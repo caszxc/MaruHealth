@@ -1,0 +1,87 @@
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.container{
+    min-height: calc(100vh - 80px);
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+}
+.policy-terms{
+    padding: 0 40px;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+.policy-terms .breadcrumb{
+    color: white;
+}
+
+.policy-terms .breadcrumb a{
+    color: white;
+    text-decoration: none;
+}
+
+.policy-terms .title{
+    text-align: center;
+    color: white;
+    font-size: 3rem;
+    margin: 20px;
+}
+
+
+.policy-terms-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    background-color: white;
+    padding: 50px 100px;
+    border-radius: 5px;
+}
+
+.policy-content {
+    font-family: 'Istok Web', sans-serif;
+    color: #000;
+    font-size: 1.5rem;
+    line-height: 1.6;
+}
+
+.policy-content .section-title {
+    text-align: center;
+    font-weight: bold;
+    color: #B71C1C;
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+.policy-content .intro {
+    text-indent: 2em;
+    margin-bottom: 20px;
+}
+
+.policy-content ol {
+    list-style: decimal;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.policy-content ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin-top: 5px;
+}
+
+.policy-content li {
+    margin-bottom: 10px;
+}
+
+.policy-content p.closing {
+    margin-top: 30px;
+    font-style: italic;
+}

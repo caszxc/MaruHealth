@@ -1,0 +1,505 @@
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.nav-profile-pic {
+    border: 3px solid white;
+}
+
+
+.profile-container{
+    padding-top: 30px;
+    margin-top: 80px;
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    display: flex;
+    max-height: calc(100vh - 80px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+
+.page-title{
+    color: white;
+    font-size: 3rem;
+    margin: 20px;
+}
+
+.profile-box{
+    background-color: #800000;
+    display: flex;
+    width: 90%;
+    height: 80vh;
+    justify-content: space-between;
+}
+
+.profile-img{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f7f7f7;
+    width: 29%;
+    border-right: solid 1px #800000;
+    gap: 10px;
+}
+
+.profile-pic-wrapper {
+    position: relative;
+    width: 270px;
+    height: 270px;
+    cursor: pointer;
+}
+
+.profile-pic-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #800000;
+}
+
+.icon-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    padding: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.icon-button:hover {
+    background-color: #f0f0f0;
+}
+
+.icon-button i {
+    color: #800000;
+}
+
+.profile-img .full-name{
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.profile-img .logout-button{
+    background-color: #800000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 100px;
+    height: 30px;
+}
+
+.profile-info{
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    background-color: #f7f7f7;
+}
+
+.tab-buttons{
+    background-color: #800000;
+    width: 100%;
+    height: 15%;
+}
+
+.tab-button {
+    background-color: #800000;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    cursor: pointer;
+    height: 100%;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.tab-button.active {
+    background-color: #f7f7f7;
+    color: #800000;
+}
+
+/* Tab Content */
+.tab-content {
+    background-color: #f7f7f7;
+    border-radius: 5px;
+}
+
+#details, #request-history{
+    padding: 20px;
+    width: 100%;
+    height: 85%;
+    gap: 20px;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+#details .title{
+    color: #800000;
+}
+
+#details .group-row{
+    padding: 10px;
+}
+
+#details .row{
+    display: flex;
+    width: 100%;
+    border-bottom: solid 1px #800000;
+    padding: 5px;
+}
+
+#details .label{
+    width: 200px;
+    font-weight: bold;
+}
+
+/* Table Styles */
+/* Table Container for Scrollable Table */
+.table-container {
+    max-height: 500px; /* Adjust this value based on your needs */
+    height: 90%;
+    overflow-y: auto; /* Enable vertical scrolling */
+    width: 100%;
+    background-color: #fff;
+    border-radius: 5px;
+    position: relative; /* Ensures proper positioning for the sticky header */
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+}
+
+table th, table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: #800000;
+    color: #fff;
+    position: sticky; /* Keep header fixed while scrolling */
+    top: 0; /* Stick to the top of the table-container */
+    z-index: 10; /* Ensure header stays above table content */
+}
+
+/* Ensure the table header doesn't get cut off */
+.table-container::-webkit-scrollbar {
+    width: 8px; /* Scrollbar width for WebKit browsers */
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: #800000; /* Scrollbar color */
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background-color: #f1f1f1; /* Scrollbar track color */
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.view-btn {
+    background-color: #4b66c1;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.view-btn:hover {
+    background-color: #3a4fa2;
+}
+
+/* Modal Styles */
+/* Ensure the modal covers everything */
+.modal {
+    display: none; /* Hide by default */
+    position: fixed;
+    z-index: 1000; /* High value to keep it on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+    justify-content: center;
+    align-items: center;
+    visibility: hidden; /* Ensures modal is not visible */
+    opacity: 0; /* Fully transparent */
+    transition: opacity 0.3s ease-in-out, visibility 0.3s;
+}
+
+.modal.show {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+}
+
+#changeProfileModal .modal-content {
+    background-color: #fff;
+    max-width: 1900px; /* Set a max width */
+    max-height: 90vh; /* Set a max height relative to the viewport */
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Enable vertical scrolling */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+#viewRequestModal .modal-content {
+    background-color: #fff;
+    max-width: 1900px; /* Set a max width */
+    width: 80%;
+    max-height: 90vh; /* Set a max height relative to the viewport */
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Enable vertical scrolling */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.modal-content h2 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #800000;
+    text-align: center;
+    border-bottom: 2px solid #800000;
+    padding-bottom: 10px;
+}
+
+
+/* For Profile picture change */
+.image-preview {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.image-preview img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #800000;
+    background-color: #f0f0f0;
+}
+
+#profile-photo {
+    display: block;
+    margin: 0 auto 20px auto;
+    font-size: 16px;
+}
+
+/* Footer buttons */
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.modal-footer .cancel-btn,
+.modal-footer .save-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.modal-footer .cancel-btn {
+    background-color: #ccc;
+    color: #333;
+}
+
+.modal-footer .cancel-btn:hover {
+    background-color: #bbb;
+}
+
+.modal-footer .save-btn {
+    background-color: #800000;
+    color: white;
+}
+
+.modal-footer .save-btn:hover {
+    background-color: #a00000;
+}
+
+
+/* View Request Modal */
+.modal-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'Istok Web', sans-serif;
+}
+
+.modal-container .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-start;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    transition: background-color 0.2s;
+}
+
+.modal-container .row:hover {
+    background-color: #f4f4f4;
+}
+
+.modal-container .row > div {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.modal-container .row > div > label {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modal-container .row > div > span {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 16px;
+    color: #444;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.modal-container .group-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+#medicine-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.medicine-entry {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 15px;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.medicine-entry > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.medicine-entry > div > label {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+.medicine-entry > div > span {
+    font-size: 16px;
+    color: #444;
+}
+
+.prescription-preview {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.prescription-preview label {
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.prescription-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#claim-info .row {
+    background-color: #ffe8e8;
+    border-color: #800000;
+}
+
+#claim-info .claim-details {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #800000;
+    border-radius: 6px;
+}
+
+#claim-info .claim-details p {
+    margin: 8px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+#claim-info .claim-details p strong {
+    color: #800000;
+}
+
+#note-info .row {
+    background-color: #fff8e8;
+    border-color: #800000;
+}
+
+#note-info span {
+    background-color: #fff;
+    border: 1px solid #800000 !important;
+}

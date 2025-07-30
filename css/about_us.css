@@ -1,0 +1,141 @@
+body::-webkit-scrollbar, .announcement-container::-webkit-scrollbar, .events-container::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.banner {
+    margin-top: 80px;
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 80px);
+    background-size: cover;
+    background-position: center 18%;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    transition: background-image 1s ease-in-out; /* smooth transition */
+}
+
+
+.banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); 
+    z-index: 1;
+}
+
+.banner .title-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    text-align: center;
+}
+
+.banner .title {
+    color: white;
+    padding: 0; /* Remove extra padding */
+    line-height: 1; /* Reduce spacing between lines */
+}
+
+.banner .title p{
+    font-size: 40px;
+}
+
+.banner .title h1 {
+    position: relative;
+    font-size: 3rem;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+
+.banner .tagline{
+    color: white;
+    z-index: 2; 
+    font-size: 20px;
+}
+
+.container {
+    position: relative;
+    width: 90%;
+    max-width: 1700px;
+    margin: 0 auto;
+    transform: translateY(-150px); /* More responsive */
+    border-radius: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+
+
+.mission-vision{
+    display: flex;
+    text-align: center;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 20px 0;
+    background-color: white;
+
+}
+
+.mission, .vision{
+    width: 50%;
+    padding: 0 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.mission img, .vision img{
+    width: 150px;
+}
+
+.mission .title, .vision .title{
+    color: #800000;
+}
+
+.about-content{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 70px;
+    background-color: white;
+}
+
+.text-content{
+    width: 60%;
+    font-size: 20px;
+    text-align: left;
+}
+
+.text-content h2{
+    color: #800000;
+    font-size: 2rem;
+}
+
+.text-content p{
+    font-size: 20px;
+}
+
+.img-content{
+    display: flex;
+    justify-content: center;
+    width: 35%;
+}
+
+.img-content img {
+    width: 90%;       /* or any fixed size */
+}

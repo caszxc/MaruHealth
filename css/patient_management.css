@@ -1,0 +1,343 @@
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.sidebar {
+    position: fixed;
+    top: 60px; /* Matches nav height */
+    left: 0;
+    width: 250px; /* Adjust as needed */
+    height: calc(100vh - 60px); /* Full height minus nav */
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto; /* Enables scrolling if needed */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none; /* Hides scrollbar in Chrome, Safari, and Edge */
+}
+
+.sidebar .profile {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    margin: 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .profile:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+.sidebar .profile img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    margin-right: 15px;
+}
+
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profile-details .admin_name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.profile-details .role {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.menu-header {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 10px 15px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.menu-link{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+.menu-link-active{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+    background-color: #FFFFFF;
+}
+
+.menu-icon{
+    width: 20%;
+    padding: 15px;
+}
+
+.menu a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    text-align: left;
+    width: 80%;
+    font-size: 16px;
+}
+
+
+.menu .menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Highlight the active menu item */
+.menu a.active {
+    background-color: #FFFFFF; /* Light background */
+    color: #C00000; /* Dark red text */
+}
+
+.patient-content {
+    margin-top: 80px;
+    margin-left: 260px;
+    padding: 20px;
+    width: calc(100% - 260px);
+}
+
+/* Search and Add Button */
+.search-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.search-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.search-row input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 250px; /* Adjust width as needed */
+}
+
+.clear-btn {
+    padding: 8px 16px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-block;
+}
+
+.clear-btn:hover {
+    background-color: #d32f2f;
+}
+
+.add-button {
+    padding: 8px 16px;
+    background-color: #800000;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Patient num Table Styling */
+.patient-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.patient-table th, .patient-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.patient-table th {
+    background-color: #800000;
+    color: white;
+}
+
+.patient-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* Action Buttons */
+.view-btn, .delete-btn {
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #fff;
+    margin-right: 5px;
+}
+
+.view-btn {
+    background-color: #4CAF50; /* green */
+}
+
+.delete-btn {
+    background-color: #f44336; /* red */
+}
+
+
+/* Modal Styles */
+/* Ensure the modal covers everything */
+.modal {
+    display: none; /* Hide by default */
+    position: fixed;
+    z-index: 1000; /* High value to keep it on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden; /* Ensures modal is not visible */
+    opacity: 0; /* Fully transparent */
+    transition: opacity 0.3s ease-in-out, visibility 0.3s;
+}
+
+.modal.show {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: #fff;
+    width: 70%; /* Adjust width for responsiveness */
+    max-width: 1900px; /* Set a max width */
+    max-height: 90vh; /* Set a max height relative to the viewport */
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Enable vertical scrolling */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.modal-content .title{
+    color: #800000;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+}
+.form-group {
+    display: flex;
+    align-items: center ;
+    gap: 10px;
+    width: 100%;
+}
+
+.form-row{
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+}
+
+.form-row-address{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.form-group input, .form-group select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+    padding-right: 20px;
+}
+.cancel-btn, .submit-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.cancel-btn {
+    background-color: #ccc;
+    color: black;
+}
+.submit-btn {
+    background-color: #800000;
+    color: white;
+}
+
+.legend-box {
+    background-color: #eaeaea;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.circle {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+/* Colors for the legend */
+.blue { background-color: #1E90FF; }  /* Underweight */
+.green { background-color: #228B22; } /* Normal / No Risk */
+.orange { background-color: #FFA500; } /* Overweight */
+.red { background-color: #B22222; } /* Obese / At Risk */

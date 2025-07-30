@@ -1,0 +1,558 @@
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.sidebar {
+    position: fixed;
+    top: 60px; /* Matches nav height */
+    left: 0;
+    width: 250px; /* Adjust as needed */
+    height: calc(100vh - 60px); /* Full height minus nav */
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto; /* Enables scrolling if needed */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none; /* Hides scrollbar in Chrome, Safari, and Edge */
+}
+
+.sidebar .profile {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    margin: 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .profile:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+.sidebar .profile img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    margin-right: 15px;
+}
+
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profile-details .admin_name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.profile-details .role {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.menu-header {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 10px 15px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.menu-link{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+.menu-link-active{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+    background-color: #FFFFFF;
+}
+
+.menu-icon{
+    width: 20%;
+    padding: 15px;
+}
+
+.menu a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    text-align: left;
+    width: 80%;
+    font-size: 16px;
+}
+
+
+.menu .menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Highlight the active menu item */
+.menu a.active {
+    background-color: #FFFFFF; /* Light background */
+    color: #C00000; /* Dark red text */
+}
+
+/* Main Content */
+.content {
+    margin-top: 80px;
+    margin-left: 250px;
+    padding: 30px;
+    width: calc(100% - 250px);
+    min-height: calc(100vh - 80px);
+    background: #f4f6f9; /* Subtle background for contrast */
+}
+
+/* Announcement Container */
+.announcement-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    min-height: 100%;
+}
+
+/* Sort Controls */
+.sort-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.sort-controls select, .new-post-btn {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    font-family: 'Istok Web', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.sort-controls select {
+    background: #fff;
+    cursor: pointer;
+}
+
+.sort-controls select:focus {
+    border-color: #800000;
+    outline: none;
+}
+
+.new-post-btn {
+    background: #800000;
+    color: white;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    padding: 12px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.new-post-btn:hover {
+    background: #a00000;
+    transform: translateY(-1px);
+}
+
+/* Announcement Box */
+.announcement-box {
+    background: #fff;
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    border: 1px solid #e8ecef;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.post-details {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.post-details-text {
+    font-size: 15px;
+}
+
+.post-details-text strong {
+    display: block;
+    font-weight: 600;
+    color: #2d2d2d;
+}
+
+.post-details-text p {
+    color: #6b7280;
+    margin: 5px 0 0;
+    font-size: 13px;
+}
+
+/* Announcement Content */
+.announcement-content {
+    flex-grow: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.announcement-con {
+    display: flex;
+    width: 100%;
+    gap: 25px;
+    align-items: flex-start;
+    background: #f9fafb; /* Subtle background for content area */
+    padding: 20px;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.announcement-con:hover {
+    background: #f1f5f9; /* Slight highlight on hover */
+}
+
+.image-con {
+    width: 200px;
+    height: 150px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.announcement-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.4s ease;
+}
+
+.content-con {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.content-con h2 {
+    font-size: 22px;
+    margin: 0;
+    color: #1f2937;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+}
+
+.post-content {
+    overflow: hidden;
+    font-size: 15px;
+    color: #374151;
+    line-height: 1.7;
+    max-width: 100%;
+}
+
+.post-content p {
+    margin: 0;
+    white-space: pre-wrap; /* Preserves newlines and wraps text */
+}
+
+
+/* Kebab Menu */
+.kebab-menu {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+.kebab-menu:hover {
+    color: #333;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 35px;
+    right: 15px;
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+.dropdown-menu button {
+    background: none;
+    border: none;
+    width: 100%;
+    padding: 10px 15px;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+    color: #333;
+    transition: background 0.3s ease;
+}
+
+.dropdown-menu button:hover {
+    background: #f5f5f5;
+}
+
+/* No Announcements */
+.no-announcements {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    text-align: center;
+    font-size: 16px;
+    color: #666;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none;
+}
+
+.modal-content .title {
+    text-align: center;
+    color: #800000;
+    padding: 15px 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-container .row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.modal-content label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.modal-content input:focus, .modal-content textarea:focus {
+    border-color: #800000;
+    outline: none;
+}
+
+.modal-content textarea {
+    width: 100%;
+    height: 150px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.modal-content .file-upload {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    gap: 15px;
+    background: #f9f9f9;
+}
+
+.modal-content input[type="file"] {
+    display: none;
+}
+
+.modal-content #file-name, .modal-content #edit-file-name {
+    font-size: 14px;
+    color: #555;
+}
+
+.modal-content .custom-file-upload {
+    display: inline-flex;
+    align-items: center;
+    background: #3399cc;
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.modal-content .custom-file-upload i {
+    margin-right: 8px;
+}
+
+.modal-content .custom-file-upload:hover {
+    background: #2b7da5;
+    transform: translateY(-1px);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.cancel-btn, .post-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.cancel-btn {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.cancel-btn:hover {
+    background: #d0d0d0;
+    transform: translateY(-1px);
+}
+
+.post-btn {
+    background: #800000;
+    color: white;
+}
+
+.post-btn:hover {
+    background: #a00000;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .content {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+        padding: 15px;
+    }
+
+    .announcement-con {
+        flex-direction: column;
+    }
+
+    .image-con {
+        width: 100%;
+        max-width: 200px;
+        height: 150px;
+    }
+
+    .modal-content {
+        width: 95%;
+        min-width: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+    }
+
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 10px;
+    }
+
+    .sort-controls {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .sort-controls select, .new-post-btn {
+        width: 100%;
+    }
+}

@@ -1,0 +1,555 @@
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+body::-webkit-scrollbar {
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.sidebar {
+    position: fixed;
+    top: 60px; /* Matches nav height */
+    left: 0;
+    width: 250px; /* Adjust as needed */
+    height: calc(100vh - 60px); /* Full height minus nav */
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto; /* Enables scrolling if needed */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none; /* Hides scrollbar in Chrome, Safari, and Edge */
+}
+
+.sidebar .profile {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    margin: 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .profile:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+.sidebar .profile img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    margin-right: 15px;
+}
+
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profile-details .admin_name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.profile-details .role {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.menu-header {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 10px 15px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.menu-link{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+.menu-link-active{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+    background-color: #FFFFFF;
+}
+
+.menu-icon{
+    width: 20%;
+    padding: 15px;
+}
+
+.menu a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    text-align: left;
+    width: 80%;
+    font-size: 16px;
+}
+
+
+.menu .menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Highlight the active menu item */
+.menu a.active {
+    background-color: #FFFFFF; /* Light background */
+    color: #C00000; /* Dark red text */
+}
+
+/* Main container for the approval page */
+.calendar-container {
+    margin-top: 80px;
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    height: calc(100vh - 80px);
+    z-index: 0;
+}
+
+.container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+}
+
+.event-panel {
+    display: flex;
+    flex-direction: column;
+    width: 30%;
+    background: linear-gradient(to bottom, #8B0000, #C00000);
+    padding: 30px;
+    color: white;
+    position: relative;
+}
+
+.event-panel .title {
+    text-align: left;
+    padding: 10px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+#eventList {
+    flex: 1 1 0;
+    overflow-y: auto;
+    padding-bottom: 30px;
+    scrollbar-width: none;
+}
+
+#eventList::-webkit-scrollbar {
+    display: none;
+}
+
+.event-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.event-card img {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.event-card .event-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    color: #800000;
+    font-size: 14px;
+}
+
+.event-card .event-details strong {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.event-card .event-details em {
+    font-style: italic;
+    color: #6b7280;
+}
+
+.button-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.delete-btn {
+    background: #8B0000;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #a00000;
+}
+
+.delete-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.3);
+}
+
+#calendar {
+    width: 70%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+#calendar table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    flex-grow: 1;
+}
+
+#calendar th {
+    width: 14.28%;
+    height: 40px;
+    border: 1px solid #800000;
+    vertical-align: middle;
+    color: #8B0000;
+    font-weight: normal;
+    font-size: 18px;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#calendar td {
+    width: 14.28%;
+    height: 110px;
+    border: 1px solid #800000;
+    vertical-align: top;
+    position: relative;
+    padding: 5px;
+    font-size: 14px;
+    text-align: right;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+#calendar td:hover {
+    background-color: #ffe6e6;
+}
+
+#calendar td.selected-day {
+    background-color: rgba(139, 0, 0, 0.2);
+}
+
+#calendar td.selected-day .day-number {
+    color: #8B0000;
+    font-weight: bold;
+}
+
+.today {
+    background-color: rgba(139, 0, 0, 0.1);
+}
+
+.day-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.day-number {
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.faded-day {
+    color: rgba(0, 0, 0, 0.3);
+}
+
+.event-title {
+    font-size: 11px;
+    background-color: #800000;
+    color: #ffffff;
+    margin-top: 2px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.event-indicator {
+    width: 20px;
+    height: 20px;
+    background: darkred;
+    border-radius: 50%;
+    margin: auto;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.btn-con {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-45%);
+    width: 100%;
+}
+
+.addEvent-btn {
+    padding: 10px 15px;
+    width: 90%;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #FFFFFF;
+    color: #800000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.addEvent-btn:hover {
+    background: #f9fafb;
+    transform: translateY(-1px);
+}
+
+.btn-con .addEvent-icon {
+    width: 10%;
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 50%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #8B0000;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.modal-content .form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-container .row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.group-row {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-content label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+}
+
+input[type="text"], input[type="date"], input[type="time"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: left;
+}
+
+.modal-content .file-upload {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    gap: 10px;
+}
+
+.modal-content input[type="file"] {
+    display: none;
+}
+
+.modal-content #file-name {
+    font-size: 13px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+}
+
+.modal-content .custom-file-upload {
+    display: inline-block;
+    background-color: #3399cc;
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.modal-content .custom-file-upload i {
+    margin-right: 8px;
+}
+
+.modal-content .custom-file-upload:hover {
+    background-color: #2b7da5;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.btn-cancel {
+    background: #D3D3D3;
+    color: #8B0000;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-cancel:hover {
+    background: #c0c0c0;
+    transform: translateY(-1px);
+}
+
+.btn-post {
+    background: #8B0000;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-post:hover {
+    background: #a00000;
+    transform: translateY(-1px);
+}
+
+/* Month Navigation */
+.month-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 17px;
+    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
+}
+
+.month-navigation h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #8B0000;
+    min-width: 200px;
+    text-align: center;
+}
+
+.nav-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #8B0000;
+    background: white;
+    border-radius: 50%;
+    font-size: 20px;
+    color: #8B0000;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: #8B0000;
+    color: white;
+    transform: translateY(-1px);
+}

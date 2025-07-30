@@ -1,0 +1,219 @@
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.container {
+    display: flex;
+    margin-top: 80px;
+    min-height: calc(100vh - 80px);
+}
+
+.event-panel {
+    width: 30%;
+    background: linear-gradient(to bottom, #8B0000, #C00000);
+    padding: 30px;
+    color: white;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#eventList{
+    flex: 1 1 0;
+    overflow-y: auto;
+    padding-bottom: 30px;
+    scrollbar-width: none;
+}
+
+.event-panel .title{
+    text-align: left;
+    padding: 10px;
+}
+
+.event-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+.event-card img {
+    width: 100px;
+    height: 100px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.event-card .event-details{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    color: #800000;
+}
+
+#calendar {
+    width: 70%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+#calendar table {
+    width: 100%;
+    table-layout: fixed; /* This ensures all columns have equal width */
+    border-collapse: collapse;
+    flex-grow: 1;
+}
+
+
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.container {
+    display: flex;
+    margin-top: 80px;
+    min-height: calc(100vh - 80px);
+}
+
+.event-panel {
+    width: 30%;
+    background: linear-gradient(to bottom, #8B0000, #C00000);
+    padding: 30px;
+    color: white;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#eventList{
+    flex: 1 1 0;
+    overflow-y: auto;
+    padding-bottom: 30px;
+    scrollbar-width: none;
+}
+
+.event-panel .title{
+    text-align: left;
+    padding: 10px;
+}
+
+.event-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    color: black;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+}
+
+.event-card img {
+    width: 100px;
+    height: 100px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.event-card .event-details{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    color: #800000;
+}
+
+#calendar {
+    width: 70%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+#calendar table {
+    width: 100%;
+    table-layout: fixed; /* This ensures all columns have equal width */
+    border-collapse: collapse;
+    flex-grow: 1;
+}
+
+#calendar th{
+    width: 14.28%; /* Exactly 1/7 of the table width */
+    height: 40px; /* Fixed height for table headers */
+    border: 1px solid #800000;
+    vertical-align: middle; /* Center text vertically */
+    position: relative;
+    color: #8B0000;
+    font-weight: normal;
+    font-size: 18px;
+    box-sizing: border-box; /* Include padding and border in the element's width */
+    text-align: center; /* Center text horizontally */
+    padding: 0; /* Remove padding and control height directly */
+    overflow: hidden; /* Prevent content from breaking layout */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+#calendar td {
+    width: 14.28%; /* Exactly 1/7 of the table width */
+    height: 110px;
+    border: 1px solid #800000;
+    vertical-align: top;
+    position: relative;
+    padding: 5px;
+    font-size: 14px;
+    text-align: right;
+    cursor: pointer; /* Add cursor pointer to indicate clickable */
+    transition: background-color 0.2s ease-in-out; /* Add smooth transition */
+    box-sizing: border-box; /* Include padding and border in the element's width */
+    overflow: hidden; /* Prevent content from breaking layout */
+}
+
+#calendar td:hover {
+    background-color: #ffe6e6; /* Light red on hover */
+}
+
+#calendar td.selected-day {
+    background-color: rgba(139, 0, 0, 0.2); /* Semi-transparent maroon background */
+}
+
+#calendar td.selected-day .day-number {
+    color: #8B0000; /* Make the day number maroon for selected day */
+    font-weight: bold;
+}
+
+.today {
+    background-color: rgba(139, 0, 0, 0.1); /* Light indication for current day */
+}
+
+.day-container {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.day-number {
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.faded-day {
+    color: rgba(0, 0, 0, 0.3);
+}
+
+.event-title {
+    font-size: 11px;
+    background-color: #800000;
+    color: #ffffff;
+    margin-top: 2px;
+    padding: 1px 3px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    width: 100%; /* Take full width of container */
+    max-width: 100%; /* Use container width instead of fixed pixel width */
+    box-sizing: border-box; /* Include padding in width calculation */
+}

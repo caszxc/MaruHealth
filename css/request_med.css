@@ -1,0 +1,206 @@
+body::-webkit-scrollbar{
+    display: none; /* For Chrome, Safari, and Opera */
+}
+
+.container {
+    padding-top: 100px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+}
+
+.form-box {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    width: 70%;
+}
+
+h1 {
+    color: #7b0000;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-container{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.row > div {
+    flex: 1;
+}
+
+.row .file-upload{
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    gap: 10px;
+}
+
+#medicine-group{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    background-color: #3399cc;
+    color: white;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#file-name{
+    font-size: 14px;
+}
+  
+.custom-file-upload i {
+    margin-right: 8px;
+}
+
+.custom-file-upload:hover {
+    background-color: #2b7da5;
+}
+  
+
+textarea {
+    resize: vertical;
+}
+
+.add-medicine-btn,
+input[type="file"]::file-selector-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-size: 14px;
+    border-radius: 4px;
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+.add-medicine-btn:hover,
+input[type="file"]::file-selector-button:hover {
+    background-color: #2c80b4;
+}
+
+.remove-medicine-btn {
+    background: #e74c3c;
+    border: none;
+    color: white;
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    height: fit-content;
+}
+
+.remove-medicine-btn:hover {
+    background: #c0392b;
+}
+
+.checkbox-label {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 30px;
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.submit-btn {
+    background-color: #7D0000;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 6px;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    background-color: #5a0000;
+}
+
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+    color: #d9534f;
+}
+
+.modal-content button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    border: none;
+    background-color: #d9534f;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.modal-content button:hover {
+    background-color: #c9302c;
+}

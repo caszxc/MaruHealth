@@ -1,0 +1,477 @@
+.register-container {
+    background: linear-gradient(to right, #8B0000, #C00000);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    margin-top: 80px;
+}
+
+.register-content{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+}
+
+.register-box {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 350px;
+    text-align: center;
+    z-index: 2;
+    width: 50%;
+}
+
+.register-box h2 {
+    color: #8B0000;
+}
+
+.register-box hr {
+    border: none;
+    height: 1px;
+    background-color: #8B0000;
+}
+
+.register-box p {
+    margin-top: 5px;
+    font-size: small;
+}
+
+.stepper-wrapper {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.stepper-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.stepper-item::before, .stepper-item::after {
+    content: "";
+    position: absolute;
+    top: 20px;
+    border-bottom: 2px solid #ccc;
+    width: 100%;
+    z-index: 1;
+}
+
+.stepper-item::before {
+    left: -50%;
+}
+
+.stepper-item::after {
+    left: 50%;
+}
+
+.stepper-item:first-child::before,
+.stepper-item:last-child::after {
+    content: none;
+}
+
+.stepper-item .step-counter {
+    z-index: 2;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #8B0000;
+    border: 2px solid #8B0000;
+}
+
+.stepper-item .step-name {
+    font-size: 14px;
+    color: #8B0000;
+}
+
+.stepper-item.active .step-counter {
+    background-color: #8B0000;
+    color: white;
+}
+
+.stepper-item.completed .step-counter {
+    background-color: #8B0000;
+    color: white;
+}
+
+.stepper-item.completed::after {
+    border-color: #8B0000;
+}  
+
+.stepper-item.completed::after {
+    border-bottom-color: #8B0000;
+}
+  
+.stepper-item.completed::before {
+    border-bottom-color: #8B0000;
+}
+  
+.stepper-item.active::before {
+    border-bottom-color: #8B0000;
+}
+
+/* Form Steps */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.register-form .group-row{
+    display: flex;
+    gap: 10px;
+}
+
+.register-form .group-col{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.register-form .group-col label{
+    font-size: 13px;
+}
+
+.register-form select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+    font-size: 16px;
+    color: #333;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+}
+
+.register-form select:after {
+    content: "▼";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.register-form select:focus {
+    border-color: #8B0000;
+    outline: none;
+    box-shadow: 0 0 5px rgba(139, 0, 0, 0.5);
+}
+
+.register-form input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Hide default file input */
+.file-upload{
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    gap: 10px;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+#file-name{
+    font-size: 13px;
+}
+
+.custom-file-upload {
+  display: inline-block;
+  background-color: #3399cc;
+  color: white;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.custom-file-upload i {
+  margin-right: 8px;
+}
+
+.custom-file-upload:hover {
+  background-color: #2b7da5;
+}
+
+
+.register-box .formTitle{
+    font-size: 15px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user-info .group-col span {
+    font-size: 16px;
+    border: 1px solid #ccc;
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+}
+
+.id-preview {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.id-preview label{
+    font-size: 13px;
+}
+
+.id-preview img {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+
+/* Styling for buttons */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.prev-step {
+    background: white;
+    color: #8B0000;
+    border: 2px solid #8B0000;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    flex: 1;
+    transition: 0.3s ease-in-out;
+}
+
+.prev-step:hover {
+    background: #8B0000;
+    color: white;
+}
+
+.submit-button, .next-step {
+    background: #8B0000;
+    color: white;
+    border: 2px solid #8B0000;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    flex: 1;
+    transition: 0.3s ease-in-out;
+}
+
+#signUpBtn:disabled {
+    pointer-events: none; /* Prevent any hover/active events */
+    opacity: 0.6;
+}
+
+.submit-button:hover {
+    background: #600000;
+}
+
+.policy_terms{
+    width: auto;
+}
+
+.checkbox-label{
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.checkbox-label a {
+    color: maroon;
+    font-weight: bold;
+    text-decoration: none;
+    margin: 5px;
+}
+
+/* Modal Styles */
+/* Ensure the modal covers everything */
+.modal {
+    display: none; /* Hide by default */
+    position: fixed;
+    z-index: 1000; /* High value to keep it on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden; /* Ensures modal is not visible */
+    opacity: 0; /* Fully transparent */
+    transition: opacity 0.3s ease-in-out, visibility 0.3s;
+}
+
+.modal.show {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: #fff;
+    width: 90%; /* Adjust width for responsiveness */
+    max-width: 1900px; /* Set a max width */
+    max-height: 90vh; /* Set a max height relative to the viewport */
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Enable vertical scrolling */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* success modal */
+.success-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.success-modal.show {
+    display: flex;
+}
+
+.success-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.success-icon {
+    font-size: 60px;
+    color: #4CAF50;
+    margin-bottom: 20px;
+}
+
+.success-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.success-message {
+    font-size: 16px;
+    margin-bottom: 25px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.success-button {
+    background-color: #8B0000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.success-button:hover {
+    background-color: #a52a2a;
+}
+
+/* Required field indicator */
+.required {
+    color: #FF0000;
+}
+
+/* Field hints */
+.field-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    font-style: italic;
+    display: block;
+}
+
+/* Error summary box */
+.error-summary {
+    background-color: #FFEBEE;
+    border: 1px solid #FFCDD2;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #B71C1C;
+}
+
+.error-summary ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.error-summary li {
+    margin-bottom: 5px;
+}

@@ -1,0 +1,578 @@
+.sidebar {
+    position: fixed;
+    top: 60px; /* Matches nav height */
+    left: 0;
+    width: 250px; /* Adjust as needed */
+    height: calc(100vh - 60px); /* Full height minus nav */
+    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    color: white;
+    padding: 20px 0;
+    overflow-y: auto; /* Enables scrolling if needed */
+    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+    display: none; /* Hides scrollbar in Chrome, Safari, and Edge */
+}
+
+.sidebar .profile {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    margin: 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.sidebar .profile:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+.sidebar .profile img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    margin-right: 15px;
+}
+
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.profile-details .admin_name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.profile-details .role {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.menu-header {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 10px 15px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.menu-link{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+.menu-link-active{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+    background-color: #FFFFFF;
+}
+
+.menu-icon{
+    width: 20%;
+    padding: 15px;
+}
+
+.menu a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    text-align: left;
+    width: 80%;
+    font-size: 16px;
+}
+
+
+.menu .menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Highlight the active menu item */
+.menu a.active {
+    background-color: #FFFFFF; /* Light background */
+    color: #C00000; /* Dark red text */
+}
+
+/* Main container */
+.container {
+    margin-top: 80px;
+    margin-left: 250px;
+    padding: 20px;
+    width: calc(100% - 250px);
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+}
+
+.services{
+    background-color: white;
+    padding: 10px;
+    flex-grow: 1;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tabs-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.service-tabs{
+    display: flex;
+}
+
+.service-tabs button {
+    padding: 8px 10px;
+    font-size: 16px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    color: #333;
+    position: relative;
+    top: 1px;
+}
+
+.service-tabs button.active {
+    background: white;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    font-weight: 600;
+}
+
+.service-button .edit-btn,  .service-button .add-btn, .service-button .delete-btn{
+    color: white;
+    padding: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.service-button .edit-btn{
+    background-color: #008CBA;
+}
+
+.service-button .add-btn{
+    background-color: #4CAF50;
+}
+
+.service-button .delete-btn{
+    background-color: #CF0606;
+}
+
+
+.service-card-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.service-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 20%;
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-card img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background-color: #f9f9f9;
+}
+
+.service-card h3 {
+    font-size: 1rem;
+    color: #800000;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.service-card p {
+    flex-grow: 1;
+    width: 100%;
+    font-size: 0.95rem;
+    color: #333;
+    overflow-wrap: break-word;
+    margin-bottom: 20px;
+}
+
+.service-schedules, .service-images {
+    margin-top: 20px;
+}
+
+.service-schedules table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.service-schedules table td, .service-schedules table th {
+    border: 1px solid #ccc;
+    padding: 8px;
+}
+
+.service-schedules table th {
+    background-color: #eee;
+}
+
+.service-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #B00000;
+}
+
+.service-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.service-images img {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.no-images {
+    color: #6c757d;
+    font-style: italic;
+}
+
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 50%;
+    max-height: 90vh;
+    min-width: 400px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.icon-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.icon-container img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background-color: #f9f9f9;
+}
+
+.edit-icon {
+    position: absolute;
+    top: -5px; /* Changed from bottom to top */
+    right: -5px;
+    color: #800000;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.3s ease;
+}
+
+.icon-container:hover .edit-icon {
+    color: #a00000;
+}
+
+.modal-content .title {
+    text-align: center;
+    color: #800000;
+    padding: 15px;
+    font-size: 22px;
+}
+
+.modal-content input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.modal-content #serviceImages {
+    display: none;
+}
+
+.modal-content textarea{
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-container{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-container .group{
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+}
+
+.form-container .row{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.form-container .service-schedules-container{
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+#serviceSchedulesContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.service-item {
+    border: 1px solid #ccc;
+    padding: 15px;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.delete-btn{
+    background-color: #CF0606;
+    color: white;
+    padding: 5px;
+    border: none;
+    cursor: pointer;
+}
+
+.schedule-container{
+    display: flex;
+    flex-direction: column;
+}
+
+.schedule-input-group{
+    display: flex;
+    gap: 5px;
+}
+
+.day-container{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.delete-schedule-btn{
+    background: #e74c3c;
+    border: none;
+    color: white;
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    height: fit-content;
+}
+
+.delete-service-btn, .delete-day-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.add-schedule-btn, .add-service-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.image-preview {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-image {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: all 0.2s;
+}
+
+.remove-image:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.upload-box {
+    width: 150px;
+    height: 150px;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-box:hover {
+    border-color: #0275d8;
+    background-color: rgba(2, 117, 216, 0.05);
+}
+
+.upload-box i {
+    font-size: 30px;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.upload-box span {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.existing-image {
+    border: 2px solid #4caf50;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.cancel-btn, .save-btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.cancel-btn {
+    background: #ccc;
+    color: black;
+}
+
+.save-btn {
+    background: #800000;
+    color: white;
+}
+
+.save-btn:hover {
+    background: #a00000;
+}
+

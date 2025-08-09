@@ -13,6 +13,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Get form data
         $patient_id = $_POST['patient_id'] ?? null;
+        $first_name = $_POST['first_name'] ?? null;
+        $middle_name = $_POST['middle_name'] ?? null;
+        $last_name = $_POST['last_name'] ?? null;
         $civil_status = $_POST['civil_status'] ?? null;
         $contact_number = $_POST['contact_number'] ?? null;
         $occupation = $_POST['occupation'] ?? null;
@@ -53,6 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Prepare update query (excluding sex)
         $sql = "UPDATE patients SET 
+                first_name = :first_name,
+                middle_name = :middle_name,
+                last_name = :last_name,
                 civil_status = :civil_status,
                 contact_number = :contact_number,
                 occupation = :occupation,
@@ -67,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Bind parameters
         $stmt->bindParam(':patient_id', $patient_id, PDO::PARAM_INT);
+        $stmt->bindParam(':first_name', $first_name);
+        $stmt->bindParam(':middle_name', $middle_name);
+        $stmt->bindParam(':last_name', $last_name);
         $stmt->bindParam(':civil_status', $civil_status);
         $stmt->bindParam(':contact_number', $contact_number);
         $stmt->bindParam(':occupation', $occupation);

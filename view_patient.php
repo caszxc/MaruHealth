@@ -424,15 +424,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <div class="form-group">
                         <div class="form-row">
                             <label>First Name</label>
-                            <input type="text" id="edit_first_name" name="first_name" value="' . htmlspecialchars($patient['first_name']) . '" readonly>
+                            <input type="text" id="edit_first_name" name="first_name" value="' . htmlspecialchars($patient['first_name']) . '" >
                         </div>
                         <div class="form-row">
                             <label>Middle Name</label>
-                            <input type="text" id="edit_middle_name" name="middle_name" value="' . htmlspecialchars($patient['middle_name']) . '" readonly>
+                            <input type="text" id="edit_middle_name" name="middle_name" value="' . htmlspecialchars($patient['middle_name']) . '" >
                         </div>
                         <div class="form-row">
                             <label>Last Name</label>
-                            <input type="text" id="edit_last_name" name="last_name" value="' . htmlspecialchars($patient['last_name']) . '" readonly>
+                            <input type="text" id="edit_last_name" name="last_name" value="' . htmlspecialchars($patient['last_name']) . '" >
                         </div>
                     </div>
                     <p>Demographic-Socio Economic Profile</p>

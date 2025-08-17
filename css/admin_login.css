@@ -1,71 +1,32 @@
 .main-login {
     background: linear-gradient(to right, #8B0000, #C00000);
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
     height: 100vh;
-    justify-content: space-around;
-    flex-wrap: wrap;
-}
-
-.left-panel {
-    color: white;
-    display: flex;
+    align-items: center;
     justify-content: center;
-    align-items: center;
+    gap: 50px;
 }
 
-.left-panel img {
-    width: 300px;
-}
-
-.left-panel div{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.left-panel div h1 {
-    font-size: 70px;
-    line-height: 1.4;
-    font-weight: bold;
-}
-
-.left-panel div p{
-    font-size: 24px;
-}
-
-.right-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.tab-header {
-    display: flex;
-    width: 100%;
-    max-width: 400px;
-    margin-bottom: 0;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    overflow: hidden;
-}
-
-.tab-header button {
-    flex: 1;
-    padding: 12px;
-    font-size: 16px;
-    border: none;
-    background: white;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
-    color: #800000;
-}
-
-.tab-header button.active {
-    background: #800000;
+.logo-box {
     color: white;
+    display: flex;
+    align-items: center;
+}
+
+.logo-box div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-box img {
+    width: 200px;
+}
+
+.logo-box div h1 {
+    font-size: 50px;
+    font-weight: bold;
 }
 
 .login-box {
@@ -74,14 +35,14 @@
     border-top: none;
     padding: 30px;
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     border-radius: 10px;
 }
 
 .login-form h3 {
     color: #800000;
-    text-align: left;
+    text-align: center;
     margin-bottom: 15px;
 }
 
@@ -94,17 +55,9 @@
     box-sizing: border-box;
 }
 
-.forgot-link {
-    display: block;
-    text-align: right;
-    color: #800000;
-    font-size: 14px;
-    margin-bottom: 15px;
-}
-
 .login-form button {
-    margin: 10px 0;
     width: 100%;
+    margin-top: 30px;
     padding: 10px;
     background-color: #800000;
     color: white;

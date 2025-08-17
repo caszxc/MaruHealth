@@ -77,7 +77,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="main-login">
         <div class="left-panel">
             <img src="images/3s logo.png" alt="Logo">
-            <h1>Maru-Health<br>Barangay Marulas<br>3S Health Station</h1>
+            <div>
+                <h1>Maru-Health</h1>
+                <p>Barangay Marulas 3S Health Station</p>
+            </div>
         </div>
 
         <div class="right-panel">

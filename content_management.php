@@ -89,7 +89,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png" alt="Logo">
-            <p>Maru-Health <br> Barangay Marulas 3S <br> Health Station</p>
+            <div>
+                <h1>Maru-Health</h1>
+                <p>Barangay Marulas 3S Health Station</p>
+            </div>
         </div>
     </nav>
 

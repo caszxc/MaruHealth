@@ -28,6 +28,7 @@ nav {
 
 .logo-container{
     display: flex;
+    align-items: center;
     gap: 10px;
 }
 
@@ -35,8 +36,19 @@ nav {
     height: 70px; 
 }
 
-.logo-container p {
+.logo-container div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-container div h1{
     color: white;
+}
+
+.logo-container div p {
+    color: white;
+    font-size: 11px;
 }
 
 .nav-links{

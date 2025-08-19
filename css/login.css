@@ -1,5 +1,8 @@
 .main-login {
-    background: linear-gradient(to right, #8B0000, #C00000);
+    background: linear-gradient(
+      rgba(220, 0, 0, 0.8),  /* top: strong red with opacity */
+      rgba(220, 0, 0, 0.6)   /* bottom: lighter red with opacity */
+    ), url("../images/calendar-banner.jpg") center/cover no-repeat;
     display: flex;
     justify-content: center;
     align-items: center;

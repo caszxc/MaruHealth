@@ -133,6 +133,10 @@ nav {
 }
 
 /* Form Steps */
+.hidden{
+    display: none;
+}
+
 .form-step {
     display: none;
 }

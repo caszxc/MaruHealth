@@ -199,44 +199,244 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <!-- Step 1 -->
                     <div class="form-step active">
                         <div class="group-col">
-                            <label>Last Name <span class="required">*</span></label>
-                            <input type="text" name="lastName" required value="<?= htmlspecialchars($_POST['lastName'] ?? '') ?>" autocomplete="off">
+                            <label>Registering for <span class="required">*</span></label>
+                            <select id="category">
+                                <option value="self" selected>Self</option> 
+                                <option value="child">Child</option> 
+                                <option value="senior">Senior Citizen</option>
+                            </select>
                         </div>
-
-                        <div class="group-col">
-                            <label>First Name <span class="required">*</span></label>
-                            <input type="text" name="firstName" required value="<?= htmlspecialchars($_POST['firstName'] ?? '') ?>" autocomplete="off">
-                        </div>
-
-                        <div class="group-col">
-                            <label>Middle Name</label>
-                            <input type="text" name="middleName" value="<?= htmlspecialchars($_POST['middleName'] ?? '') ?>" autocomplete="off">
-                        </div>
-
-                        <div class="group-row">
+                        <!-- Self -->
+                        <div id="selfFields" class="">
                             <div class="group-col">
-                                <label>Gender <span class="required">*</span></label>
-                                <select name="gender" required>
-                                    <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
-                                    <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-                                    <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
-                                </select>
+                                <label>Last Name <span class="required">*</span></label>
+                                <input type="text" name="lastName" required value="<?= htmlspecialchars($_POST['lastName'] ?? '') ?>" autocomplete="off">
                             </div>
+
+                            <div class="group-col">
+                                <label>First Name <span class="required">*</span></label>
+                                <input type="text" name="firstName" required value="<?= htmlspecialchars($_POST['firstName'] ?? '') ?>" autocomplete="off">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Middle Name</label>
+                                <input type="text" name="middleName" value="<?= htmlspecialchars($_POST['middleName'] ?? '') ?>" autocomplete="off">
+                            </div>
+
+                            <div class="group-row">
+                                <div class="group-col">
+                                    <label>Gender <span class="required">*</span></label>
+                                    <select name="gender" required>
+                                        <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
+                                        <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                        <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="group-col">
+                                    <label>Date of Birth <span class="required">*</span></label>
+                                    <input type="date" name="birthday" required value="<?= htmlspecialchars($_POST['birthday'] ?? '') ?>">
+                                    <small class="field-hint">You must be at least 18 years old</small>
+                                </div>    
+                            </div>   
                             
                             <div class="group-col">
-                                <label>Date of Birth <span class="required">*</span></label>
-                                <input type="date" name="birthday" required value="<?= htmlspecialchars($_POST['birthday'] ?? '') ?>">
-                                <small class="field-hint">You must be at least 18 years old</small>
-                            </div>    
-                        </div>   
-                        
-                        <div class="group-col">
-                            <label>Address <span class="required">*</span></label>
-                            <input type="text" name="address" required value="<?= htmlspecialchars($_POST['address'] ?? '') ?>" autocomplete="off">
+                                <label>Address <span class="required">*</span></label>
+                                <input type="text" name="address" required value="<?= htmlspecialchars($_POST['address'] ?? '') ?>" autocomplete="off">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Upload Valid ID <span class="required">*</span></label>
+                                <div class="file-upload">
+                                    <label for="file-upload" class="custom-file-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i> Add File
+                                    </label>
+                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
+                                    <span id="file-name">No file chosen</span>
+                                </div>
+                                <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
+                            </div>
+
+                            <div class="button-container">
+                                <button type="button" class="next-step">Next</button>
+                            </div>
                         </div>
 
-                        <div class="button-container">
-                            <button type="button" class="next-step">Next</button>
+                        <div id="childFields" class="hidden">
+                            <h3>Child Information</h3>
+                            <div class="group-col">
+                                <label>Last Name <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>First Name <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Middle Name</label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-row">
+                                <div class="group-col">
+                                    <label>Gender <span class="required">*</span></label>
+                                    <select name="gender" required>
+                                        <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
+                                        <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                        <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="group-col">
+                                    <label>Date of Birth <span class="required">*</span></label>
+                                    <input type="date">
+                                </div>    
+                            </div>   
+                            
+                            <div class="group-col">
+                                <label>Address <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Upload School ID / Birth Certificate<span class="required">*</span></label>
+                                <div class="file-upload">
+                                    <label for="file-upload" class="custom-file-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i> Add File
+                                    </label>
+                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
+                                    <span id="file-name">No file chosen</span>
+                                </div>
+                            </div>
+
+                            <h3>II. Guardian/Authorized Registrant’s Information</h3>
+
+                            <div class="group-col">
+                                <label>Full Name <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Relationship <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Phone Number</label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Email <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Upload Valid ID <span class="required">*</span></label>
+                                <div class="file-upload">
+                                    <label for="file-upload" class="custom-file-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i> Add File
+                                    </label>
+                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
+                                    <span id="file-name">No file chosen</span>
+                                </div>
+                                <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
+                            </div>
+                            <div class="button-container">
+                                <button type="button" class="next-step">Next</button>
+                            </div>
+                        </div>
+
+                        <div id="seniorFields" class="hidden">
+                            <h3>Senior Information</h3>
+                            <div class="group-col">
+                                <label>Last Name <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>First Name <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Middle Name</label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-row">
+                                <div class="group-col">
+                                    <label>Gender <span class="required">*</span></label>
+                                    <select name="gender" required>
+                                        <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
+                                        <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                        <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="group-col">
+                                    <label>Date of Birth <span class="required">*</span></label>
+                                    <input type="date">
+                                </div>    
+                            </div>   
+                            
+                            <div class="group-col">
+                                <label>Address <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Upload Valid ID <span class="required">*</span></label>
+                                <div class="file-upload">
+                                    <label for="file-upload" class="custom-file-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i> Add File
+                                    </label>
+                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
+                                    <span id="file-name">No file chosen</span>
+                                </div>
+                                <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
+                            </div>
+
+                            <h3>II. Guardian/Authorized Registrant’s Information</h3>
+
+                            <div class="group-col">
+                                <label>Full Name <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Relationship <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Phone Number</label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Email <span class="required">*</span></label>
+                                <input type="text">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Upload Valid ID <span class="required">*</span></label>
+                                <div class="file-upload">
+                                    <label for="file-upload" class="custom-file-upload">
+                                        <i class="fas fa-cloud-upload-alt"></i> Add File
+                                    </label>
+                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
+                                    <span id="file-name">No file chosen</span>
+                                </div>
+                                <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
+                            </div>
+
+                            <div class="button-container">
+                                <button type="button" class="next-step">Next</button>
+                            </div>
+
                         </div>
                     </div>
 
@@ -261,18 +461,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <input type="password" name="confirmPassword" required>
                         </div>
                         
-                        <div class="group-col">
-                            <label>Upload Valid ID <span class="required">*</span></label>
-                            <div class="file-upload">
-                                <label for="file-upload" class="custom-file-upload">
-                                    <i class="fas fa-cloud-upload-alt"></i> Add File
-                                </label>
-                                <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
-                                <span id="file-name">No file chosen</span>
-                            </div>
-                            <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
-                        </div>
-
                         <div class="button-container">
                             <button type="button" class="prev-step">Back</button>
                             <button type="button" class="next-step">Next</button>
@@ -492,6 +680,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
     <script>
+        const category = document.getElementById("category");
+        const selfFields = document.getElementById("selfFields");
+        const childFields = document.getElementById("childFields");
+        const seniorFields = document.getElementById("seniorFields");
+
+
+        category.addEventListener("change", function() {
+            selfFields.classList.add("hidden");
+            childFields.classList.add("hidden");
+            seniorFields.classList.add("hidden");
+
+            if (this.value === "self") {
+            selfFields.classList.remove("hidden");
+            } else if (this.value === "child") {
+            childFields.classList.remove("hidden");
+            } else if (this.value === "senior") {
+            seniorFields.classList.remove("hidden");
+            }
+        });
+
         document.addEventListener("DOMContentLoaded", function () {
             // Form Step Navigation
             let currentStep = 0;

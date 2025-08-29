@@ -69,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <form method="POST" class="login-form">
                 <h3 id="login-title">Login as an Administrator or Health Staff</h3>
                 <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
-                <input type="text" name="identifier" placeholder="Username/Email" required>
+                <input type="text" name="identifier" placeholder="Username/Email" autocomplete="off" required>
                 <input type="password" name="password" placeholder="Password" required>
                 <button type="submit">Log In</button>   
             </form>

@@ -276,11 +276,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </div>
                     <div class="row">
                         <label for="newServiceTitle">Title</label>
-                        <input type="text" id="newServiceTitle" name="serviceTitle" required>
+                        <input type="text" id="newServiceTitle" name="serviceTitle" autocomplete="off" required>
                     </div>
                     <div class="row">
                         <label for="newServiceIntro">Intro</label>
-                        <input type="text" id="newServiceIntro" name="serviceIntro">
+                        <input type="text" id="newServiceIntro" name="serviceIntro" autocomplete="off">
                     </div>
                     <div class="row">
                         <label for="newServiceDescription">Description</label>
@@ -338,11 +338,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         
                     <div class="row">
                         <label for="serviceTitle">Title</label>
-                        <input type="text" id="serviceTitle" name="serviceTitle" required>
+                        <input type="text" id="serviceTitle" name="serviceTitle" autocomplete="off" required>
                     </div>
                     <div class="row">
                         <label for="serviceIntro">Intro</label>
-                        <input type="text" id="serviceIntro" name="serviceIntro">
+                        <input type="text" id="serviceIntro" name="serviceIntro" autocomplete="off">
                     </div>
                     <div class="row">
                         <label for="serviceDescription">Description</label>
@@ -519,7 +519,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div class="group">
                             <div class="row">
                                 <label>Name of Service</label>
-                                <input type="text" name="serviceName[]" value="${sub.sub_service_name}" required>
+                                <input type="text" name="serviceName[]" value="${sub.sub_service_name}" autocomplete="off" required>
                             </div>
                             <div class="row">
                                 <div class="schedule-container">
@@ -567,14 +567,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="group">
                     <div class="row">
                         <label>Name of Service</label>
-                        <input type="text" name="serviceName[]" placeholder="Name of Service" required>
+                        <input type="text" name="serviceName[]" placeholder="Name of Service" autocomplete="off" required>
                     </div>
                     <div class="row">
                         <div class="schedule-container">
                             <label>Day of Schedule</label>
                             <div class="day-container">
                                 <div class="schedule-input-group">
-                                    <input type="text" name="scheduleDay[${nextIndex}][]" required>
+                                    <input type="text" name="scheduleDay[${nextIndex}][]" autocomplete="off" required>
                                     <button type="button" class="delete-schedule-btn" onclick="deleteSchedule(this)">
                                         <i class="fa fa-trash"></i>
                                     </button>
@@ -603,7 +603,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             scheduleDiv.classList.add('schedule-input-group');
             
             scheduleDiv.innerHTML = `
-                <input type="text" name="scheduleDay[${index}][]" required>
+                <input type="text" name="scheduleDay[${index}][]" autocomplete="off" autocomplete="off" required>
                 <button type="button" class="delete-schedule-btn" onclick="deleteSchedule(this)">
                     <i class="fa fa-trash"></i>
                 </button>
@@ -848,14 +848,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <div class="group">
                     <div class="row">
                         <label>Name of Service</label>
-                        <input type="text" name="serviceName[]" placeholder="Name of Service" required>
+                        <input type="text" name="serviceName[]" placeholder="Name of Service" autocomplete="off" required>
                     </div>
                     <div class="row">
                         <div class="schedule-container">
                             <label>Day of Schedule</label>
                             <div class="day-container">
                                 <div class="schedule-input-group">
-                                    <input type="text" name="scheduleDay[${nextIndex}][]" required>
+                                    <input type="text" name="scheduleDay[${nextIndex}][]" autocomplete="off" required>
                                     <button type="button" class="delete-schedule-btn" onclick="deleteNewSchedule(this)">
                                         <i class="fa fa-trash"></i>
                                     </button>
@@ -884,7 +884,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             scheduleDiv.classList.add('schedule-input-group');
             
             scheduleDiv.innerHTML = `
-                <input type="text" name="scheduleDay[${index}][]" required>
+                <input type="text" name="scheduleDay[${index}][]" autocomplete="off" required>
                 <button type="button" class="delete-schedule-btn" onclick="deleteNewSchedule(this)">
                     <i class="fa fa-trash"></i>
                 </button>

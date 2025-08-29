@@ -200,17 +200,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-step active">
                         <div class="group-col">
                             <label>Last Name <span class="required">*</span></label>
-                            <input type="text" name="lastName" required value="<?= htmlspecialchars($_POST['lastName'] ?? '') ?>">
+                            <input type="text" name="lastName" required value="<?= htmlspecialchars($_POST['lastName'] ?? '') ?>" autocomplete="off">
                         </div>
 
                         <div class="group-col">
                             <label>First Name <span class="required">*</span></label>
-                            <input type="text" name="firstName" required value="<?= htmlspecialchars($_POST['firstName'] ?? '') ?>">
+                            <input type="text" name="firstName" required value="<?= htmlspecialchars($_POST['firstName'] ?? '') ?>" autocomplete="off">
                         </div>
 
                         <div class="group-col">
                             <label>Middle Name</label>
-                            <input type="text" name="middleName" value="<?= htmlspecialchars($_POST['middleName'] ?? '') ?>">
+                            <input type="text" name="middleName" value="<?= htmlspecialchars($_POST['middleName'] ?? '') ?>" autocomplete="off">
                         </div>
 
                         <div class="group-row">
@@ -232,7 +232,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         
                         <div class="group-col">
                             <label>Address <span class="required">*</span></label>
-                            <input type="text" name="address" required value="<?= htmlspecialchars($_POST['address'] ?? '') ?>">
+                            <input type="text" name="address" required value="<?= htmlspecialchars($_POST['address'] ?? '') ?>" autocomplete="off">
                         </div>
 
                         <div class="button-container">
@@ -244,12 +244,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-step">
                         <div class="group-col">
                             <label>Phone Number <span class="required">*</span></label>
-                            <input type="tel" name="phone" required value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>" >
+                            <input type="tel" name="phone" required value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>" autocomplete="off">
                             <small class="field-hint">Format: +639XXXXXXXXX or 09XXXXXXXXX</small>
                         </div>
                         <div class="group-col">
                             <label>E-mail Address <span class="required">*</span></label>
-                            <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+                            <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" autocomplete="off">
                         </div>
                         <div class="group-col">
                             <label>Password <span class="required">*</span></label>

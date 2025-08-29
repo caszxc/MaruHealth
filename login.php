@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <form method="POST" class="login-form">
                     <h3 id="login-title">Login as a Resident</h3>
                     <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
-                    <input type="text" name="identifier" placeholder="E-mail/Phone Number" required>
+                    <input type="text" name="identifier" placeholder="E-mail/Phone Number" autocomplete="off" required>
                     <input type="password" name="password" placeholder="Password" required>
                     <a href="forgot_password.php" class="forgot-link" id="forgot-link">Forgot password?</a>
                     <button type="submit">Log In</button>

@@ -129,11 +129,11 @@ if (isset($_SESSION['user_id'])) {
                         <div class="row medicine-entry">
                             <div>
                                 <label>Medicine Name</label>
-                                <input type="text" name="medicine_name[]" required>
+                                <input type="text" name="medicine_name[]" required autocomplete="off">
                             </div>
                             <div>
                                 <label>Dosage</label>
-                                <input type="text" name="dosage[]">
+                                <input type="text" name="dosage[]" autocomplete="off">
                             </div>
                             <div>
                                 <label>Quantity</label>

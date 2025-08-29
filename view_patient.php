@@ -299,41 +299,41 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <div class="form-group">
                         <div class="form-row">
                             <label>Reason for Consultation</label>
-                            <input type="text" id="reason_for_consultation" name="reason_for_consultation" required>
+                            <input type="text" id="reason_for_consultation" name="reason_for_consultation" required autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row-vitals">
                             <label>Blood Pressure</label>
-                            <input type="text" id="blood_pressure" name="blood_pressure" placeholder="e.g., 120/80">
+                            <input type="text" id="blood_pressure" name="blood_pressure" placeholder="e.g., 120/80" autocomplete="off">
                         </div>
                         <div class="form-row">
                             <label>Temperature (°C)</label>
-                            <input type="number" id="temperature" name="temperature" step="0.1" required>
+                            <input type="number" id="temperature" name="temperature" step="0.1" required autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row">
                             <label>Diagnosis</label>
-                            <input type="text" id="diagnosis" name="diagnosis" required>
+                            <input type="text" id="diagnosis" name="diagnosis" required autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row">
                             <label>Prescribed Medicine (if any)</label>
-                            <input type="text" id="prescribed_medicine" name="prescribed_medicine">
+                            <input type="text" id="prescribed_medicine" name="prescribed_medicine" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row">
                             <label>Treatment Given (if any)</label>
-                            <input type="text" id="treatment_given" name="treatment_given">
+                            <input type="text" id="treatment_given" name="treatment_given" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row">
                             <label>Consulting Physician/Nurse</label>
-                            <input type="text" id="consulting_physician_nurse" name="consulting_physician_nurse" required>
+                            <input type="text" id="consulting_physician_nurse" name="consulting_physician_nurse" required autocomplete="off">
                         </div>
                     </div>
                 </div>  
@@ -427,15 +427,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <div class="form-group">
                         <div class="form-row">
                             <label>First Name</label>
-                            <input type="text" id="edit_first_name" name="first_name" value="' . htmlspecialchars($patient['first_name']) . '" >
+                            <input type="text" id="edit_first_name" name="first_name" value="' . htmlspecialchars($patient['first_name']) . '" autocomplete="off">
                         </div>
                         <div class="form-row">
                             <label>Middle Name</label>
-                            <input type="text" id="edit_middle_name" name="middle_name" value="' . htmlspecialchars($patient['middle_name']) . '" >
+                            <input type="text" id="edit_middle_name" name="middle_name" value="' . htmlspecialchars($patient['middle_name']) . '" autocomplete="off">
                         </div>
                         <div class="form-row">
                             <label>Last Name</label>
-                            <input type="text" id="edit_last_name" name="last_name" value="' . htmlspecialchars($patient['last_name']) . '" >
+                            <input type="text" id="edit_last_name" name="last_name" value="' . htmlspecialchars($patient['last_name']) . '" autocomplete="off">
                         </div>
                     </div>
                     <p>Demographic-Socio Economic Profile</p>
@@ -465,17 +465,17 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <div class="form-group">
                         <div class="form-row">
                             <label>Contact Number</label>
-                            <input type="tel" id="edit_contact_number" name="contact_number" value="' . htmlspecialchars($patient['contact_number']) . '">
+                            <input type="tel" id="edit_contact_number" name="contact_number" value="' . htmlspecialchars($patient['contact_number']) . '" autocomplete="off">
                         </div>
                         <div class="form-row">
                             <label>Occupation</label>
-                            <input type="text" id="edit_occupation" name="occupation" value="' . htmlspecialchars($patient['occupation']) . '">
+                            <input type="text" id="edit_occupation" name="occupation" value="' . htmlspecialchars($patient['occupation']) . '" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row-address">
                             <label>Address</label>
-                            <input type="text" id="edit_address" name="address" value="' . htmlspecialchars($patient['address']) . '">
+                            <input type="text" id="edit_address" name="address" value="' . htmlspecialchars($patient['address']) . '" autocomplete="off">
                         </div>
                     </div>
                     <p>Anthropometric Measurement</p>

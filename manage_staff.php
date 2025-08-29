@@ -181,7 +181,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         <!-- Search and Add Admin -->
         <div class="search-container">
             <form method="GET" action="">
-                <input type="text" name="search" placeholder="Search for Name/ID No." value="<?= htmlspecialchars($search) ?>">
+                <input type="text" name="search" placeholder="Search for Name/ID No." value="<?= htmlspecialchars($search) ?> " autocomplete="off">
             </form>
             <button class="add-button" onclick="openModal()">Add Admin</button>
         </div>
@@ -232,7 +232,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                 <div class="form-container">
                     <div class="form-group">
                         <label for="full_name">Full Name</label>
-                        <input type="text" id="full_name" name="full_name" required>
+                        <input type="text" id="full_name" name="full_name" autocomplete="off" required>
                     </div>
                     
                     <div class="form-group">
@@ -246,12 +246,12 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                     
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" name="email" required>
+                        <input type="email" id="email" name="email" autocomplete="off" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="username">Username</label>
-                        <input type="text" id="username" name="username" required>
+                        <input type="text" id="username" name="username" autocomplete="off" required>
                     </div>
                     
                     <div class="form-row">

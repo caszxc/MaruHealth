@@ -3,8 +3,8 @@
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+// Check if user is logged in as staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -199,7 +199,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>

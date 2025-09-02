@@ -293,18 +293,6 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
-                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
-            </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/med_icon.png" alt="">
-                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
-            </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
-                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
-            </div>
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">

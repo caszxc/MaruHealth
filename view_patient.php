@@ -133,7 +133,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'staff'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/patient_icon_active.png" alt="">
                 <a href="patient_management.php" class="<?= ($current_page == 'patient_management.php' || $current_page == 'view_patient.php')  ? 'active' : '' ?>">Patient Management</a>

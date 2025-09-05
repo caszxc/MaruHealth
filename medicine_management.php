@@ -155,6 +155,7 @@ unset($medicine);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -419,7 +420,15 @@ unset($medicine);
             <form method="POST" action="add_medicine.php" id="addMedicineForm">
                 <div class="form-group">
                     <label>Therapeutic Category</label>
-                    <input type="text" name="therapeutic_category" required>
+                    <select name="therapeutic_category" class="select2" required>
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $categoryStmt = $conn->query("SELECT DISTINCT therapeutic_category FROM medicines ORDER BY therapeutic_category");
+                        while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($category['therapeutic_category']) . "'>" . htmlspecialchars($category['therapeutic_category']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-row">
@@ -436,12 +445,28 @@ unset($medicine);
                 
                 <div class="form-group">
                     <label>Generic Name</label>
-                    <input type="text" name="generic_name" required>
+                    <select name="generic_name" class="select2" required>
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $genericStmt = $conn->query("SELECT DISTINCT generic_name FROM medicines ORDER BY generic_name");
+                        while ($generic = $genericStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($generic['generic_name']) . "'>" . htmlspecialchars($generic['generic_name']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label>Brand Name</label>
-                    <input type="text" name="brand_name">
+                    <select name="brand_name" class="select2">
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $brandStmt = $conn->query("SELECT DISTINCT brand_name FROM medicines WHERE brand_name IS NOT NULL ORDER BY brand_name");
+                        while ($brand = $brandStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($brand['brand_name']) . "'>" . htmlspecialchars($brand['brand_name']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -492,7 +517,15 @@ unset($medicine);
 
                 <div class="form-group">
                     <label>Source</label>
-                    <input type="text" name="source">
+                    <select name="source" class="select2">
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $sourceStmt = $conn->query("SELECT DISTINCT source FROM medicines WHERE source IS NOT NULL ORDER BY source");
+                        while ($source = $sourceStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($source['source']) . "'>" . htmlspecialchars($source['source']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-row">
@@ -514,7 +547,20 @@ unset($medicine);
         </div>
     </div>
 
+    <!-- jQuery and Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Initialize Select2 for searchable dropdowns
+        $(document).ready(function() {
+            $('.select2').select2({
+                tags: true, // Allow adding new options
+                placeholder: "Select or type to add new",
+                allowClear: true,
+                width: '100%'
+            });
+        });
+        
     function selectRow(row) {
         // Remove 'selected' class from all rows
         document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));

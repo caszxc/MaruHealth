@@ -1,5 +1,5 @@
 <?php
-//patient_management.php
+// patient_management.php
 session_start();
 require 'config.php';
 
@@ -8,6 +8,11 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff'
     header("Location: admin_dashboard.php");
     exit();
 }
+
+// Pagination settings
+$itemsPerPage = 10; // Number of patients per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Current page, default is 1
+$offset = ($page - 1) * $itemsPerPage; // Offset for SQL query
 
 // Search functionality
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -25,12 +30,28 @@ if (!empty($conditions)) {
     $searchCondition = "WHERE " . implode(" AND ", $conditions);
 }
 
-// Fetch patients
-$query = "SELECT * FROM patients $searchCondition ORDER BY id DESC";
+// Count total patients (for pagination)
+$countQuery = "SELECT COUNT(*) FROM patients $searchCondition";
+$countStmt = $conn->prepare($countQuery);
+foreach ($params as $key => $value) {
+    $countStmt->bindValue($key, $value);
+}
+$countStmt->execute();
+$totalItems = $countStmt->fetchColumn();
+$totalPages = ceil($totalItems / $itemsPerPage);
+
+// Ensure the page is within valid range
+if ($page < 1) $page = 1;
+if ($page > $totalPages && $totalPages > 0) $page = $totalPages;
+
+// Fetch patients with pagination
+$query = "SELECT * FROM patients $searchCondition ORDER BY id DESC LIMIT :offset, :limit";
 $stmt = $conn->prepare($query);
 foreach ($params as $key => $value) {
     $stmt->bindValue($key, $value);
 }
+$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+$stmt->bindParam(':limit', $itemsPerPage, PDO::PARAM_INT);
 $stmt->execute();
 $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -47,7 +68,6 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 
 // Format role for display (convert super_admin to Super Admin)
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
-
 ?>
 
 <!DOCTYPE html>
@@ -61,7 +81,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-
 </head>
 <body>
 
@@ -157,10 +176,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
-            
         </div>
     </div>
-
 
     <div class="patient-content">
         <!-- Search and Add Patient -->
@@ -175,47 +192,75 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         </div>
 
         <!-- Patient List Table -->
-        <table class="patient-table">
-            <thead>
-                <tr>
-                    <th>Family No.</th>
-                    <th>Last Name</th>
-                    <th>First Name</th>
-                    <th>Middle Name</th>
-                    <th>Sex</th>
-                    <th>Birthdate</th>
-                    <th>Civil Status</th>
-                    <th>Contact Number</th>
-                    <th>Date Registered</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($patients)): ?>
+        <div class="table-wrapper">
+            <table class="patient-table">
+                <thead>
                     <tr>
-                        <td colspan="10" class="no-patients" style="text-align: center;">No patients found.</td>
+                        <th>Family No.</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>Middle Name</th>
+                        <th>Sex</th>
+                        <th>Birthdate</th>
+                        <th>Civil Status</th>
+                        <th>Contact Number</th>
+                        <th>Date Registered</th>
+                        <th></th>
                     </tr>
-                <?php else: ?>
-                    <?php foreach ($patients as $patient): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($patient['family_number']) ?></td>
-                        <td><?= htmlspecialchars($patient['last_name']) ?></td>
-                        <td><?= htmlspecialchars($patient['first_name']) ?></td>
-                        <td><?= htmlspecialchars($patient['middle_name']) ?></td>
-                        <td><?= htmlspecialchars($patient['sex']) ?></td>
-                        <td><?= htmlspecialchars($patient['birthdate']) ?></td>
-                        <td><?= htmlspecialchars($patient['civil_status']) ?></td>
-                        <td><?= htmlspecialchars($patient['contact_number']) ?></td>
-                        <td><?= htmlspecialchars($patient['created_at']) ?></td>
-                        <td class="action-buttons">
-                            <a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">VIEW</a>
-                            <a href="delete_patient.php?id=<?= $patient['id'] ?>" class="delete-btn" onclick="return confirm('Are you sure?')">DELETE</a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php if (empty($patients)): ?>
+                        <tr>
+                            <td colspan="10" class="no-patients" style="text-align: center;">No patients found.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($patients as $patient): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($patient['family_number']) ?></td>
+                            <td><?= htmlspecialchars($patient['last_name']) ?></td>
+                            <td><?= htmlspecialchars($patient['first_name']) ?></td>
+                            <td><?= htmlspecialchars($patient['middle_name']) ?></td>
+                            <td><?= htmlspecialchars($patient['sex']) ?></td>
+                            <td><?= htmlspecialchars($patient['birthdate']) ?></td>
+                            <td><?= htmlspecialchars($patient['civil_status']) ?></td>
+                            <td><?= htmlspecialchars($patient['contact_number']) ?></td>
+                            <td><?= htmlspecialchars($patient['created_at']) ?></td>
+                            <td class="action-buttons">
+                                <a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">VIEW</a>
+                                <a href="delete_patient.php?id=<?= $patient['id'] ?>" class="delete-btn" onclick="return confirm('Are you sure?')">DELETE</a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <?php if ($totalPages > 1): ?>
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Showing <?= ($offset + 1) ?>-<?= min($offset + $itemsPerPage, $totalItems) ?> of <?= $totalItems ?> entries
+                </div>
+                <div class="pagination-controls">
+                    <?php
+                    // Build query string with search parameter
+                    $queryParams = [];
+                    if (!empty($search)) $queryParams['search'] = urlencode($search);
+                    $queryString = !empty($queryParams) ? '&' . http_build_query($queryParams) : '';
+                    ?>
+                    <a href="?page=<?= max(1, $page - 1) ?><?= $queryString ?>" 
+                       class="pagination-button <?= $page <= 1 ? 'disabled' : '' ?>">
+                        <
+                    </a>
+                    <a href="#" class="pagination-button active"><?= $page ?></a>
+                    <a href="?page=<?= min($totalPages, $page + 1) ?><?= $queryString ?>" 
+                       class="pagination-button <?= $page >= $totalPages ? 'disabled' : '' ?>">
+                        >
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Add Patient Modal -->
@@ -275,7 +320,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <input type="tel" id="contact_number" name="contact_number" autocomplete="off">
                         </div>
                         <div class="form-row">
-                             <label>Occupation</label>
+                            <label>Occupation</label>
                             <input type="text" id="occupation" name="occupation" autocomplete="off">
                         </div>
                     </div>
@@ -360,8 +405,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             })
             .catch(error => console.error("Error:", error));
         });
-    </script>
 
+        // Auto-submit search form on input
+        document.getElementById("searchInput").addEventListener("input", function() {
+            document.getElementById("searchForm").submit();
+        });
+    </script>
 
     <!-- Calculation -->  
     <script>
@@ -388,13 +437,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 }
             }
 
-
             // Attach event listeners
             document.getElementById("weight").addEventListener("input", calculateBMI);
             document.getElementById("height").addEventListener("input", calculateBMI);
-            document.getElementById("sex").addEventListener("change", calculateWHRatio);
         });
     </script>
-
 </body>
 </html>

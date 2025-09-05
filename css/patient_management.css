@@ -123,6 +123,10 @@ input[type="number"]::-webkit-inner-spin-button {
     margin-left: 260px;
     padding: 20px;
     width: calc(100% - 260px);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+    gap: 20px;
 }
 
 /* Search and Add Button */
@@ -130,7 +134,7 @@ input[type="number"]::-webkit-inner-spin-button {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    flex: 0 0 auto;
 }
 
 .search-row {
@@ -174,6 +178,10 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* Patient num Table Styling */
+.table-wrapper{
+    flex: 1;
+}
+
 .patient-table {
     width: 100%;
     border-collapse: collapse;
@@ -341,3 +349,49 @@ input[type="number"]::-webkit-inner-spin-button {
 .green { background-color: #228B22; } /* Normal / No Risk */
 .orange { background-color: #FFA500; } /* Overweight */
 .red { background-color: #B22222; } /* Obese / At Risk */
+
+.pagination-container{
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 10px;
+}
+
+.pagination-info {
+    margin-right: 15px;
+    color: #666;
+    font-size: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.pagination-button {
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.pagination-button:hover {
+    background-color: #e0e0e0;
+}
+
+.pagination-button.active {
+    background-color: #800000;
+    color: white;
+    border-color: #700000;
+}
+
+.pagination-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

@@ -7,18 +7,79 @@ $errors = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
-        // Sanitize and validate user input
-        $firstName = filter_input(INPUT_POST, 'firstName', FILTER_SANITIZE_STRING);
-        $lastName = filter_input(INPUT_POST, 'lastName', FILTER_SANITIZE_STRING);
-        $middleName = filter_input(INPUT_POST, 'middleName', FILTER_SANITIZE_STRING);
-        $gender = filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_STRING);
-        $birthday = filter_input(INPUT_POST, 'birthday', FILTER_SANITIZE_STRING);
-        $address = filter_input(INPUT_POST, 'address', FILTER_SANITIZE_STRING);
-        $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-        $phone = filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING);
+        // Get registration type
+        $registrationType = filter_input(INPUT_POST, 'registration_type', FILTER_SANITIZE_STRING) ?: 'self';
+        
+        // Initialize variables
+        $firstName = $lastName = $middleName = $gender = $birthday = $address = '';
+        $email = $phone = $password = $confirmPassword = '';
+        $guardianData = null;
+        $validIdFiles = [];
+        
+        // Handle different registration types
+        switch ($registrationType) {
+            case 'self':
+                $firstName = filter_input(INPUT_POST, 'firstName', FILTER_SANITIZE_STRING);
+                $lastName = filter_input(INPUT_POST, 'lastName', FILTER_SANITIZE_STRING);
+                $middleName = filter_input(INPUT_POST, 'middleName', FILTER_SANITIZE_STRING);
+                $gender = filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_STRING);
+                $birthday = filter_input(INPUT_POST, 'birthday', FILTER_SANITIZE_STRING);
+                $address = filter_input(INPUT_POST, 'address', FILTER_SANITIZE_STRING);
+                $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
+                $phone = filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING);
+                $validIdFiles['user'] = $_FILES["validID_front"] ?? null;
+                break;
+                
+            case 'child':
+                $firstName = filter_input(INPUT_POST, 'child_firstName', FILTER_SANITIZE_STRING);
+                $lastName = filter_input(INPUT_POST, 'child_lastName', FILTER_SANITIZE_STRING);
+                $middleName = filter_input(INPUT_POST, 'child_middleName', FILTER_SANITIZE_STRING);
+                $gender = filter_input(INPUT_POST, 'child_gender', FILTER_SANITIZE_STRING);
+                $birthday = filter_input(INPUT_POST, 'child_birthday', FILTER_SANITIZE_STRING);
+                $address = filter_input(INPUT_POST, 'child_address', FILTER_SANITIZE_STRING);
+                
+                // Guardian info for child
+                $guardianData = [
+                    'fullname' => filter_input(INPUT_POST, 'guardian_fullname', FILTER_SANITIZE_STRING),
+                    'relationship' => filter_input(INPUT_POST, 'guardian_relationship', FILTER_SANITIZE_STRING),
+                    'phone' => filter_input(INPUT_POST, 'guardian_phone', FILTER_SANITIZE_STRING),
+                    'email' => filter_input(INPUT_POST, 'guardian_email', FILTER_SANITIZE_EMAIL)
+                ];
+                
+                $email = $guardianData['email']; // Use guardian's email for account
+                $phone = $guardianData['phone']; // Use guardian's phone for account
+                
+                $validIdFiles['user'] = $_FILES["child_validID"] ?? null;
+                $validIdFiles['guardian'] = $_FILES["guardian_validID"] ?? null;
+                break;
+                
+            case 'senior':
+                $firstName = filter_input(INPUT_POST, 'senior_firstName', FILTER_SANITIZE_STRING);
+                $lastName = filter_input(INPUT_POST, 'senior_lastName', FILTER_SANITIZE_STRING);
+                $middleName = filter_input(INPUT_POST, 'senior_middleName', FILTER_SANITIZE_STRING);
+                $gender = filter_input(INPUT_POST, 'senior_gender', FILTER_SANITIZE_STRING);
+                $birthday = filter_input(INPUT_POST, 'senior_birthday', FILTER_SANITIZE_STRING);
+                $address = filter_input(INPUT_POST, 'senior_address', FILTER_SANITIZE_STRING);
+                
+                // Guardian info for senior
+                $guardianData = [
+                    'fullname' => filter_input(INPUT_POST, 'senior_guardian_fullname', FILTER_SANITIZE_STRING),
+                    'relationship' => filter_input(INPUT_POST, 'senior_guardian_relationship', FILTER_SANITIZE_STRING),
+                    'phone' => filter_input(INPUT_POST, 'senior_guardian_phone', FILTER_SANITIZE_STRING),
+                    'email' => filter_input(INPUT_POST, 'senior_guardian_email', FILTER_SANITIZE_EMAIL)
+                ];
+                
+                $email = $guardianData['email']; // Use guardian's email for account
+                $phone = $guardianData['phone']; // Use guardian's phone for account
+                
+                $validIdFiles['user'] = $_FILES["senior_validID"] ?? null;
+                $validIdFiles['guardian'] = $_FILES["senior_guardian_validID"] ?? null;
+                break;
+        }
+        
         $password = $_POST['password'] ?? '';
         $confirmPassword = $_POST['confirmPassword'] ?? '';
-
+        
         // Validate required fields
         if (empty($firstName)) $errors[] = "First name is required";
         if (empty($lastName)) $errors[] = "Last name is required";
@@ -29,60 +90,92 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (empty($phone)) $errors[] = "Phone number is required";
         if (empty($password)) $errors[] = "Password is required";
         if (empty($confirmPassword)) $errors[] = "Password confirmation is required";
-
+        
+        // Validate guardian data if needed
+        if ($guardianData) {
+            if (empty($guardianData['fullname'])) $errors[] = "Guardian full name is required";
+            if (empty($guardianData['relationship'])) $errors[] = "Guardian relationship is required";
+            if (empty($guardianData['phone'])) $errors[] = "Guardian phone number is required";
+            if (empty($guardianData['email'])) $errors[] = "Guardian email is required";
+        }
+        
         // Validate email format
         if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = "Invalid email format";
         }
-
-        // Validate phone format (Philippines format: +639XXXXXXXXX or 09XXXXXXXXX)
+        
+        // Validate phone format
         if (!empty($phone) && !preg_match('/^(\+63|0)[9][0-9]{9}$/', $phone)) {
             $errors[] = "Invalid phone number format";
         }
-
-        // Validate password strength
+        
+        // Validate password
         if (!empty($password) && !preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $password)) {
             $errors[] = "Password must be at least 8 characters and include uppercase, lowercase, and numbers";
         }
-
-        // Validate password confirmation
+        
         if ($password !== $confirmPassword) {
             $errors[] = "Passwords do not match";
         }
-
-        // Validate user age (18+ years)
+        
+        // Validate age based on registration type
         if (!empty($birthday)) {
             $birthDate = new DateTime($birthday);
             $today = new DateTime();
             $age = $today->diff($birthDate)->y;
             
-            if ($age < 18) {
-                $errors[] = "You must be at least 18 years old to register";
+            switch ($registrationType) {
+                case 'self':
+                    if ($age < 18) {
+                        $errors[] = "You must be at least 18 years old to register";
+                    }
+                    break;
+                case 'child':
+                    if ($age >= 18) {
+                        $errors[] = "Child registration is for individuals under 18 years old";
+                    }
+                    break;
+                case 'senior':
+                    if ($age < 60) {
+                        $errors[] = "Senior registration is for individuals 60 years old and above";
+                    }
+                    break;
             }
         }
-
-        // Validate file upload
-        if (!isset($_FILES["validID_front"]) || $_FILES["validID_front"]["error"] !== UPLOAD_ERR_OK) {
+        
+        // Validate file uploads
+        if (!isset($validIdFiles['user']) || $validIdFiles['user']['error'] !== UPLOAD_ERR_OK) {
             $errors[] = "Valid ID is required";
         } else {
-            // Check file type
             $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            $fileType = $_FILES["validID_front"]["type"];
-            $fileSize = $_FILES["validID_front"]["size"];
             $maxSize = 5 * 1024 * 1024; // 5MB
             
-            if (!in_array($fileType, $allowedTypes)) {
-                $errors[] = "Invalid file type. Please upload JPEG or PNG images only";
+            if (!in_array($validIdFiles['user']['type'], $allowedTypes)) {
+                $errors[] = "Invalid file type for ID. Please upload JPEG or PNG images only";
             }
-            
-            if ($fileSize > $maxSize) {
-                $errors[] = "File size exceeds the 5MB limit";
+            if ($validIdFiles['user']['size'] > $maxSize) {
+                $errors[] = "ID file size exceeds the 5MB limit";
             }
         }
-
+        
+        // Validate guardian ID if guardian data exists
+        if ($guardianData && (!isset($validIdFiles['guardian']) || $validIdFiles['guardian']['error'] !== UPLOAD_ERR_OK)) {
+            $errors[] = "Guardian's valid ID is required";
+        } elseif ($guardianData && isset($validIdFiles['guardian'])) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            $maxSize = 5 * 1024 * 1024; // 5MB
+            
+            if (!in_array($validIdFiles['guardian']['type'], $allowedTypes)) {
+                $errors[] = "Invalid file type for guardian ID. Please upload JPEG or PNG images only";
+            }
+            if ($validIdFiles['guardian']['size'] > $maxSize) {
+                $errors[] = "Guardian ID file size exceeds the 5MB limit";
+            }
+        }
+        
         // If no errors, proceed with registration
         if (empty($errors)) {
-            // Check if email or phone already exists in BOTH users AND pending_users tables
+            // Check if email or phone already exists
             $stmt = $conn->prepare("
                 SELECT 'users' as source FROM users WHERE email = :email OR phone_number = :phone
                 UNION
@@ -100,39 +193,107 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             } else {
                 // Hash the password
                 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-                // Handle file uploads
-                $uploadDir = "images/uploads/IDs/"; // Ensure this directory exists and is writable
                 
-                // Generate unique filename to prevent overwriting
-                $fileExtension = pathinfo($_FILES["validID_front"]["name"], PATHINFO_EXTENSION);
+                // Handle file uploads
+                $uploadDir = "images/uploads/IDs/";
+                $userIdPath = '';
+                $guardianIdPath = '';
+                
+                // Upload user ID
+                $fileExtension = pathinfo($validIdFiles['user']['name'], PATHINFO_EXTENSION);
                 $newFileName = uniqid('id_') . '.' . $fileExtension;
-                $validIdFrontPath = $uploadDir . $newFileName;
-
-                if (!move_uploaded_file($_FILES["validID_front"]["tmp_name"], $validIdFrontPath)) {
-                    $errors[] = "Error uploading files. Please try again.";
+                $userIdPath = $uploadDir . $newFileName;
+                
+                if (!move_uploaded_file($validIdFiles['user']['tmp_name'], $userIdPath)) {
+                    $errors[] = "Error uploading user ID file. Please try again.";
                 } else {
-                    // Insert into pending_users table
-                    $stmt = $conn->prepare("INSERT INTO pending_users 
-                        (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, date_registered) 
-                        VALUES 
-                        (:firstName, :lastName, :middleName, :gender, :birthday, :address, :email, :phone, :validIDFront, :password, NOW())");
+                    // Upload guardian ID if exists
+                    if ($guardianData && isset($validIdFiles['guardian'])) {
+                        $guardianFileExtension = pathinfo($validIdFiles['guardian']['name'], PATHINFO_EXTENSION);
+                        $guardianFileName = uniqid('guardian_id_') . '.' . $guardianFileExtension;
+                        $guardianIdPath = $uploadDir . $guardianFileName;
+                        
+                        if (!move_uploaded_file($validIdFiles['guardian']['tmp_name'], $guardianIdPath)) {
+                            $errors[] = "Error uploading guardian ID file. Please try again.";
+                            // Clean up user file if guardian upload fails
+                            unlink($userIdPath);
+                        }
+                    }
+                    
+                    if (empty($errors)) {
+                        // Begin transaction
+                        $conn->beginTransaction();
+                        
+                        try {
+                            // Determine age category
+                            $ageCategory = 'adult';
+                            if (!empty($birthday)) {
+                                $birthDate = new DateTime($birthday);
+                                $today = new DateTime();
+                                $age = $today->diff($birthDate)->y;
+                                
+                                if ($age < 18) {
+                                    $ageCategory = 'child';
+                                } elseif ($age >= 60) {
+                                    $ageCategory = 'senior';
+                                }
+                            }
+                            
+                            // Insert into pending_users table
+                            $stmt = $conn->prepare("INSERT INTO pending_users 
+                                (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, registration_type, age_category, date_registered) 
+                                VALUES 
+                                (:firstName, :lastName, :middleName, :gender, :birthday, :address, :email, :phone, :validIDFront, :password, :registrationType, :ageCategory, NOW())");
 
-                    $stmt->execute([
-                        ':firstName' => $firstName,
-                        ':lastName' => $lastName,
-                        ':middleName' => $middleName,
-                        ':gender' => $gender,
-                        ':birthday' => $birthday,
-                        ':address' => $address,
-                        ':email' => $email,
-                        ':phone' => $phone,
-                        ':validIDFront' => $validIdFrontPath,
-                        ':password' => $hashedPassword
-                    ]);
-
-                    // Registration successful
-                    $registrationSuccess = true;
+                            $stmt->execute([
+                                ':firstName' => $firstName,
+                                ':lastName' => $lastName,
+                                ':middleName' => $middleName,
+                                ':gender' => $gender,
+                                ':birthday' => $birthday,
+                                ':address' => $address,
+                                ':email' => $email,
+                                ':phone' => $phone,
+                                ':validIDFront' => $userIdPath,
+                                ':password' => $hashedPassword,
+                                ':registrationType' => $registrationType,
+                                ':ageCategory' => $ageCategory
+                            ]);
+                            
+                            $pendingUserId = $conn->lastInsertId();
+                            
+                            // Insert guardian data if exists
+                            if ($guardianData && $guardianIdPath) {
+                                $guardianStmt = $conn->prepare("INSERT INTO guardians 
+                                    (pending_user_id, full_name, relationship, phone_number, email, valid_id_path) 
+                                    VALUES 
+                                    (:pendingUserId, :fullName, :relationship, :phone, :email, :validIdPath)");
+                                
+                                $guardianStmt->execute([
+                                    ':pendingUserId' => $pendingUserId,
+                                    ':fullName' => $guardianData['fullname'],
+                                    ':relationship' => $guardianData['relationship'],
+                                    ':phone' => $guardianData['phone'],
+                                    ':email' => $guardianData['email'],
+                                    ':validIdPath' => $guardianIdPath
+                                ]);
+                            }
+                            
+                            // Commit transaction
+                            $conn->commit();
+                            $registrationSuccess = true;
+                            
+                        } catch (Exception $e) {
+                            // Rollback transaction
+                            $conn->rollback();
+                            
+                            // Clean up uploaded files
+                            if (file_exists($userIdPath)) unlink($userIdPath);
+                            if ($guardianIdPath && file_exists($guardianIdPath)) unlink($guardianIdPath);
+                            
+                            $errors[] = "Registration failed: " . $e->getMessage();
+                        }
+                    }
                 }
             }
         }
@@ -169,7 +330,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="register-box">
                 <h2 id="formTitle">REGISTRATION FORM</h2>
                 <hr>
-                <p>Account creation is strictly limited to individuals who are 18 years old and above. This age requirement is enforced to ensure that all users meet the legal criteria for accessing and using the system. Users must provide accurate information during registration, and may be required to present valid proof of age if necessary. Any accounts created by individuals under the age of 18 will be subject to removal.</p>
+                <p>Account creation supports three registration types: <strong>Self</strong> (for individuals 18+ years old), <strong>Child</strong> (for minors under 18 with guardian assistance), and <strong>Senior Citizen</strong> (for individuals 60+ who may need guardian assistance). All users must provide accurate information during registration. Guardian information is required for child and senior registrations to ensure proper account management and communication.</p>
                 <div class="stepper-wrapper" id="stepper">
                     <div class="stepper-item active">
                         <div class="step-counter">1</div>
@@ -263,172 +424,193 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
 
                         <div id="childFields" class="hidden">
-                            <h3>Child Information</h3>
+                            <h3>I. Child Information</h3>
                             <div class="group-col">
                                 <label>Last Name <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="child_lastName" id="child_lastName" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>First Name <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="child_firstName" id="child_firstName" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Middle Name</label>
-                                <input type="text">
+                                <input type="text" name="child_middleName" id="child_middleName" autocomplete="off">
                             </div>
 
                             <div class="group-row">
                                 <div class="group-col">
                                     <label>Gender <span class="required">*</span></label>
-                                    <select name="gender" required>
-                                        <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
-                                        <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-                                        <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    <select name="child_gender" id="child_gender">
+                                        <option value="" disabled selected>Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
                                     </select>
                                 </div>
                                 
                                 <div class="group-col">
                                     <label>Date of Birth <span class="required">*</span></label>
-                                    <input type="date">
+                                    <input type="date" name="child_birthday" id="child_birthday">
+                                    <small class="field-hint">Must be under 18 years old</small>
                                 </div>    
                             </div>   
                             
                             <div class="group-col">
                                 <label>Address <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="child_address" id="child_address" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Upload School ID / Birth Certificate<span class="required">*</span></label>
                                 <div class="file-upload">
-                                    <label for="file-upload" class="custom-file-upload">
+                                    <label for="child-file-upload" class="custom-file-upload">
                                         <i class="fas fa-cloud-upload-alt"></i> Add File
                                     </label>
-                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
-                                    <span id="file-name">No file chosen</span>
+                                    <input id="child-file-upload" type="file" name="child_validID" accept="image/jpeg,image/png">
+                                    <span id="child-file-name">No file chosen</span>
                                 </div>
+                                <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
                             </div>
 
-                            <h3>II. Guardian/Authorized Registrant’s Information</h3>
+                            <h3 style="margin-top: 10px;">II. Guardian/Authorized Registrant's Information</h3>
 
                             <div class="group-col">
                                 <label>Full Name <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="guardian_fullname" id="guardian_fullname" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Relationship <span class="required">*</span></label>
-                                <input type="text">
+                                <select name="guardian_relationship" id="guardian_relationship">
+                                    <option value="" disabled selected>Select Relationship</option>
+                                    <option value="Father">Father</option>
+                                    <option value="Mother">Mother</option>
+                                    <option value="Guardian">Legal Guardian</option>
+                                    <option value="Grandparent">Grandparent</option>
+                                    <option value="Aunt/Uncle">Aunt/Uncle</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
 
                             <div class="group-col">
-                                <label>Phone Number</label>
-                                <input type="text">
+                                <label>Phone Number <span class="required">*</span></label>
+                                <input type="tel" name="guardian_phone" id="guardian_phone" autocomplete="off">
+                                <small class="field-hint">Format: +639XXXXXXXXX or 09XXXXXXXXX</small>
                             </div>
 
                             <div class="group-col">
                                 <label>Email <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="email" name="guardian_email" id="guardian_email" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Upload Valid ID <span class="required">*</span></label>
                                 <div class="file-upload">
-                                    <label for="file-upload" class="custom-file-upload">
+                                    <label for="guardian-file-upload" class="custom-file-upload">
                                         <i class="fas fa-cloud-upload-alt"></i> Add File
                                     </label>
-                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
-                                    <span id="file-name">No file chosen</span>
+                                    <input id="guardian-file-upload" type="file" name="guardian_validID" accept="image/jpeg,image/png">
+                                    <span id="guardian-file-name">No file chosen</span>
                                 </div>
                                 <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
                             </div>
+                            
                             <div class="button-container">
                                 <button type="button" class="next-step">Next</button>
                             </div>
                         </div>
 
                         <div id="seniorFields" class="hidden">
-                            <h3>Senior Information</h3>
+                            <h3>I. Senior Information</h3>
                             <div class="group-col">
                                 <label>Last Name <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="senior_lastName" id="senior_lastName" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>First Name <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="senior_firstName" id="senior_firstName" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Middle Name</label>
-                                <input type="text">
+                                <input type="text" name="senior_middleName" id="senior_middleName" autocomplete="off">
                             </div>
 
                             <div class="group-row">
                                 <div class="group-col">
                                     <label>Gender <span class="required">*</span></label>
-                                    <select name="gender" required>
-                                        <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
-                                        <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-                                        <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    <select name="senior_gender" id="senior_gender">
+                                        <option value="" disabled selected>Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
                                     </select>
                                 </div>
                                 
                                 <div class="group-col">
                                     <label>Date of Birth <span class="required">*</span></label>
-                                    <input type="date">
+                                    <input type="date" name="senior_birthday" id="senior_birthday">
+                                    <small class="field-hint">Must be 60+ years old</small>
                                 </div>    
                             </div>   
                             
                             <div class="group-col">
                                 <label>Address <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="senior_address" id="senior_address" autocomplete="off">
                             </div>
 
                             <div class="group-col">
-                                <label>Upload Valid ID <span class="required">*</span></label>
+                                <label>Upload Valid ID / Senior Citizen ID<span class="required">*</span></label>
                                 <div class="file-upload">
-                                    <label for="file-upload" class="custom-file-upload">
+                                    <label for="senior-file-upload" class="custom-file-upload">
                                         <i class="fas fa-cloud-upload-alt"></i> Add File
                                     </label>
-                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
-                                    <span id="file-name">No file chosen</span>
+                                    <input id="senior-file-upload" type="file" name="senior_validID" accept="image/jpeg,image/png">
+                                    <span id="senior-file-name">No file chosen</span>
                                 </div>
                                 <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
                             </div>
 
-                            <h3>II. Guardian/Authorized Registrant’s Information</h3>
+                            <h3 style="margin-top: 10px;">II. Guardian/Authorized Registrant's Information</h3>
 
                             <div class="group-col">
                                 <label>Full Name <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="text" name="senior_guardian_fullname" id="senior_guardian_fullname" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Relationship <span class="required">*</span></label>
-                                <input type="text">
+                                <select name="senior_guardian_relationship" id="senior_guardian_relationship">
+                                    <option value="" disabled selected>Select Relationship</option>
+                                    <option value="Son/Daughter">Son/Daughter</option>
+                                    <option value="Spouse">Spouse</option>
+                                    <option value="Grandchild">Grandchild</option>
+                                    <option value="Caregiver">Caregiver</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
 
                             <div class="group-col">
-                                <label>Phone Number</label>
-                                <input type="text">
+                                <label>Phone Number <span class="required">*</span></label>
+                                <input type="tel" name="senior_guardian_phone" id="senior_guardian_phone" autocomplete="off">
+                                <small class="field-hint">Format: +639XXXXXXXXX or 09XXXXXXXXX</small>
                             </div>
 
                             <div class="group-col">
                                 <label>Email <span class="required">*</span></label>
-                                <input type="text">
+                                <input type="email" name="senior_guardian_email" id="senior_guardian_email" autocomplete="off">
                             </div>
 
                             <div class="group-col">
                                 <label>Upload Valid ID <span class="required">*</span></label>
                                 <div class="file-upload">
-                                    <label for="file-upload" class="custom-file-upload">
+                                    <label for="senior-guardian-file-upload" class="custom-file-upload">
                                         <i class="fas fa-cloud-upload-alt"></i> Add File
                                     </label>
-                                    <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
-                                    <span id="file-name">No file chosen</span>
+                                    <input id="senior-guardian-file-upload" type="file" name="senior_guardian_validID" accept="image/jpeg,image/png">
+                                    <span id="senior-guardian-file-name">No file chosen</span>
                                 </div>
                                 <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
                             </div>
@@ -436,21 +618,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="button-container">
                                 <button type="button" class="next-step">Next</button>
                             </div>
-
                         </div>
                     </div>
 
                     <!-- Step 2 -->
                     <div class="form-step">
-                        <div class="group-col">
-                            <label>Phone Number <span class="required">*</span></label>
-                            <input type="tel" name="phone" required value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>" autocomplete="off">
-                            <small class="field-hint">Format: +639XXXXXXXXX or 09XXXXXXXXX</small>
+                        <!-- Self Registration Credentials -->
+                        <div id="selfCredentials">
+                            <div class="group-col">
+                                <label>Phone Number <span class="required">*</span></label>
+                                <input type="tel" name="phone" required value="<?= htmlspecialchars($_POST['phone'] ?? '') ?>" autocomplete="off">
+                                <small class="field-hint">Format: +639XXXXXXXXX or 09XXXXXXXXX</small>
+                            </div>
+                            <div class="group-col">
+                                <label>E-mail Address <span class="required">*</span></label>
+                                <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" autocomplete="off">
+                            </div>
                         </div>
-                        <div class="group-col">
-                            <label>E-mail Address <span class="required">*</span></label>
-                            <input type="email" name="email" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" autocomplete="off">
+                        
+                        <!-- Guardian Credentials (for child/senior registration) -->
+                        <div id="guardianCredentials" style="display: none;">
+                            <h4>Guardian Account Credentials</h4>
+                            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                                The guardian's email and phone will be used as the account login credentials.
+                            </p>
                         </div>
+                        
+                        <!-- Common password fields -->
                         <div class="group-col">
                             <label>Password <span class="required">*</span></label>
                             <input type="password" name="password" required>
@@ -470,6 +664,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <!-- Step 3 -->
                     <div class="form-step">
                         <div class="user-info">
+                            <h4>Personal Information</h4>
                             <div class="group-col">
                                 <label>Last Name</label>
                                 <span id="reviewLastName"></span>
@@ -494,7 +689,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <label>Address</label>
                                 <span id="reviewAddress"></span>
                             </div>
-
+                            
+                            <!-- Contact Information (changes based on registration type) -->
+                            <h4 id="contactInfoHeader">Contact Information</h4>
                             <div class="group-col">
                                 <label>E-mail Address</label>
                                 <span id="reviewEmail"></span>
@@ -503,10 +700,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <label>Phone Number</label>
                                 <span id="reviewPhone"></span>
                             </div>
+                            
+                            <!-- Guardian Information (only shows for child/senior registration) -->
+                            <div id="guardianInfo" style="display: none;">
+                                <h4>Guardian Information</h4>
+                                <div class="group-col">
+                                    <label>Guardian Name</label>
+                                    <span id="reviewGuardianName"></span>
+                                </div>
+                                <div class="group-col">
+                                    <label>Relationship</label>
+                                    <span id="reviewGuardianRelationship"></span>
+                                </div>
+                            </div>
                         </div>
+                        
                         <div class="id-preview">
-                            <label>Upload Valid ID</label>
-                            <img id="idFrontPreview" src="" alt="Valid ID Front" style="display: none;">
+                            <h4>Uploaded Documents</h4>
+                            <div id="userIdPreview">
+                                <label id="userIdLabel">Valid ID</label>
+                                <img id="idFrontPreview" src="" alt="Valid ID Front" style="display: none;">
+                            </div>
+                            
+                            <div id="guardianIdPreview" style="display: none;">
+                                <label>Guardian's Valid ID</label>
+                                <img id="guardianIdImg" src="" alt="Guardian Valid ID" style="display: none;">
+                            </div>
                         </div>
 
                         <div class="policy_terms">
@@ -680,26 +899,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
     <script>
-        const category = document.getElementById("category");
-        const selfFields = document.getElementById("selfFields");
-        const childFields = document.getElementById("childFields");
-        const seniorFields = document.getElementById("seniorFields");
-
-
-        category.addEventListener("change", function() {
-            selfFields.classList.add("hidden");
-            childFields.classList.add("hidden");
-            seniorFields.classList.add("hidden");
-
-            if (this.value === "self") {
-            selfFields.classList.remove("hidden");
-            } else if (this.value === "child") {
-            childFields.classList.remove("hidden");
-            } else if (this.value === "senior") {
-            seniorFields.classList.remove("hidden");
-            }
-        });
-
         document.addEventListener("DOMContentLoaded", function () {
             // Form Step Navigation
             let currentStep = 0;
@@ -708,14 +907,103 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const prevBtns = document.querySelectorAll(".prev-step");
             const stepperItems = document.querySelectorAll(".stepper-item");
             
-            // File Upload Elements
-            const fileInput = document.getElementById('file-upload');
-            const fileNameSpan = document.getElementById('file-name');
-            const idFrontInput = document.querySelector('input[name="validID_front"]');
-            const idFrontPreview = document.getElementById("idFrontPreview");
+            // Create hidden input for registration type
+            const form = document.querySelector('.register-form');
+            const registrationTypeInput = document.createElement('input');
+            registrationTypeInput.type = 'hidden';
+            registrationTypeInput.name = 'registration_type';
+            registrationTypeInput.value = 'self';
+            form.appendChild(registrationTypeInput);
             
-            // Form Fields
+            // Update category change handler
+            const category = document.getElementById("category");
+            category.addEventListener("change", function() {
+                // Update hidden input value
+                registrationTypeInput.value = this.value;
+                
+                // Show/hide appropriate fields
+                document.getElementById("selfFields").classList.add("hidden");
+                document.getElementById("childFields").classList.add("hidden");
+                document.getElementById("seniorFields").classList.add("hidden");
+
+                if (this.value === "self") {
+                    document.getElementById("selfFields").classList.remove("hidden");
+                } else if (this.value === "child") {
+                    document.getElementById("childFields").classList.remove("hidden");
+                } else if (this.value === "senior") {
+                    document.getElementById("seniorFields").classList.remove("hidden");
+                }
+                updateStep2Display();
+            });
+            
+            // Error handling functions
+            function showFieldError(element, message) {
+                removeFieldError(element);
+                
+                const errorSpan = document.createElement("span");
+                errorSpan.className = "field-error";
+                errorSpan.textContent = message;
+                errorSpan.style.color = "#FF0000";
+                errorSpan.style.fontSize = "12px";
+                
+                element.style.borderColor = "#FF0000";
+                element.parentNode.appendChild(errorSpan);
+            }
+
+            function removeFieldError(element) {
+                const existingError = element.parentNode.querySelector(".field-error");
+                if (existingError) {
+                    existingError.remove();
+                }
+                element.style.borderColor = "";
+            }
+            
+            // Function to setup file upload handlers
+            function setupFileUpload(inputId, spanId) {
+                const fileInput = document.getElementById(inputId);
+                const fileNameSpan = document.getElementById(spanId);
+                
+                if (fileInput && fileNameSpan) {
+                    fileInput.addEventListener('change', function () {
+                        if (this.files.length > 0) {
+                            const file = this.files[0];
+                            fileNameSpan.textContent = file.name;
+                            
+                            const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                            const maxFileSize = 5 * 1024 * 1024; // 5MB
+                            
+                            if (!validImageTypes.includes(file.type)) {
+                                showFieldError(this, "Please upload a valid image file (JPEG, PNG)");
+                                this.value = "";
+                                fileNameSpan.textContent = "No file chosen";
+                                return;
+                            }
+                            
+                            if (file.size > maxFileSize) {
+                                showFieldError(this, "File size exceeds 5MB limit");
+                                this.value = "";
+                                fileNameSpan.textContent = "No file chosen";
+                                return;
+                            }
+                            
+                            removeFieldError(this);
+                        } else {
+                            fileNameSpan.textContent = 'No file chosen';
+                        }
+                    });
+                }
+            }
+            
+            // Setup file upload handlers
+            setupFileUpload('file-upload', 'file-name');
+            setupFileUpload('child-file-upload', 'child-file-name');
+            setupFileUpload('guardian-file-upload', 'guardian-file-name');
+            setupFileUpload('senior-file-upload', 'senior-file-name');
+            setupFileUpload('senior-guardian-file-upload', 'senior-guardian-file-name');
+            
+            // Form validation fields
             const formFields = {
+                // Self registration fields
                 firstName: {
                     element: document.querySelector('input[name="firstName"]'),
                     errorMsg: "First name is required",
@@ -725,11 +1013,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     element: document.querySelector('input[name="lastName"]'),
                     errorMsg: "Last name is required",
                     validator: (value) => value.trim().length > 0
-                },
-                middleName: {
-                    element: document.querySelector('input[name="middleName"]'),
-                    errorMsg: "",
-                    validator: () => true // Optional field
                 },
                 gender: {
                     element: document.querySelector('select[name="gender"]'),
@@ -741,8 +1024,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     errorMsg: "Date of birth is required",
                     validator: (value) => {
                         if (!value) return false;
-                        
-                        // Check if user is at least 18 years old
                         const today = new Date();
                         const birthDate = new Date(value);
                         let age = today.getFullYear() - birthDate.getFullYear();
@@ -751,13 +1032,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                             age--;
                         }
-                        
                         return age >= 18;
                     },
                     customErrorMsg: (value) => {
                         if (!value) return "Date of birth is required";
-                        
-                        // Calculate age for custom message
                         const today = new Date();
                         const birthDate = new Date(value);
                         let age = today.getFullYear() - birthDate.getFullYear();
@@ -766,7 +1044,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                             age--;
                         }
-                        
                         return age < 18 ? "You must be at least 18 years old to register" : "";
                     }
                 },
@@ -779,13 +1056,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     element: document.querySelector('input[name="phone"]'),
                     errorMsg: "Phone number is required",
                     validator: (value) => {
-                        // Philippines phone number validation (format: +639XXXXXXXXX or 09XXXXXXXXX)
                         const phoneRegex = /^(\+63|0)[9][0-9]{9}$/;
                         return phoneRegex.test(value.trim());
                     },
                     customErrorMsg: (value) => {
                         if (!value.trim()) return "Phone number is required";
-                        return "Please enter a valid Philippines phone number (format: +639XXXXXXXXX or 09XXXXXXXXX)";
+                        return "Please enter a valid Philippines phone number";
                     }
                 },
                 email: {
@@ -804,7 +1080,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     element: document.querySelector('input[name="password"]'),
                     errorMsg: "Password is required",
                     validator: (value) => {
-                        // Password validation: at least 8 characters, 1 uppercase, 1 lowercase, 1 number
                         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
                         return passwordRegex.test(value);
                     },
@@ -825,109 +1100,198 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         return "Passwords do not match";
                     }
                 },
-                validID_front: {
-                    element: document.querySelector('input[name="validID_front"]'),
-                    errorMsg: "Please upload a valid ID",
+                // Child registration fields
+                child_firstName: {
+                    element: document.querySelector('input[name="child_firstName"]'),
+                    errorMsg: "First name is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                child_lastName: {
+                    element: document.querySelector('input[name="child_lastName"]'),
+                    errorMsg: "Last name is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                child_gender: {
+                    element: document.querySelector('select[name="child_gender"]'),
+                    errorMsg: "Please select a gender",
+                    validator: (value) => value !== ""
+                },
+                child_birthday: {
+                    element: document.querySelector('input[name="child_birthday"]'),
+                    errorMsg: "Date of birth is required",
                     validator: (value) => {
-                        const fileInput = document.querySelector('input[name="validID_front"]');
-                        return fileInput.files && fileInput.files.length > 0;
+                        if (!value) return false;
+                        const today = new Date();
+                        const birthDate = new Date(value);
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                        
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        return age < 18;
+                    },
+                    customErrorMsg: (value) => {
+                        if (!value) return "Date of birth is required";
+                        const today = new Date();
+                        const birthDate = new Date(value);
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                        
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        return age >= 18 ? "Child registration is for individuals under 18 years old" : "";
+                    }
+                },
+                child_address: {
+                    element: document.querySelector('input[name="child_address"]'),
+                    errorMsg: "Address is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                guardian_fullname: {
+                    element: document.querySelector('input[name="guardian_fullname"]'),
+                    errorMsg: "Guardian full name is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                guardian_relationship: {
+                    element: document.querySelector('select[name="guardian_relationship"]'),
+                    errorMsg: "Guardian relationship is required",
+                    validator: (value) => value !== ""
+                },
+                guardian_phone: {
+                    element: document.querySelector('input[name="guardian_phone"]'),
+                    errorMsg: "Guardian phone number is required",
+                    validator: (value) => {
+                        const phoneRegex = /^(\+63|0)[9][0-9]{9}$/;
+                        return phoneRegex.test(value.trim());
+                    },
+                    customErrorMsg: (value) => {
+                        if (!value.trim()) return "Guardian phone number is required";
+                        return "Please enter a valid Philippines phone number";
+                    }
+                },
+                guardian_email: {
+                    element: document.querySelector('input[name="guardian_email"]'),
+                    errorMsg: "Guardian email is required",
+                    validator: (value) => {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        return emailRegex.test(value.trim());
+                    },
+                    customErrorMsg: (value) => {
+                        if (!value.trim()) return "Guardian email is required";
+                        return "Please enter a valid email address";
+                    }
+                },
+                // Senior registration fields
+                senior_firstName: {
+                    element: document.querySelector('input[name="senior_firstName"]'),
+                    errorMsg: "First name is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                senior_lastName: {
+                    element: document.querySelector('input[name="senior_lastName"]'),
+                    errorMsg: "Last name is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                senior_gender: {
+                    element: document.querySelector('select[name="senior_gender"]'),
+                    errorMsg: "Please select a gender",
+                    validator: (value) => value !== ""
+                },
+                senior_birthday: {
+                    element: document.querySelector('input[name="senior_birthday"]'),
+                    errorMsg: "Date of birth is required",
+                    validator: (value) => {
+                        if (!value) return false;
+                        const today = new Date();
+                        const birthDate = new Date(value);
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                        
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        return age >= 60;
+                    },
+                    customErrorMsg: (value) => {
+                        if (!value) return "Date of birth is required";
+                        const today = new Date();
+                        const birthDate = new Date(value);
+                        let age = today.getFullYear() - birthDate.getFullYear();
+                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                        
+                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                        }
+                        return age < 60 ? "Senior registration is for individuals 60 years old and above" : "";
+                    }
+                },
+                senior_address: {
+                    element: document.querySelector('input[name="senior_address"]'),
+                    errorMsg: "Address is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                senior_guardian_fullname: {
+                    element: document.querySelector('input[name="senior_guardian_fullname"]'),
+                    errorMsg: "Guardian full name is required",
+                    validator: (value) => value.trim().length > 0
+                },
+                senior_guardian_relationship: {
+                    element: document.querySelector('select[name="senior_guardian_relationship"]'),
+                    errorMsg: "Guardian relationship is required",
+                    validator: (value) => value !== ""
+                },
+                senior_guardian_phone: {
+                    element: document.querySelector('input[name="senior_guardian_phone"]'),
+                    errorMsg: "Guardian phone number is required",
+                    validator: (value) => {
+                        const phoneRegex = /^(\+63|0)[9][0-9]{9}$/;
+                        return phoneRegex.test(value.trim());
+                    },
+                    customErrorMsg: (value) => {
+                        if (!value.trim()) return "Guardian phone number is required";
+                        return "Please enter a valid Philippines phone number";
+                    }
+                },
+                senior_guardian_email: {
+                    element: document.querySelector('input[name="senior_guardian_email"]'),
+                    errorMsg: "Guardian email is required",
+                    validator: (value) => {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        return emailRegex.test(value.trim());
+                    },
+                    customErrorMsg: (value) => {
+                        if (!value.trim()) return "Guardian email is required";
+                        return "Please enter a valid email address";
                     }
                 }
             };
-
-            // Add "required" attribute to all required fields
-            Object.values(formFields).forEach(field => {
-                if (field.errorMsg && field.element) {
-                    field.element.setAttribute("required", "true");
-                }
-            });
-
-            // File input change handler
-            fileInput.addEventListener('change', function () {
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    fileNameSpan.textContent = file.name;
-                    
-                    // Validate file type and size
-                    const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-                    const maxFileSize = 5 * 1024 * 1024; // 5MB
-                    
-                    if (!validImageTypes.includes(file.type)) {
-                        showFieldError(fileInput, "Please upload a valid image file (JPEG, PNG)");
-                        fileInput.value = "";
-                        fileNameSpan.textContent = "No file chosen";
-                        return;
-                    }
-                    
-                    if (file.size > maxFileSize) {
-                        showFieldError(fileInput, "File size exceeds 5MB limit");
-                        fileInput.value = "";
-                        fileNameSpan.textContent = "No file chosen";
-                        return;
-                    }
-                    
-                    // Remove error if valid
-                    removeFieldError(fileInput);
-                    
-                } else {
-                    fileNameSpan.textContent = 'No file chosen';
-                }
-            });
-
-            // Preview ID image when selected
-            idFrontInput.addEventListener("change", function () {
-                if (this.files.length > 0) {
-                    idFrontPreview.src = URL.createObjectURL(this.files[0]);
-                    idFrontPreview.style.display = "block";
-                } else {
-                    idFrontPreview.src = "";
-                    idFrontPreview.style.display = "none";
-                }
-            });
-
-            // Error handling functions
-            function showFieldError(element, message) {
-                removeFieldError(element);
-                
-                const errorSpan = document.createElement("span");
-                errorSpan.className = "field-error";
-                errorSpan.textContent = message;
-                errorSpan.style.color = "#FF0000";
-                errorSpan.style.fontSize = "12px";
-                
-                // Add red border to highlight the field
-                element.style.borderColor = "#FF0000";
-                
-                // Insert error message after the field
-                element.parentNode.appendChild(errorSpan);
-            }
-
-            function removeFieldError(element) {
-                // Remove existing error messages
-                const existingError = element.parentNode.querySelector(".field-error");
-                if (existingError) {
-                    existingError.remove();
-                }
-                
-                // Reset border color
-                element.style.borderColor = "";
-            }
-
-            // Function to validate a specific form step
+            
+            // Updated validation function
             function validateStep(step) {
                 let isValid = true;
                 const currentStepElement = steps[step];
+                const registrationType = document.querySelector('input[name="registration_type"]').value;
                 
-                // Get all input and select elements in current step
-                const inputs = currentStepElement.querySelectorAll("input, select");
+                const inputs = currentStepElement.querySelectorAll("input:not([type='hidden']), select");
                 
-                // Clear all previous errors
                 inputs.forEach(input => removeFieldError(input));
                 
-                // Validate each field
                 inputs.forEach(input => {
                     const fieldName = input.getAttribute("name");
                     if (!fieldName || !formFields[fieldName]) return;
+                    
+                    // Skip validation for fields not related to current registration type
+                    if (registrationType === 'self' && (fieldName.startsWith('child_') || fieldName.startsWith('senior_') || fieldName.startsWith('guardian_'))) {
+                        return;
+                    }
+                    if (registrationType === 'child' && (fieldName.startsWith('senior_') || (!fieldName.startsWith('child_') && !fieldName.startsWith('guardian_') && fieldName !== 'password' && fieldName !== 'confirmPassword'))) {
+                        return;
+                    }
+                    if (registrationType === 'senior' && (fieldName.startsWith('child_') || (!fieldName.startsWith('senior_') && fieldName !== 'password' && fieldName !== 'confirmPassword'))) {
+                        return;
+                    }
                     
                     const field = formFields[fieldName];
                     const value = input.value;
@@ -939,49 +1303,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 });
                 
-                // Special check for password confirmation
-                if (step === 1) {
-                    const password = document.querySelector('input[name="password"]').value;
-                    const confirmPassword = document.querySelector('input[name="confirmPassword"]').value;
-                    
-                    if (password !== confirmPassword && confirmPassword.length > 0) {
-                        isValid = false;
-                        showFieldError(document.querySelector('input[name="confirmPassword"]'), "Passwords do not match");
-                    }
-                }
-                
                 return isValid;
             }
-
-            // Function to check if email or phone exists
-            async function checkDuplicate(field, value) {
-                if (!value.trim()) return true; // Skip if empty
-
-                try {
-                    const formData = new FormData();
-                    formData.append(field, value);
-
-                    const response = await fetch('check_availability.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    const result = await response.json();
-
-                    if (result.exists) {
-                        showFieldError(formFields[field].element, result.message);
-                        return false;
-                    } else {
-                        removeFieldError(formFields[field].element);
-                        return true;
-                    }
-                } catch (error) {
-                    showFieldError(formFields[field].element, 'Error checking availability');
-                    return false;
-                }
-            }
-
-            // Update step indicator and form visibility
+            
+            // Update step function
             function updateStep(step) {
                 steps.forEach((s, i) => {
                     s.classList.toggle("active", i === step);
@@ -997,43 +1322,122 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                 });
 
-                // Populate review step
                 if (step === 2) {
                     populateReviewStep();
                 }
             }
 
-            // Populate the review step with user data
-            function populateReviewStep() {
-                document.getElementById("reviewFirstName").textContent = document.querySelector('input[name="firstName"]').value;
-                document.getElementById("reviewLastName").textContent = document.querySelector('input[name="lastName"]').value;
-                document.getElementById("reviewMiddleName").textContent = document.querySelector('input[name="middleName"]').value;
-                document.getElementById("reviewGender").textContent = document.querySelector('select[name="gender"]').value;
-                document.getElementById("reviewBirthday").textContent = document.querySelector('input[name="birthday"]').value;
-                document.getElementById("reviewAddress").textContent = document.querySelector('input[name="address"]').value;
-                document.getElementById("reviewEmail").textContent = document.querySelector('input[name="email"]').value;
-                document.getElementById("reviewPhone").textContent = document.querySelector('input[name="phone"]').value;
-
-                // Show uploaded ID images
-                if (idFrontInput.files.length > 0) {
-                    idFrontPreview.src = URL.createObjectURL(idFrontInput.files[0]);
-                    idFrontPreview.style.display = "block";
+            // Function to update Step 2 based on registration type
+            function updateStep2Display() {
+                const registrationType = document.querySelector('input[name="registration_type"]').value;
+                const selfCredentials = document.getElementById("selfCredentials");
+                const guardianCredentials = document.getElementById("guardianCredentials");
+                
+                if (registrationType === 'self') {
+                    selfCredentials.style.display = "block";
+                    guardianCredentials.style.display = "none";
                 } else {
-                    idFrontPreview.style.display = "none";
+                    selfCredentials.style.display = "none";
+                    guardianCredentials.style.display = "block";
                 }
             }
-
-            // Add event listeners for next/prev buttons
+            
+            // Populate review step
+            function populateReviewStep() {
+                const registrationType = document.querySelector('input[name="registration_type"]').value;
+                const guardianInfo = document.getElementById("guardianInfo");
+                const guardianIdPreview = document.getElementById("guardianIdPreview");
+                const userIdLabel = document.getElementById("userIdLabel");
+                
+                guardianInfo.style.display = "none";
+                guardianIdPreview.style.display = "none";
+                
+                switch (registrationType) {
+                    case 'self':
+                        document.getElementById("reviewFirstName").textContent = document.querySelector('input[name="firstName"]').value;
+                        document.getElementById("reviewLastName").textContent = document.querySelector('input[name="lastName"]').value;
+                        document.getElementById("reviewMiddleName").textContent = document.querySelector('input[name="middleName"]').value;
+                        document.getElementById("reviewGender").textContent = document.querySelector('select[name="gender"]').value;
+                        document.getElementById("reviewBirthday").textContent = document.querySelector('input[name="birthday"]').value;
+                        document.getElementById("reviewAddress").textContent = document.querySelector('input[name="address"]').value;
+                        document.getElementById("reviewEmail").textContent = document.querySelector('input[name="email"]').value;
+                        document.getElementById("reviewPhone").textContent = document.querySelector('input[name="phone"]').value;
+                        
+                        userIdLabel.textContent = "Valid ID";
+                        
+                        const selfIdInput = document.querySelector('input[name="validID_front"]');
+                        if (selfIdInput && selfIdInput.files.length > 0) {
+                            document.getElementById("idFrontPreview").src = URL.createObjectURL(selfIdInput.files[0]);
+                            document.getElementById("idFrontPreview").style.display = "block";
+                        }
+                        break;
+                        
+                    case 'child':
+                        document.getElementById("reviewFirstName").textContent = document.querySelector('input[name="child_firstName"]').value;
+                        document.getElementById("reviewLastName").textContent = document.querySelector('input[name="child_lastName"]').value;
+                        document.getElementById("reviewMiddleName").textContent = document.querySelector('input[name="child_middleName"]').value;
+                        document.getElementById("reviewGender").textContent = document.querySelector('select[name="child_gender"]').value;
+                        document.getElementById("reviewBirthday").textContent = document.querySelector('input[name="child_birthday"]').value;
+                        document.getElementById("reviewAddress").textContent = document.querySelector('input[name="child_address"]').value;
+                        document.getElementById("reviewEmail").textContent = document.querySelector('input[name="guardian_email"]').value + " (Guardian)";
+                        document.getElementById("reviewPhone").textContent = document.querySelector('input[name="guardian_phone"]').value + " (Guardian)";
+                        
+                        guardianInfo.style.display = "block";
+                        document.getElementById("reviewGuardianName").textContent = document.querySelector('input[name="guardian_fullname"]').value;
+                        document.getElementById("reviewGuardianRelationship").textContent = document.querySelector('select[name="guardian_relationship"]').value;
+                        
+                        userIdLabel.textContent = "Child's ID/Birth Certificate";
+                        
+                        const childIdInput = document.querySelector('input[name="child_validID"]');
+                        if (childIdInput && childIdInput.files.length > 0) {
+                            document.getElementById("idFrontPreview").src = URL.createObjectURL(childIdInput.files[0]);
+                            document.getElementById("idFrontPreview").style.display = "block";
+                        }
+                        
+                        const guardianIdInput = document.querySelector('input[name="guardian_validID"]');
+                        if (guardianIdInput && guardianIdInput.files.length > 0) {
+                            guardianIdPreview.style.display = "block";
+                            document.getElementById("guardianIdImg").src = URL.createObjectURL(guardianIdInput.files[0]);
+                            document.getElementById("guardianIdImg").style.display = "block";
+                        }
+                        break;
+                        
+                    case 'senior':
+                        document.getElementById("reviewFirstName").textContent = document.querySelector('input[name="senior_firstName"]').value;
+                        document.getElementById("reviewLastName").textContent = document.querySelector('input[name="senior_lastName"]').value;
+                        document.getElementById("reviewMiddleName").textContent = document.querySelector('input[name="senior_middleName"]').value;
+                        document.getElementById("reviewGender").textContent = document.querySelector('select[name="senior_gender"]').value;
+                        document.getElementById("reviewBirthday").textContent = document.querySelector('input[name="senior_birthday"]').value;
+                        document.getElementById("reviewAddress").textContent = document.querySelector('input[name="senior_address"]').value;
+                        document.getElementById("reviewEmail").textContent = document.querySelector('input[name="senior_guardian_email"]').value + " (Guardian)";
+                        document.getElementById("reviewPhone").textContent = document.querySelector('input[name="senior_guardian_phone"]').value + " (Guardian)";
+                        
+                        guardianInfo.style.display = "block";
+                        document.getElementById("reviewGuardianName").textContent = document.querySelector('input[name="senior_guardian_fullname"]').value;
+                        document.getElementById("reviewGuardianRelationship").textContent = document.querySelector('select[name="senior_guardian_relationship"]').value;
+                        
+                        userIdLabel.textContent = "Senior's Valid ID";
+                        
+                        const seniorIdInput = document.querySelector('input[name="senior_validID"]');
+                        if (seniorIdInput && seniorIdInput.files.length > 0) {
+                            document.getElementById("idFrontPreview").src = URL.createObjectURL(seniorIdInput.files[0]);
+                            document.getElementById("idFrontPreview").style.display = "block";
+                        }
+                        
+                        const seniorGuardianIdInput = document.querySelector('input[name="senior_guardian_validID"]');
+                        if (seniorGuardianIdInput && seniorGuardianIdInput.files.length > 0) {
+                            guardianIdPreview.style.display = "block";
+                            document.getElementById("guardianIdImg").src = URL.createObjectURL(seniorGuardianIdInput.files[0]);
+                            document.getElementById("guardianIdImg").style.display = "block";
+                        }
+                        break;
+                }
+            }
+            
+            // Next button handlers
             nextBtns.forEach((btn) => {
                 btn.addEventListener("click", async function () {
                     let isValid = validateStep(currentStep);
-
-                    // For step 1 (contains email and phone), check duplicates
-                    if (currentStep === 1) {
-                        const emailValid = await checkDuplicate('email', formFields.email.element.value);
-                        const phoneValid = await checkDuplicate('phone', formFields.phone.element.value);
-                        isValid = isValid && emailValid && phoneValid;
-                    }
 
                     if (isValid && currentStep < steps.length - 1) {
                         currentStep++;
@@ -1042,6 +1446,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 });
             });
 
+            // Previous button handlers
             prevBtns.forEach((btn) => {
                 btn.addEventListener("click", function () {
                     if (currentStep > 0) {
@@ -1051,51 +1456,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 });
             });
 
-            // Terms checkbox and signup button
+            // Terms checkbox handler
             const termsCheckbox = document.getElementById("termsCheckbox");
             const signUpBtn = document.getElementById("signUpBtn");
 
-            termsCheckbox.addEventListener("change", function () {
-                signUpBtn.disabled = !this.checked;
-            });
-
-            // Real-time validation for email and phone
-            ['email', 'phone'].forEach(fieldName => {
-                const field = formFields[fieldName];
-                if (field.element) {
-                    field.element.addEventListener('blur', async function() {
-                        if (field.validator(this.value)) {
-                            await checkDuplicate(fieldName, this.value);
-                        } else {
-                            const errorMsg = field.customErrorMsg ? field.customErrorMsg(this.value) : field.errorMsg;
-                            showFieldError(this, errorMsg);
-                        }
-                    });
-
-                    // Optional: Real-time validation on input for immediate feedback
-                    field.element.addEventListener('input', async function() {
-                        if (field.validator(this.value)) {
-                            await checkDuplicate(fieldName, this.value);
-                        }
-                    });
-                }
-            });
-
-            // Add input validation on blur for other fields
-            Object.keys(formFields).forEach(fieldName => {
-                if (fieldName !== 'email' && fieldName !== 'phone' && formFields[fieldName].element) {
-                    formFields[fieldName].element.addEventListener('blur', function() {
-                        if (!formFields[fieldName].validator(this.value)) {
-                            const errorMsg = formFields[fieldName].customErrorMsg ? 
-                                formFields[fieldName].customErrorMsg(this.value) : 
-                                formFields[fieldName].errorMsg;
-                            showFieldError(this, errorMsg);
-                        } else {
-                            removeFieldError(this);
-                        }
-                    });
-                }
-            });
+            if (termsCheckbox && signUpBtn) {
+                termsCheckbox.addEventListener("change", function () {
+                    signUpBtn.disabled = !this.checked;
+                });
+            }
 
             // Initialize form
             updateStep(currentStep);
@@ -1110,6 +1479,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         function closeModal(id) {
             let modal = document.getElementById(id);
             modal.classList.remove("show");
+        }
+
+        // Legacy function for self registration file upload
+        function updateFileName() {
+            const fileInput = document.getElementById('file-upload');
+            const fileNameSpan = document.getElementById('file-name');
+            
+            if (fileInput.files.length > 0) {
+                fileNameSpan.textContent = fileInput.files[0].name;
+            } else {
+                fileNameSpan.textContent = 'No file chosen';
+            }
         }
 
         const registrationSuccess = <?= $registrationSuccess ? 'true' : 'false' ?>;

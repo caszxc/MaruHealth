@@ -4,7 +4,7 @@ session_start();
 require_once "config.php";
 
 // Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }

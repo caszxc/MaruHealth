@@ -265,7 +265,10 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
-            <p>Maru-Health <br> Barangay Marulas 3S <br> Health Station</p>
+            <div>
+                <h1>Maru-Health</h1>
+                <p>Barangay Marulas 3S Health Station</p>
+            </div>
         </div>
     </nav>
 
@@ -329,7 +332,7 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>

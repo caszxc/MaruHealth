@@ -279,7 +279,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <h3>Request Details</h3>
                 <p><strong>Approved Medicines:</strong><br>$approvedList</p>
                 <p><strong>Declined Medicines:</strong><br>$declinedList</p>
-                <p><strong>Claim By:</strong> " . htmlspecialchars($claimBy) . "</p>
                 <p><strong>Claim Until:</strong> " . htmlspecialchars($claimUntil) . "</p>
                 $noteSection
                 <p>Please visit the health station during the specified period to claim your medicines. Bring a valid ID for verification.</p>

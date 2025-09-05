@@ -3,8 +3,8 @@
 session_start();
 require_once "config.php"; // Include database connection
 
-// Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+// Check if user is logged in as staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -155,6 +155,8 @@ unset($medicine);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
 
@@ -179,9 +181,7 @@ unset($medicine);
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-
-                // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
+                $dashboard_url = '';
                 if ($adminRole === 'super_admin') {
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
@@ -191,66 +191,55 @@ unset($medicine);
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
             
             <p class="menu-header">BASE</p>
-
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
             </div>
             <?php endif; ?>
-            
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
-
             <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
             </div>
-            
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/med_icon_active.png" alt="">
                 <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
                 <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
-
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
-            
         </div>
     </div>
 
@@ -264,7 +253,6 @@ unset($medicine);
                             <select name="therapeutic_category">
                                 <option value="">All Categories</option>
                                 <?php
-                                // Fetch unique therapeutic categories
                                 $categoryStmt = $conn->query("SELECT DISTINCT therapeutic_category FROM medicines ORDER BY therapeutic_category");
                                 while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
                                     $selected = ($category['therapeutic_category'] === $therapeutic_category) ? 'selected' : '';
@@ -275,7 +263,6 @@ unset($medicine);
                             <select name="dosage_form">
                                 <option value="">All Dosage Forms</option>
                                 <?php
-                                // Fetch unique dosage forms
                                 $dosageStmt = $conn->query("SELECT DISTINCT dosage_form FROM medicines WHERE dosage_form IS NOT NULL ORDER BY dosage_form");
                                 while ($dosage = $dosageStmt->fetch(PDO::FETCH_ASSOC)) {
                                     $selected = ($dosage['dosage_form'] === $dosage_form) ? 'selected' : '';
@@ -303,9 +290,6 @@ unset($medicine);
                 </div>
             </div>
 
-            
-
-            <!-- Medicine Table -->
             <div class="table-details">
                 <div class="table-con">
                     <div class="legend">
@@ -369,7 +353,6 @@ unset($medicine);
                         </table>
                     </div>
                     
-                    <!-- Pagination Controls -->
                     <?php if ($totalPages > 1): ?>
                         <div class="pagination-container">
                             <div class="pagination-info">
@@ -377,7 +360,6 @@ unset($medicine);
                             </div>
                             <div class="pagination-controls">
                                 <?php
-                                // Build query string with all filter parameters
                                 $queryParams = [];
                                 if (!empty($search)) $queryParams['search'] = urlencode($search);
                                 if (!empty($therapeutic_category)) $queryParams['therapeutic_category'] = urlencode($therapeutic_category);
@@ -415,11 +397,18 @@ unset($medicine);
     <div id="medicineModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h2>Add Medicine</h2>
-
             <form method="POST" action="add_medicine.php" id="addMedicineForm">
                 <div class="form-group">
                     <label>Therapeutic Category</label>
-                    <input type="text" name="therapeutic_category" required>
+                    <select name="therapeutic_category" class="select2" required>
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $categoryStmt = $conn->query("SELECT DISTINCT therapeutic_category FROM medicines ORDER BY therapeutic_category");
+                        while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($category['therapeutic_category']) . "'>" . htmlspecialchars($category['therapeutic_category']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-row">
@@ -427,7 +416,6 @@ unset($medicine);
                         <label>Batch/Lot Number</label>
                         <input type="text" name="batch_lot_number" required>
                     </div>
-
                     <div class="form-group">
                         <label>P.O. Number</label>
                         <input type="text" name="pono">
@@ -436,12 +424,28 @@ unset($medicine);
                 
                 <div class="form-group">
                     <label>Generic Name</label>
-                    <input type="text" name="generic_name" required>
+                    <select name="generic_name" class="select2" required>
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $genericStmt = $conn->query("SELECT DISTINCT generic_name FROM medicines ORDER BY generic_name");
+                        while ($generic = $genericStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($generic['generic_name']) . "'>" . htmlspecialchars($generic['generic_name']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label>Brand Name</label>
-                    <input type="text" name="brand_name">
+                    <select name="brand_name" class="select2">
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $brandStmt = $conn->query("SELECT DISTINCT brand_name FROM medicines WHERE brand_name IS NOT NULL ORDER BY brand_name");
+                        while ($brand = $brandStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($brand['brand_name']) . "'>" . htmlspecialchars($brand['brand_name']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -455,7 +459,6 @@ unset($medicine);
                         <option value="Cream">Cream</option>
                         <option value="Drops">Drops</option>
                         <option value="Ointment">Ointment</option>
-                        <option value="Cream">Cream</option>
                     </select>
                 </div>
 
@@ -492,7 +495,15 @@ unset($medicine);
 
                 <div class="form-group">
                     <label>Source</label>
-                    <input type="text" name="source">
+                    <select name="source" class="select2">
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $sourceStmt = $conn->query("SELECT DISTINCT source FROM medicines WHERE source IS NOT NULL ORDER BY source");
+                        while ($source = $sourceStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($source['source']) . "'>" . htmlspecialchars($source['source']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="form-row">
@@ -514,7 +525,19 @@ unset($medicine);
         </div>
     </div>
 
+    <!-- jQuery and Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Initialize Select2 for searchable dropdowns
+        $(document).ready(function() {
+            $('.select2').select2({
+                tags: true, // Allow adding new options
+                placeholder: "Select or type to add new",
+                allowClear: true,
+                width: '100%'
+            });
+        });
     function selectRow(row) {
         // Remove 'selected' class from all rows
         document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));

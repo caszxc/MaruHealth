@@ -35,6 +35,8 @@ try {
 
     // Create Users Table
     $sql = "CREATE TABLE IF NOT EXISTS users (
+        registration_type ENUM('self', 'child', 'senior') DEFAULT 'self',
+        age_category ENUM('adult', 'child', 'senior') DEFAULT 'adult',
         id INT AUTO_INCREMENT PRIMARY KEY,
         first_name VARCHAR(255) NOT NULL,
         last_name VARCHAR(255) NOT NULL,
@@ -55,6 +57,8 @@ try {
 
     // Create Pending Users Table
     $sql = "CREATE TABLE IF NOT EXISTS pending_users (
+        registration_type ENUM('self', 'child', 'senior') DEFAULT 'self',
+        age_category ENUM('adult', 'child', 'senior') DEFAULT 'adult',
         id INT AUTO_INCREMENT PRIMARY KEY,
         first_name VARCHAR(255) NOT NULL,
         last_name VARCHAR(255) NOT NULL,
@@ -70,6 +74,22 @@ try {
         date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
 
+    $conn->exec($sql);
+
+    // Create Guardians Table
+    $sql = "CREATE TABLE IF NOT EXISTS guardians (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        pending_user_id INT NULL,
+        full_name VARCHAR(255) NOT NULL,
+        relationship VARCHAR(100) NOT NULL,
+        phone_number VARCHAR(20) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        valid_id_path VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (pending_user_id) REFERENCES pending_users(id) ON DELETE CASCADE
+    )";
     $conn->exec($sql);
 
     $sql = "CREATE TABLE IF NOT EXISTS admin_staff (

@@ -293,18 +293,6 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
-                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
-            </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/med_icon.png" alt="">
-                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
-            </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
-                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
-            </div>
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
@@ -323,30 +311,6 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                 <div class="count"><?= $pendingAccounts ?></div>
                 <a href="account_requests.php" class="view-all">View Details</a>
             </div>
-
-            <div class="stat-card">
-                <h3>Pending Medicine Requests</h3>
-                <div class="count"><?= $pendingReqCount ?></div>
-                <a href="requests.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Expired Medicines</h3>
-                <div class="count"><?= $expiredMedicines ?></div>
-                <a href="medicine_management.php?expiry_status=Expired" class="view-all">View Details</a>
-            </div>
-
-            <div class="stat-card">
-                <h3>Out of Stock Medicines</h3>
-                <div class="count"><?= $outOfStockMedicines ?></div>
-                <a href="medicine_management.php?stock_status=Out of Stock" class="view-all">View Details</a>
-            </div>
-
-            <div class="stat-card">
-                <h3>To Be Claimed Medicines</h3>
-                <div class="count"><?= $toBeClaimedMedicines ?></div>
-                <a href="pending_requests.php" class="view-all">View Details</a>
-            </div>
             
             <div class="stat-card">
                 <h3>Active Announcements</h3>
@@ -359,58 +323,6 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                 <a href="edit_calendar.php" class="view-all">View Details</a>
             </div>
         </div> 
-
-        <!-- Alert Sections -->
-        <div class="alert-section">
-            <h2>Critical Alerts</h2>
-            
-            <div class="alert-cards">
-                <!-- Expiring Medicines -->
-                <div class="alert-card">
-                    <h3>Expiring Medicines</h3>
-                    <ul class="alert-list">
-                        <?php if (empty($expiringMedicines)): ?>
-                            <li>No expiring medicines at the moment.</li>
-                        <?php else: ?>
-                            <?php foreach ($expiringMedicines as $medicine): ?>
-                                <li class="<?= $medicine['expiry_status'] == 'Expired' ? 'critical' : 'warning' ?>">
-                                    <?= htmlspecialchars($medicine['generic_name']) ?>
-                                    <?php if (!empty($medicine['brand_name'])): ?>
-                                        (<?= htmlspecialchars($medicine['brand_name']) ?>)
-                                    <?php endif; ?>
-                                    - Expiry: <span class="expiry-date"><?= htmlspecialchars($medicine['expiration_date']) ?></span>
-                                    (<?= htmlspecialchars($medicine['expiry_status']) ?>)
-                                </li>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </ul>
-                    <a href="medicine_management.php?expiry_status=Expiring within a month" class="view-all">View All Expiring Medicines</a>
-                </div>
-                
-                <!-- Low Stock Medicines -->
-                <div class="alert-card">
-                    <h3>Low Stock Medicines</h3>
-                    <ul class="alert-list">
-                        <?php if (empty($lowStockMedicines)): ?>
-                            <li>No low stock medicines at the moment.</li>
-                        <?php else: ?>
-                            <?php foreach ($lowStockMedicines as $medicine): ?>
-                                <li class="<?= $medicine['stock_status'] == 'Out of Stock' ? 'critical' : 'warning' ?>">
-                                    <?= htmlspecialchars($medicine['generic_name']) ?>
-                                    <?php if (!empty($medicine['brand_name'])): ?>
-                                        (<?= htmlspecialchars($medicine['brand_name']) ?>)
-                                    <?php endif; ?>
-                                    - Stock: <span class="stock-level <?= $medicine['stock_status'] == 'Out of Stock' ? 'critical-stock' : 'low-stock' ?>">
-                                        <?= htmlspecialchars($medicine['stocks']) ?> / Min: <?= htmlspecialchars($medicine['min_stock']) ?>
-                                    </span>
-                                </li>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </ul>
-                    <a href="medicine_management.php?stock_status=Low Stock" class="view-all">View All Low Stock Medicines</a>
-                </div>
-            </div>
-        </div>
 
         <h2>Reports and Statistics</h2>
 

@@ -40,6 +40,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // Check if batch_lot_number already exists
+    $checkStmt = $conn->prepare("SELECT COUNT(*) FROM medicines WHERE batch_lot_number = :batch_lot_number");
+    $checkStmt->execute([':batch_lot_number' => $batch_lot_number]);
+    if ($checkStmt->fetchColumn() > 0) {
+        $_SESSION['error'] = "Batch/Lot Number already exists. It must be unique.";
+        header("Location: medicine_management.php");
+        exit();
+    }
+
     // Determine stock status based on stock levels
     if ($stocks <= 0) {
         $stock_status = 'Out of Stock';

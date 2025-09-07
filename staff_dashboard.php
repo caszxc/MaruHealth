@@ -20,7 +20,7 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
 // Get expiring medicines (within next 60 days)
-$expiryDate = date('Y-m-d', strtotime('+60 days'));
+/* $expiryDate = date('Y-m-d', strtotime('+60 days'));
 $expiringStmt = $conn->prepare("SELECT id, generic_name, brand_name, expiration_date, stocks 
                                FROM medicines 
                                WHERE expiration_date <= :expiryDate 
@@ -30,17 +30,17 @@ $expiringStmt = $conn->prepare("SELECT id, generic_name, brand_name, expiration_
                                LIMIT 5");
 $expiringStmt->bindParam(':expiryDate', $expiryDate);
 $expiringStmt->execute();
-$expiringMedicines = $expiringStmt->fetchAll(PDO::FETCH_ASSOC);
+$expiringMedicines = $expiringStmt->fetchAll(PDO::FETCH_ASSOC); */
 
 // Get low stock medicines (below min_stock level)
-$lowStockStmt = $conn->prepare("SELECT id, generic_name, brand_name, stocks, min_stock 
+/* $lowStockStmt = $conn->prepare("SELECT id, generic_name, brand_name, stocks, min_stock 
                                FROM medicines 
                                WHERE stocks <= min_stock 
                                AND stocks > 0
                                ORDER BY (stocks/min_stock) ASC
                                LIMIT 5");
 $lowStockStmt->execute();
-$lowStockMedicines = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
+$lowStockMedicines = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC); */
 
 // Get pending medicine requests
 $pendingRequestsStmt = $conn->prepare("SELECT mr.id, mr.full_name, mr.request_date, 
@@ -69,8 +69,8 @@ $totalPatientsStmt = $conn->query("SELECT COUNT(*) FROM patients");
 $totalPatients = $totalPatientsStmt->fetchColumn();
 
 // Count total medicines
-$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines");
-$totalMedicines = $totalMedicinesStmt->fetchColumn();
+/* $totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines");
+$totalMedicines = $totalMedicinesStmt->fetchColumn(); */
 
 // Count pending medicine requests
 $pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status IN ('requested', 'pending')");

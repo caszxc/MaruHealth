@@ -217,29 +217,39 @@ try {
     )";
     $conn->exec($sql);
 
-    // Create Medicines Table
-    $sql = "CREATE TABLE IF NOT EXISTS medicines (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        therapeutic_category VARCHAR(50) NOT NULL,
-        batch_lot_number VARCHAR(50) NOT NULL,
-        pono VARCHAR(50),
-        generic_name VARCHAR(255) NOT NULL,
-        brand_name VARCHAR(255),
-        dosage VARCHAR(50),
-        dosage_form VARCHAR(100),
-        unit VARCHAR(50),
-        manufacturing_date DATE,
-        expiration_date DATE,
-        stocks INT DEFAULT 0,
-        min_stock INT NOT NULL DEFAULT 0,
-        source VARCHAR(255),
-        stock_status ENUM('In Stock', 'Low Stock', 'Out of Stock') NOT NULL DEFAULT 'In Stock', 
-        expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') NOT NULL DEFAULT 'Valid',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    // Create Medicine Catalog Table
+    $sql = "CREATE TABLE IF NOT EXISTS medicines_catalog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    therapeutic_category VARCHAR(50) NOT NULL,
+    generic_name VARCHAR(255) NOT NULL,
+    brand_name VARCHAR(255),
+    dosage VARCHAR(50),
+    dosage_form VARCHAR(100),
+    unit VARCHAR(50),
+    min_stock INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_medicine (generic_name, brand_name, dosage, dosage_form)
     )";
     $conn->exec($sql);
 
-    $sql = "CREATE TABLE IF NOT EXISTS stock_history (
+    // Create Medicine Batches Table
+    $sql = "CREATE TABLE IF NOT EXISTS medicine_batches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    catalog_id INT NOT NULL,
+    batch_lot_number VARCHAR(50) NOT NULL,
+    pono VARCHAR(50),
+    manufacturing_date DATE,
+    expiration_date DATE,
+    stocks INT DEFAULT 0,
+    stock_status ENUM('In Stock', 'Low Stock', 'Out of Stock') DEFAULT 'In Stock',
+    expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
+    source VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE CASCADE
+    )";
+    $conn->exec($sql);
+
+/*     $sql = "CREATE TABLE IF NOT EXISTS stock_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
     medicine_id INT NOT NULL,
     quantity_change INT NOT NULL,
@@ -249,7 +259,7 @@ try {
     FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON DELETE CASCADE,
     FOREIGN KEY (changed_by) REFERENCES admin_staff(id) ON DELETE CASCADE
     )";
-    $conn->exec($sql);
+    $conn->exec($sql); */
     
     // Create Medicine Request Table
    $sql = "CREATE TABLE IF NOT EXISTS medicine_requests (
@@ -286,7 +296,7 @@ try {
     $conn->exec($sql);
 
     // Create medicine_distributions table
-    $sql = "CREATE TABLE IF NOT EXISTS medicine_distributions (
+/*     $sql = "CREATE TABLE IF NOT EXISTS medicine_distributions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         request_id INT NOT NULL,
         requested_medicine_id INT NOT NULL,
@@ -298,7 +308,7 @@ try {
         FOREIGN KEY (requested_medicine_id) REFERENCES requested_medicines(id) ON DELETE CASCADE,
         FOREIGN KEY (inventory_medicine_id) REFERENCES medicines(id) ON DELETE CASCADE
     )";
-    $conn->exec($sql);
+    $conn->exec($sql); */
 
     // Create Family Number Table
     $sql = "CREATE TABLE IF NOT EXISTS families (

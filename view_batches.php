@@ -33,7 +33,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
 // Fetch medicine details for display
 $catalogStmt = $conn->prepare("
-    SELECT therapeutic_category, generic_name, brand_name, dosage, dosage_form
+    SELECT therapeutic_category, generic_name, brand_name, dosage, dosage_form, unit
     FROM medicines_catalog
     WHERE id = :catalog_id
 ");
@@ -47,7 +47,7 @@ if (!$medicine) {
 
 // Fetch batches for the given catalog_id
 $batchStmt = $conn->prepare("
-    SELECT batch_lot_number, manufacturing_date, expiration_date, stocks, 
+    SELECT id, batch_lot_number, pono, manufacturing_date, expiration_date, stocks, 
            stock_status, expiry_status, source
     FROM medicine_batches
     WHERE catalog_id = :catalog_id
@@ -159,7 +159,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                     <h2>Batches for <?php echo htmlspecialchars($medicine['generic_name'] . ($medicine['brand_name'] ? ' (' . $medicine['brand_name'] . ' ' . $medicine['dosage'] .')' : '')); ?></h2></h2>
                 </div>
                 <div class="search-con">
-                    <button class="add-batch-btn" onclick="openModal()">ADD BATCH</button>
+                    <button class="add-batch-btn" onclick="openBatchModal()">ADD BATCH</button>
                 </div>
             </div>
 
@@ -185,7 +185,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($batches as $batch): ?>
-                                        <tr>
+                                        <tr onclick="selectRow(this); showBatchDetails(<?= htmlspecialchars(json_encode($batch)) ?>, <?= htmlspecialchars(json_encode($medicine)) ?>)">
                                             <td><?= htmlspecialchars($batch['batch_lot_number']) ?></td>
                                             <td><?= htmlspecialchars($batch['manufacturing_date'] ?: 'N/A') ?></td>
                                             <td><?= htmlspecialchars($batch['expiration_date'] ?: 'N/A') ?></td>
@@ -211,5 +211,236 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
+
+    <!-- Add Batch Modal -->
+    <div id="batchModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Add Batch</h2>
+            <form method="POST" action="add_batch.php" id="addBatchForm">
+                <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
+                <div class="form-group">
+                    <label>Batch Lot Number</label>
+                    <input type="text" name="batch_lot_number" required placeholder="Enter batch lot number">
+                </div>
+                <div class="form-group">
+                    <label>PONO</label>
+                    <input type="text" name="pono" placeholder="Enter PONO">
+                </div>
+                <div class="form-group">
+                    <label>Manufacturing Date</label>
+                    <input type="date" name="manufacturing_date">
+                </div>
+                <div class="form-group">
+                    <label>Expiration Date</label>
+                    <input type="date" name="expiration_date" required>
+                </div>
+                <div class="form-group">
+                    <label>Stocks</label>
+                    <input type="number" name="stocks" min="1" required placeholder="Enter stock quantity">
+                </div>
+                <div class="form-group">
+                    <label>Source</label>
+                    <input type="text" name="source" placeholder="Enter source">
+                </div>
+                <div class="button-group">
+                    <button type="button" class="cancel-btn" onclick="closeBatchModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        let selectedBatchId = null;
+        let medicineDetails = null;
+
+        function selectRow(row) {
+            // Remove 'selected' class from all rows
+            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
+            // Add 'selected' class to the clicked row
+            row.classList.add('selected');
+        }
+        function showBatchDetails(batch, medicine) {
+            selectedBatchId = batch.id;
+            medicineDetails = medicine;
+
+            const detailsContent = `
+                <div class="tabs-buttons">
+                    <div class="details-tabs">  
+                        <button class="tab active" onclick="switchTab('details')">Details</button>
+                        <button class="tab" onclick="switchTab('addStock')">Add Stock</button>
+                        <button class="tab" onclick="switchTab('history')">History</button>
+                    </div>                            
+                </div>
+
+                <div id="tab-content">
+                    <div id="detailsTab" class="tab-page">
+                        <div class="details-buttons">
+                            <button class="edit-btn" id="editBtn" onclick="enableEditing()">Edit</button>
+                            <button class="delete-btn" onclick="deleteBatch()">Delete</button>
+                        </div>
+                        <form id="batchForm">
+                            <input type="hidden" name="batch_id" value="${batch.id}">
+                            <div class="details-fields">
+                                <div class="field">
+                                    <label>Medicine</label>
+                                    <p>${medicine.generic_name} ${medicine.brand_name ? '(' + medicine.brand_name + ')' : ''} - ${medicine.dosage} ${medicine.dosage_form} (${medicine.unit})</p>
+                                </div>
+                                <div class="field">
+                                    <label>Batch Lot Number</label>
+                                    <input type="text" name="batch_lot_number" id="batch_lot_number" value="${batch.batch_lot_number || ''}" readonly>
+                                </div>
+                                <div class="field">
+                                    <label>PONO</label>
+                                    <input type="text" name="pono" id="pono" value="${batch.pono || ''}" readonly>
+                                </div>
+                                <div class="field">
+                                    <label>Manufacturing Date</label>
+                                    <input type="date" name="manufacturing_date" id="manufacturing_date" value="${batch.manufacturing_date || ''}" readonly>
+                                </div>
+                                <div class="field">
+                                    <label>Expiration Date</label>
+                                    <input type="date" name="expiration_date" id="expiration_date" value="${batch.expiration_date || ''}" readonly>
+                                </div>
+                                <div class="row">
+                                    <div class="field">
+                                        <label>Stocks</label>
+                                        <input type="number" name="stocks" id="stocks" value="${batch.stocks || 0}" readonly>
+                                    </div>
+                                    <div class="field">
+                                        <label>Stock Status</label>
+                                        <input type="text" name="stock_status" id="stock_status" value="${batch.stock_status || ''}" readonly>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label>Expiry Status</label>
+                                    <input type="text" name="expiry_status" id="expiry_status" value="${batch.expiry_status || ''}" readonly>
+                                </div>
+                                <div class="field">
+                                    <label>Source</label>
+                                    <input type="text" name="source" id="source" value="${batch.source || ''}" readonly>
+                                </div>
+                            </div>
+                            <div class="action-buttons" style="display:none; text-align:center; margin-top:20px;">
+                                <button type="button" class="save-btn" onclick="saveBatchChanges()">Save</button>
+                                <button type="button" class="cancel-btn" onclick="cancelEditing()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="addStockTab" class="tab-page" style="display:none;">
+                        <div class="details-fields">
+                            <p>Loading batch summary...</p>
+                        </div>
+                    </div>
+
+                    <div id="historyTab" class="tab-page" style="display:none;">
+                        <div class="details-fields">
+                            <p>Loading history...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailsContent').innerHTML = detailsContent;
+        }
+
+        function enableEditing() {
+            const inputs = document.querySelectorAll('#batchForm input');
+            inputs.forEach(input => {
+                if (input.name !== 'stocks') { // Prevent editing of stocks field
+                    input.removeAttribute('readonly');
+                }
+            });
+
+            document.querySelectorAll('.action-buttons').forEach(actionBtn => {
+                actionBtn.style.display = 'flex';
+            });
+
+            const editBtn = document.getElementById('editBtn');
+            if (editBtn) {
+                editBtn.disabled = true;
+                editBtn.style.opacity = '0.6';
+                editBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        function cancelEditing() {
+            const medicineInputs = document.querySelectorAll('#batchForm input');
+            medicineInputs.forEach(input => {
+                input.setAttribute('readonly', true);
+            });
+
+            document.querySelectorAll('.action-buttons').forEach(actionBtn => {
+                actionBtn.style.display = 'none';
+            });
+
+            const editBtn = document.getElementById('editBtn');
+            if (editBtn) {
+                editBtn.disabled = false;
+                editBtn.style.opacity = '1';
+                editBtn.style.cursor = 'pointer';
+            }
+        }
+
+        function saveBatchChanges() {
+            if (!confirm('Are you sure you want to save changes to this batch?')) {
+                return;
+            }
+
+            const batchForm = document.getElementById('batchForm');
+            const formData = new FormData(batchForm);
+            formData.append('admin_id', '<?= $adminId ?>');
+
+            fetch('update_batch.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Batch updated successfully!');
+                    window.location.href = 'view_batches.php?catalog_id=<?= htmlspecialchars($catalog_id) ?>';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating.');
+            });
+        }
+
+        function switchTab(tabName) {
+            cancelEditing();
+            const tabs = document.querySelectorAll('.tab');
+            const tabPages = document.querySelectorAll('.tab-page');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabPages.forEach(page => page.style.display = 'none');
+
+            if (tabName === 'details') {
+                document.getElementById('detailsTab').style.display = 'block';
+                tabs[0].classList.add('active');
+            } else if (tabName === 'addStock') {
+                document.getElementById('addStockTab').style.display = 'block';
+                tabs[1].classList.add('active');
+                fetchBatchSummary(selectedMedicineId);
+            } else if (tabName === 'history') {
+                document.getElementById('historyTab').style.display = 'block';
+                tabs[2].classList.add('active');
+            }
+        }
+    </script>
+    <script>
+        function openBatchModal() {
+            document.getElementById("batchModal").style.display = "flex";
+        }
+
+        function closeBatchModal() {
+            document.getElementById("batchModal").style.display = "none";
+        }
+
+        
+    </script>
 </body>
 </html>

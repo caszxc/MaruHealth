@@ -615,7 +615,7 @@ table th {
     border-radius: 8px 8x 0 0;
 }
 
-#medicineForm, #addMedicineForm{
+#medicineForm, #addMedicineForm, #addBatchForm{
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -647,7 +647,7 @@ table th {
     font-size: 14px;
 }
 
-#addMedicineForm .button-group{
+#addMedicineForm .button-group, #addBatchForm .button-group{
     display: flex;
     justify-content: flex-end;
     text-align: center;

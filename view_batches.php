@@ -66,6 +66,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 <body>
     <nav>
@@ -220,11 +221,11 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
                 <div class="form-group">
                     <label>Batch Lot Number</label>
-                    <input type="text" name="batch_lot_number" required placeholder="Enter batch lot number">
+                    <input type="text" name="batch_lot_number" required placeholder="Enter batch lot number" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>PONO</label>
-                    <input type="text" name="pono" placeholder="Enter PONO">
+                    <input type="text" name="pono" placeholder="Enter PONO" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label>Manufacturing Date</label>
@@ -240,7 +241,15 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="form-group">
                     <label>Source</label>
-                    <input type="text" name="source" placeholder="Enter source">
+                    <select name="source" class="select2" required>
+                        <option value="" disabled selected>Select or type to add new</option>
+                        <?php
+                        $categoryStmt = $conn->query("SELECT DISTINCT source FROM medicine_batches ORDER BY source");
+                        while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
+                            echo "<option value='" . htmlspecialchars($category['source']) . "'>" . htmlspecialchars($category['source']) . "</option>";
+                        }
+                        ?>
+                    </select>
                 </div>
                 <div class="button-group">
                     <button type="button" class="cancel-btn" onclick="closeBatchModal()">Cancel</button>
@@ -249,6 +258,10 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             </form>
         </div>
     </div>
+
+    <!-- jQuery and Select2 JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         let selectedBatchId = null;
         let medicineDetails = null;
@@ -432,6 +445,15 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         }
     </script>
     <script>
+        // Initialize Select2 for searchable dropdowns
+        $(document).ready(function() {
+            $('.select2').select2({
+                tags: true, // Allow adding new options
+                placeholder: "Select or type to add new",
+                allowClear: true,
+                width: '100%'
+            });
+        });
         function openBatchModal() {
             document.getElementById("batchModal").style.display = "flex";
         }

@@ -517,6 +517,38 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             }
         }
 
+        function deleteMedicine() {
+            if (!selectedMedicineId) {
+                alert('Please select a medicine to delete.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this medicine? This action cannot be undone.')) {
+                return;
+            }
+
+            fetch('delete_medicine.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `medicine_id=${encodeURIComponent(selectedMedicineId)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Medicine deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the medicine.');
+            });
+        }
+
     </script>
     <script>
         //ADD MEDICINE MODAL

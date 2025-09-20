@@ -443,6 +443,40 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 tabs[2].classList.add('active');
             }
         }
+
+        function deleteBatch() {
+            if (!selectedBatchId) {
+                alert('No batch selected.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this batch? This action cannot be undone.')) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('batch_id', selectedBatchId);
+            formData.append('admin_id', '<?= $adminId ?>');
+
+            fetch('delete_batch.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Batch deleted successfully!');
+                    window.location.reload(); // Refresh the page to update the batch list
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the batch.');
+            });
+        }
+        
     </script>
     <script>
         // Initialize Select2 for searchable dropdowns

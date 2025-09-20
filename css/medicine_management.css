@@ -141,7 +141,39 @@ body::-webkit-scrollbar{
 
 /* Sort Controls */
 .sort-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+}
+
+.sort-controls h2 {
+    font-size: 24px;
+    color: #800000;
+    margin: 0;
+    font-weight: bold;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    color: #fff;
+    background-color: #800000;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: #6b0000;
 }
 
 .search-con {
@@ -208,7 +240,7 @@ body::-webkit-scrollbar{
     transform: translateY(-1px);
 }
 
-.add-med-btn {
+.add-med-btn, .add-batch-btn {
     background-color: #800000;
     color: white;
     padding: 10px 20px;
@@ -220,7 +252,7 @@ body::-webkit-scrollbar{
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.add-med-btn:hover {
+.add-med-btn:hover, .add-batch-btn:hover {
     background-color: #6b0000;
     transform: translateY(-1px);
 }
@@ -228,7 +260,7 @@ body::-webkit-scrollbar{
 /* Legend */
 .legend {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap;    
     gap: 12px;
     padding: 12px;
     background-color: #f1f5f9;
@@ -409,13 +441,18 @@ table th {
     justify-content: flex-end;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn, .delete-btn, .viewBatch-btn {
     padding: 8px 8px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
+}
+
+.viewBatch-btn{
+    background-color: green;
+    color: white;
 }
 
 .edit-btn {
@@ -583,7 +620,7 @@ table th {
     border-radius: 8px 8x 0 0;
 }
 
-#medicineForm, #addMedicineForm{
+#medicineForm, #addMedicineForm, #addBatchForm{
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -615,7 +652,7 @@ table th {
     font-size: 14px;
 }
 
-#addMedicineForm .button-group{
+#addMedicineForm .button-group, #addBatchForm .button-group{
     display: flex;
     justify-content: flex-end;
     text-align: center;
@@ -671,3 +708,4 @@ table th {
 .select2-container .select2-selection__arrow {
     height: 38px;
 }
+

@@ -1,5 +1,5 @@
 <?php
-// get_request_details.php
+//get_request_details.php
 session_start();
 require_once "config.php";
 
@@ -45,16 +45,20 @@ $medicines = $medicinesStmt->fetchAll(PDO::FETCH_ASSOC);
 // For each medicine, check if it's available in stock
 foreach ($medicines as &$medicine) {
     // Check if this medicine is available in our inventory
-    $availabilityQuery = "SELECT id, generic_name, brand_name, dosage, dosage_form, stocks 
-                     FROM medicines 
-                     WHERE (generic_name LIKE :name OR brand_name LIKE :name) 
-                     AND stocks > 0 
-                     AND stock_status IN ('In Stock', 'Low Stock') 
-                     AND expiry_status != 'Expired'";
-                         
+    $availabilityQuery = "SELECT mc.id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form, SUM(mb.stocks) as stocks 
+                     FROM medicines_catalog mc 
+                     JOIN medicine_batches mb ON mc.id = mb.catalog_id
+                     WHERE (mc.generic_name LIKE :name OR mc.brand_name LIKE :name) 
+                     AND mc.dosage LIKE :dosage
+                     AND mb.stocks > 0 
+                     AND mb.stock_status IN ('In Stock', 'Low Stock') 
+                     AND mb.expiry_status != 'Expired'
+                     GROUP BY mc.id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form";
     $availabilityStmt = $conn->prepare($availabilityQuery);
     $searchName = "%" . $medicine['medicine_name'] . "%";
+    $searchDosage = "%" . $medicine['dosage'] . "%";
     $availabilityStmt->bindParam(':name', $searchName);
+    $availabilityStmt->bindParam(':dosage', $searchDosage);
     $availabilityStmt->execute();
     $availableMeds = $availabilityStmt->fetchAll(PDO::FETCH_ASSOC);
     

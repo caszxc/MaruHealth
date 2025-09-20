@@ -1,5 +1,5 @@
 <?php
-// process_request.php
+//process_request.php
 session_start();
 require_once "config.php";
 require_once "email_function.php"; // Include email function
@@ -12,7 +12,7 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $requestId = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
-    $adminId = $_SESSION['admin_id']; // Get admin ID for stock history logging
+    $adminId = $_SESSION['admin_id']; // Get admin ID
     $adminNote = isset($_POST['admin_note']) ? trim($_POST['admin_note']) : null;
     
     if ($requestId <= 0) {
@@ -119,7 +119,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     else {
         $claimBy = isset($_POST['claim_by']) ? $_POST['claim_by'] : null;
         $claimUntil = isset($_POST['claim_until']) ? $_POST['claim_until'] : null;
-        $distributeMedicines = isset($_POST['distribute_medicines']) ? $_POST['distribute_medicines'] : [];
         
         if ($requestId <= 0 || empty($claimBy) || empty($claimUntil)) {
             $_SESSION['error'] = "Please fill in all required fields";
@@ -188,23 +187,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         }
                     }
 
-                    // Store the association between requested medicine and inventory medicine
+                    // Update stock in medicine_batches (optional, if you want to track stock)
                     if (isset($_POST['distribute_medicines']) && is_array($_POST['distribute_medicines']) && isset($_POST['approved_quantities']) && is_array($_POST['approved_quantities'])) {
-                        // Insert the distribution data
-                        $distributionQuery = "INSERT INTO medicine_distributions 
-                                             (request_id, requested_medicine_id, inventory_medicine_id, quantity) 
-                                             VALUES (:request_id, :requested_id, :inventory_id, :quantity)";
-                        $distributionStmt = $conn->prepare($distributionQuery);
-
-                        // Update medicine stock
-                        $updateStockQuery = "UPDATE medicines SET stocks = stocks - :quantity WHERE id = :id";
+                        $updateStockQuery = "UPDATE medicine_batches SET stocks = stocks - :quantity WHERE id = :id";
                         $updateStockStmt = $conn->prepare($updateStockQuery);
-
-                        // Log stock history
-                        $historyQuery = "INSERT INTO stock_history 
-                                        (medicine_id, quantity_change, reason, changed_by) 
-                                        VALUES (:medicine_id, :quantity_change, :reason, :changed_by)";
-                        $historyStmt = $conn->prepare($historyQuery);
 
                         foreach ($_POST['distribute_medicines'] as $requestedId => $inventoryId) {
                             if (in_array($requestedId, $approvedMedicines)) {
@@ -215,42 +201,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 }
 
                                 // Check stock for safety
-                                $stockCheckQuery = "SELECT stocks FROM medicines WHERE id = :id";
+                                $stockCheckQuery = "SELECT stocks FROM medicine_batches WHERE id = :id";
                                 $stockCheckStmt = $conn->prepare($stockCheckQuery);
                                 $stockCheckStmt->bindParam(':id', $inventoryId);
                                 $stockCheckStmt->execute();
                                 $currentStock = $stockCheckStmt->fetchColumn();
 
                                 if ($currentStock < $approvedQty) {
-                                    throw new Exception("Not enough stock for medicine ID $inventoryId");
+                                    throw new Exception("Not enough stock for medicine batch ID $inventoryId");
                                 }
 
-                                // Add to distribution table
-                                $distributionStmt->bindParam(':request_id', $requestId);
-                                $distributionStmt->bindParam(':requested_id', $requestedId);
-                                $distributionStmt->bindParam(':inventory_id', $inventoryId);
-                                $distributionStmt->bindParam(':quantity', $approvedQty);
-                                $distributionStmt->execute();
-
-                                // Reduce inventory stock
+                                // Reduce inventory stock in medicine_batches
                                 $updateStockStmt->bindParam(':quantity', $approvedQty);
                                 $updateStockStmt->bindParam(':id', $inventoryId);
                                 $updateStockStmt->execute();
 
-                                // Log stock history
-                                $quantityChange = -$approvedQty; // Negative for distribution
-                                $reason = 'Distribution';
-                                $historyStmt->bindParam(':medicine_id', $inventoryId);
-                                $historyStmt->bindParam(':quantity_change', $quantityChange);
-                                $historyStmt->bindParam(':reason', $reason);
-                                $historyStmt->bindParam(':changed_by', $adminId);
-                                $historyStmt->execute();
-
-                                // Update medicine stock status
-                                $updateStockStatusQuery = "UPDATE medicines SET 
+                                // Update batch stock status
+                                $updateStockStatusQuery = "UPDATE medicine_batches SET 
                                                          stock_status = CASE 
                                                             WHEN stocks <= 0 THEN 'Out of Stock'
-                                                            WHEN stocks <= min_stock THEN 'Low Stock'
+                                                            WHEN stocks <= (SELECT min_stock FROM medicines_catalog WHERE id = medicine_batches.catalog_id) THEN 'Low Stock'
                                                             ELSE 'In Stock'
                                                          END
                                                          WHERE id = :id";
@@ -279,7 +249,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <h3>Request Details</h3>
                 <p><strong>Approved Medicines:</strong><br>$approvedList</p>
                 <p><strong>Declined Medicines:</strong><br>$declinedList</p>
-                <p><strong>Claim By:</strong> " . htmlspecialchars($claimBy) . "</p>
                 <p><strong>Claim Until:</strong> " . htmlspecialchars($claimUntil) . "</p>
                 $noteSection
                 <p>Please visit the health station during the specified period to claim your medicines. Bring a valid ID for verification.</p>

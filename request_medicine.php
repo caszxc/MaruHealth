@@ -24,7 +24,6 @@ if (isset($_SESSION['user_id'])) {
     $stmt->execute();
     $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 }
-
 ?>
 
 <html lang="en">
@@ -154,7 +153,6 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     </div>
                     
-                    
                     <div class="row">
                         <div>
                             <label>Upload Prescription</label>
@@ -186,7 +184,9 @@ if (isset($_SESSION['user_id'])) {
             const clone = entry.cloneNode(true);
 
             // Clear inputs
-            clone.querySelectorAll('input').forEach(input => input.value = '');
+            clone.querySelector('input[name="medicine_name[]"]').value = '';
+            clone.querySelector('input[name="dosage[]"]').value = '';
+            clone.querySelector('input[name="quantity[]"]').value = '';
 
             container.appendChild(clone);
         });
@@ -216,6 +216,6 @@ if (isset($_SESSION['user_id'])) {
             });
         });
     </script>
-
 </body>
+</html>
 </html>

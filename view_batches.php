@@ -424,25 +424,78 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         function switchTab(tabName) {
-            cancelEditing();
-            const tabs = document.querySelectorAll('.tab');
-            const tabPages = document.querySelectorAll('.tab-page');
+        cancelEditing();
+        const tabs = document.querySelectorAll('.tab');
+        const tabPages = document.querySelectorAll('.tab-page');
 
-            tabs.forEach(tab => tab.classList.remove('active'));
-            tabPages.forEach(page => page.style.display = 'none');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabPages.forEach(page => page.style.display = 'none');
 
-            if (tabName === 'details') {
-                document.getElementById('detailsTab').style.display = 'block';
-                tabs[0].classList.add('active');
-            } else if (tabName === 'addStock') {
-                document.getElementById('addStockTab').style.display = 'block';
-                tabs[1].classList.add('active');
-                fetchBatchSummary(selectedMedicineId);
-            } else if (tabName === 'history') {
-                document.getElementById('historyTab').style.display = 'block';
-                tabs[2].classList.add('active');
-            }
+        if (tabName === 'details') {
+            document.getElementById('detailsTab').style.display = 'block';
+            tabs[0].classList.add('active');
+        } else if (tabName === 'addStock') {
+            document.getElementById('addStockTab').style.display = 'block';
+            tabs[1].classList.add('active');
+            // fetchBatchSummary(selectedMedicineId); // Uncomment if needed
+        } else if (tabName === 'history') {
+            document.getElementById('historyTab').style.display = 'block';
+            tabs[2].classList.add('active');
+            fetchBatchHistory(selectedBatchId);
         }
+    }
+
+    function fetchBatchHistory(batchId) {
+        const historyTab = document.getElementById('historyTab');
+        historyTab.innerHTML = '<p>Loading history...</p>';
+
+        fetch('get_batch_history.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `batch_id=${encodeURIComponent(batchId)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.data.length === 0) {
+                    historyTab.innerHTML = '<p>No history available for this batch.</p>';
+                } else {
+                    let tableHTML = `
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>Performed by</th>
+                                    <th>When</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    data.data.forEach(entry => {
+                        tableHTML += `
+                            <tr>
+                                <td>${entry.action_type}</td>
+                                <td>${entry.details}</td>
+                                <td>${entry.performed_by}</td>
+                                <td>${entry.created_at}</td>
+                            </tr>
+                        `;
+                    });
+                    tableHTML += '</tbody></table>';
+                    historyTab.innerHTML = tableHTML;
+                }
+            } else {
+                historyTab.innerHTML = `<p style="color: red;">Error: ${data.message}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            historyTab.innerHTML = '<p style="color: red;">Failed to load history.</p>';
+        });
+    }
 
         function deleteBatch() {
             if (!selectedBatchId) {

@@ -72,6 +72,8 @@ if ($days_to_expiry < 0) {
 }
 
 try {
+    $conn->beginTransaction();
+
     // Insert new batch
     $insertStmt = $conn->prepare("
         INSERT INTO medicine_batches (
@@ -94,11 +96,23 @@ try {
         ':source' => $source
     ]);
 
-    // Redirect to view_batches.php with catalog_id
+    $batch_id = $conn->lastInsertId();
+
+    // Log the action in medicine_history
+    $details = "Added batch: Lot $batch_lot_number, Stocks: $stocks, Source: " . ($source ?: 'N/A');
+    $historyStmt = $conn->prepare("INSERT INTO medicine_history (batch_id, action_type, details, performed_by) VALUES (:batch_id, 'add_batch', :details, :performed_by)");
+    $historyStmt->execute([
+        ':batch_id' => $batch_id,
+        ':details' => $details,
+        ':performed_by' => $admin_id
+    ]);
+
+    $conn->commit();
+
     header("Location: view_batches.php?catalog_id=" . urlencode($catalog_id));
     exit();
-
 } catch (PDOException $e) {
+    $conn->rollBack();
     echo json_encode(['success' => false, 'message' => 'Error adding batch: ' . $e->getMessage()]);
     exit();
 }

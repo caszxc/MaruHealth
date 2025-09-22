@@ -85,6 +85,13 @@ if ($days_to_expiry < 0) {
 }
 
 try {
+    $conn->beginTransaction();
+
+    // Fetch current batch details for comparison
+    $currentStmt = $conn->prepare("SELECT * FROM medicine_batches WHERE id = :batch_id");
+    $currentStmt->execute([':batch_id' => $batch_id]);
+    $current = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
     // Update batch
     $updateStmt = $conn->prepare("
         UPDATE medicine_batches SET
@@ -110,22 +117,30 @@ try {
         ':batch_id' => $batch_id
     ]);
 
-    // Log stock history if stock quantity changed (assuming stock_history table exists)
-    /* if ($stocks != $original_stocks) {
-        $historyStmt = $conn->prepare("
-            INSERT INTO stock_history (medicine_id, quantity_change, reason, changed_by)
-            VALUES (:medicine_id, :quantity_change, :reason, :changed_by)
-        ");
+    // Log changes in medicine_history
+    $changes = [];
+    if ($current['batch_lot_number'] !== $batch_lot_number) $changes[] = "Batch Lot Number: {$current['batch_lot_number']} to $batch_lot_number";
+    if ($current['pono'] !== $pono) $changes[] = "PONO: {$current['pono']} to " . ($pono ?: 'N/A');
+    if ($current['manufacturing_date'] !== $manufacturing_date) $changes[] = "Manufacturing Date: {$current['manufacturing_date']} to " . ($manufacturing_date ?: 'N/A');
+    if ($current['expiration_date'] !== $expiration_date) $changes[] = "Expiration Date: {$current['expiration_date']} to $expiration_date";
+    if ($current['stocks'] !== $stocks) $changes[] = "Stocks: {$current['stocks']} to $stocks";
+    if ($current['source'] !== $source) $changes[] = "Source: {$current['source']} to " . ($source ?: 'N/A');
+
+    if (!empty($changes)) {
+        $details = "Updated batch: " . implode(', ', $changes);
+        $historyStmt = $conn->prepare("INSERT INTO medicine_history (batch_id, action_type, details, performed_by) VALUES (:batch_id, 'update_batch', :details, :performed_by)");
         $historyStmt->execute([
-            ':medicine_id' => $catalog_id,
-            ':quantity_change' => $stocks - $original_stocks,
-            ':reason' => 'Batch update',
-            ':changed_by' => $admin_id
+            ':batch_id' => $batch_id,
+            ':details' => $details,
+            ':performed_by' => $admin_id
         ]);
-    } */
+    }
+
+    $conn->commit();
 
     echo json_encode(['success' => true, 'message' => 'Batch updated successfully']);
 } catch (PDOException $e) {
+    $conn->rollBack();
     echo json_encode(['success' => false, 'message' => 'Error updating batch: ' . $e->getMessage()]);
 }
 

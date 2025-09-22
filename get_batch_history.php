@@ -9,24 +9,24 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $catalog_id = isset($_POST['catalog_id']) ? (int)$_POST['catalog_id'] : 0;
+    $batch_id = isset($_POST['batch_id']) ? (int)$_POST['batch_id'] : 0;
 
-    if ($catalog_id <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid catalog ID.']);
+    if ($batch_id <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid batch ID.']);
         exit();
     }
 
     try {
-        // Fetch history for both catalog and batch-related actions
+        // Fetch history for batch-related actions
         $stmt = $conn->prepare("
             SELECT mh.id, mh.action_type, mh.details, mh.created_at, a.full_name
             FROM medicine_history mh
             LEFT JOIN admin_staff a ON mh.performed_by = a.id
-            WHERE (mh.catalog_id = :catalog_id AND mh.action_type IN ('add_catalog', 'update_catalog', 'delete_catalog'))
-               OR (mh.batch_id IN (SELECT id FROM medicine_batches WHERE catalog_id = :catalog_id) AND mh.action_type IN ('add_batch', 'delete_batch'))
+            WHERE mh.batch_id = :batch_id
+            AND mh.action_type IN ('add_batch', 'update_batch', 'delete_batch')
             ORDER BY mh.created_at DESC
         ");
-        $stmt->execute([':catalog_id' => $catalog_id]);
+        $stmt->execute([':batch_id' => $batch_id]);
         $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Format the history data

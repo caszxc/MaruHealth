@@ -78,8 +78,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Content Management</title>
-    <link rel="stylesheet" href="css/content_management.css">
+    <title>Service Management</title>
+    <link rel="stylesheet" href="css/service_management.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -153,7 +153,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/calendar_icon_active.png" alt="">
-                <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
+                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
 

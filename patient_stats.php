@@ -420,7 +420,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
 
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
-                <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
+                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
 

@@ -169,7 +169,7 @@ try {
     </div>
     <!-- Services Section -->
     <section class="services" data-aos="fade-up">
-        <h2>Our Services</h2>
+        <h2>Services in Marulas 3S</h2>
         <div class="card-container">
             <?php if (!empty($services)): ?>
                 <?php foreach ($services as $service): ?>

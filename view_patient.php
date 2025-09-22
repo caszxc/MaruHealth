@@ -3,8 +3,8 @@
 session_start();
 include 'config.php';
 
-// Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+// Check if user is logged in as health staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -91,8 +91,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'staff') {
-                    $dashboard_url = 'staff_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
@@ -133,7 +133,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'health_staff'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/patient_icon_active.png" alt="">
                 <a href="patient_management.php" class="<?= ($current_page == 'patient_management.php' || $current_page == 'view_patient.php')  ? 'active' : '' ?>">Patient Management</a>
@@ -195,10 +195,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <div class="row">
                             <p class="label">Birthdate</p>
                             <p class="value"><?= $patient['birthdate'] ?></p>
-                        </div>
-                        <div class="row">
-                            <p class="label">Civil Status</p>
-                            <p class="value"><?= $patient['civil_status'] ?></p>
                         </div>
                         <div class="row">
                             <p class="label">Contact Number</p>
@@ -451,25 +447,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                 <option value="Female" ' . ($patient['sex'] == 'Female' ? 'selected' : '') . '>Female</option>
                             </select>
                         </div>
-                        <div class="form-row">
-                            <label>Civil Status</label>
-                            <select name="civil_status" id="edit_civil_status" required>
-                                <option value="" disabled>Select</option>
-                                <option value="Single" ' . ($patient['civil_status'] == 'Single' ? 'selected' : '') . '>Single</option>
-                                <option value="Married" ' . ($patient['civil_status'] == 'Married' ? 'selected' : '') . '>Married</option>
-                                <option value="Divorced" ' . ($patient['civil_status'] == 'Divorced' ? 'selected' : '') . '>Divorced</option>
-                                <option value="Widowed" ' . ($patient['civil_status'] == 'Widowed' ? 'selected' : '') . '>Widowed</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row">
                             <label>Contact Number</label>
                             <input type="tel" id="edit_contact_number" name="contact_number" value="' . htmlspecialchars($patient['contact_number']) . '" autocomplete="off">
-                        </div>
-                        <div class="form-row">
-                            <label>Occupation</label>
-                            <input type="text" id="edit_occupation" name="occupation" value="' . htmlspecialchars($patient['occupation']) . '" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">

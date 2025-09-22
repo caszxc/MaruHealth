@@ -16,9 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $first_name = $_POST['first_name'] ?? null;
         $middle_name = $_POST['middle_name'] ?? null;
         $last_name = $_POST['last_name'] ?? null;
-        $civil_status = $_POST['civil_status'] ?? null;
         $contact_number = $_POST['contact_number'] ?? null;
-        $occupation = $_POST['occupation'] ?? null;
         $address = $_POST['address'] ?? null;
         $weight = $_POST['weight'] ? floatval($_POST['weight']) : null;
         $height = $_POST['height'] ? floatval($_POST['height']) : null;
@@ -26,18 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $bmi_status = $_POST['bmi_status'] ?? null;
 
         // Validate required fields
-        if (empty($patient_id) || empty($civil_status)) {
-            echo json_encode(['status' => 'error', 'message' => 'Patient ID and civil status are required']);
-            exit();
-        }
-
-        // Validate civil_status
-        $valid_civil_statuses = ['Single', 'Married', 'Divorced', 'Widowed'];
-        if (!in_array($civil_status, $valid_civil_statuses)) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid civil status']);
-            exit();
-        }
-
         // Validate contact_number if provided
         if (!empty($contact_number) && !preg_match('/^[0-9]{10,11}$/', $contact_number)) {
             echo json_encode(['status' => 'error', 'message' => 'Invalid contact number. Must be 10 or 11 digits.']);
@@ -59,9 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 first_name = :first_name,
                 middle_name = :middle_name,
                 last_name = :last_name,
-                civil_status = :civil_status,
                 contact_number = :contact_number,
-                occupation = :occupation,
                 address = :address,
                 weight = :weight,
                 height = :height,
@@ -76,9 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':first_name', $first_name);
         $stmt->bindParam(':middle_name', $middle_name);
         $stmt->bindParam(':last_name', $last_name);
-        $stmt->bindParam(':civil_status', $civil_status);
         $stmt->bindParam(':contact_number', $contact_number);
-        $stmt->bindParam(':occupation', $occupation);
         $stmt->bindParam(':address', $address);
         $stmt->bindParam(':weight', $weight);
         $stmt->bindParam(':height', $height);

@@ -3,8 +3,8 @@
 session_start();
 require 'config.php';
 
-// Check if user is logged in as staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff'])) {
+// Check if user is logged in as health staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -112,8 +112,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'staff') {
-                    $dashboard_url = 'staff_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
@@ -154,7 +154,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'health_staff'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/patient_icon_active.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
@@ -202,7 +202,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Middle Name</th>
                         <th>Sex</th>
                         <th>Birthdate</th>
-                        <th>Civil Status</th>
                         <th>Contact Number</th>
                         <th>Date Registered</th>
                         <th></th>
@@ -222,7 +221,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <td><?= htmlspecialchars($patient['middle_name']) ?></td>
                             <td><?= htmlspecialchars($patient['sex']) ?></td>
                             <td><?= htmlspecialchars($patient['birthdate']) ?></td>
-                            <td><?= htmlspecialchars($patient['civil_status']) ?></td>
                             <td><?= htmlspecialchars($patient['contact_number']) ?></td>
                             <td><?= htmlspecialchars($patient['created_at']) ?></td>
                             <td class="action-buttons">
@@ -303,25 +301,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                 <option value="Female">Female</option>
                             </select>
                         </div>
-                        <div class="form-row">
-                            <label>Civil Status</label>
-                            <select name="civil_status" id="civil_status" required>
-                                <option value="" disabled selected>Select</option>
-                                <option value="Single">Single</option>
-                                <option value="Married">Married</option>
-                                <option value="Divorced">Divorced</option>
-                                <option value="Widowed">Widowed</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="form-group">
                         <div class="form-row">
                             <label>Contact Number</label>
                             <input type="tel" id="contact_number" name="contact_number" autocomplete="off">
-                        </div>
-                        <div class="form-row">
-                            <label>Occupation</label>
-                            <input type="text" id="occupation" name="occupation" autocomplete="off">
                         </div>
                     </div>
                     <div class="form-group">

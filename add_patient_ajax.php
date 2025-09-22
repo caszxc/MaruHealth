@@ -12,9 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $last_name = $_POST['last_name'];
         $birthdate = $_POST['birthdate'];
         $sex = $_POST['sex'];
-        $civil_status = $_POST['civil_status'];
         $contact_number = $_POST['contact_number'];
-        $occupation = $_POST['occupation'];
         $address = $_POST['address'];
         $weight = $_POST['weight'];
         $height = $_POST['height'];
@@ -25,11 +23,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Insert family details into the families table
         $query = "INSERT INTO patients (
-            family_number, first_name, middle_name, last_name, birthdate, sex, civil_status, 
-            contact_number, occupation, address, weight, height, bmi, bmi_status
+            family_number, first_name, middle_name, last_name, birthdate, sex, 
+            contact_number, address, weight, height, bmi, bmi_status
         ) VALUES (
-            :family_number, :first_name, :middle_name, :last_name, :birthdate, :sex, :civil_status, 
-            :contact_number, :occupation, :address, :weight, :height, :bmi, :bmi_status
+            :family_number, :first_name, :middle_name, :last_name, :birthdate, :sex, 
+            :contact_number, :address, :weight, :height, :bmi, :bmi_status
         )";
         $stmt = $conn->prepare($query);
         $stmt->execute([
@@ -39,9 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ':last_name' => $last_name,
             ':birthdate' => $birthdate,
             ':sex' => $sex,
-            ':civil_status' => $civil_status,
             ':contact_number' => $contact_number,
-            ':occupation' => $occupation,
             ':address' => $address,
             ':weight' => $weight,
             ':height' => $height,

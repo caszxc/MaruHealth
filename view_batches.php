@@ -3,8 +3,8 @@
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as staff or super_admin
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff', 'super_admin'])) {
+// Check if user is logged in as health staff 
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -95,8 +95,8 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'staff') {
-                    $dashboard_url = 'staff_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
@@ -130,7 +130,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>

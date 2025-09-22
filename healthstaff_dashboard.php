@@ -1,10 +1,10 @@
 <?php
-//staff_dashboard.php
+//healthstaff_dashboard.php
 session_start();
 require_once "config.php";
 
 // Check if user is logged in and is staff
-if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'staff') {
+if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'health_staff') {
     header("Location: login.php");
     exit();
 }
@@ -89,7 +89,7 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Dashboard</title>
+    <title>Health Staff Dashboard</title>
     <link rel="stylesheet" href="css/admin_dashboard.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -290,7 +290,7 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-                $dashboard_url = 'staff_dashboard.php';
+                $dashboard_url = 'healthstaff_dashboard.php';
             ?>
             <p class="menu-header">ANALYTICS</p>
             <div class="menu-link-active">

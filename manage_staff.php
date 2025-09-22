@@ -109,8 +109,8 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'staff') {
-                    $dashboard_url = 'staff_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>

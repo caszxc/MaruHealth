@@ -2,6 +2,12 @@
 //add_patient_ajax.php
 require 'config.php';
 
+// Check if user is logged in as health staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
+    exit();
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     try {
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

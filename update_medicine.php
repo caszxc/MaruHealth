@@ -3,8 +3,8 @@
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as staff or super_admin
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['staff', 'super_admin'])) {
+// Check if user is logged in as health staff 
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
     exit();
 }

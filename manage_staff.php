@@ -240,7 +240,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                         <select id="role" name="role" required>
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
+                            <option value="staff">Medical Staff</option>
                         </select>
                     </div>
                     

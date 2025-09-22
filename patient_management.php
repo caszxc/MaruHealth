@@ -80,7 +80,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <img src="images/profile-placeholder.png" alt="Admin">
             <div class="profile-details">
                 <p class="admin_name"><strong><?= htmlspecialchars($adminName) ?></strong></p>
-                <p class="role"><?= htmlspecialchars($displayRole) ?></p>
+                <p class="role"><?= 'Medical ' . htmlspecialchars($displayRole) ?></p>
             </div>
         </div>
         <div class="menu">

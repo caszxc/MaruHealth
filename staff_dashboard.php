@@ -284,7 +284,8 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
             <img src="images/profile-placeholder.png" alt="Staff">
             <div class="profile-details">
                 <p class="admin_name"><strong><?= htmlspecialchars($adminName) ?></strong></p>
-                <p class="role"><?= htmlspecialchars($displayRole) ?></p>
+                
+                <p class="role"><?= 'Medical ' . htmlspecialchars($displayRole) ?></p>
             </div>
         </div>
         <div class="menu">
@@ -319,7 +320,7 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
     </div>
 
     <div class="dashboard-content">
-        <h1>Staff Dashboard</h1>
+        <h1>Medical Staff Dashboard</h1>
         
         <!-- Stats Cards -->
         <div class="stats-cards">

@@ -16,6 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $serviceIntro = trim($_POST['serviceIntro'] ?? '');
     $serviceNames = $_POST['serviceName'] ?? [];
     $scheduleDays = $_POST['scheduleDay'] ?? [];
+    $doctorNames = $_POST['doctorName'] ?? []; // Added to capture doctor names
     $images = $_FILES['serviceImages'] ?? [];
     $serviceIcon = $_FILES['serviceIcon'] ?? null;
 
@@ -63,10 +64,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Insert sub-services and schedules
         foreach ($serviceNames as $index => $serviceName) {
             if (!empty($serviceName)) {
-                // Insert sub-service
-                $subStmt = $conn->prepare("INSERT INTO sub_services (service_id, name) VALUES (:service_id, :name)");
+                // Insert sub-service with doctor_name
+                $doctorName = !empty($doctorNames[$index]) ? trim($doctorNames[$index]) : null;
+                $subStmt = $conn->prepare("INSERT INTO sub_services (service_id, name, doctor_name) VALUES (:service_id, :name, :doctor_name)");
                 $subStmt->bindParam(':service_id', $serviceId);
                 $subStmt->bindParam(':name', $serviceName);
+                $subStmt->bindParam(':doctor_name', $doctorName, PDO::PARAM_STR | PDO::PARAM_NULL);
                 $subStmt->execute();
                 $subServiceId = $conn->lastInsertId();
 

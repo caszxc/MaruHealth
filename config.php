@@ -194,6 +194,7 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         service_id INT NOT NULL,
         name VARCHAR(255) NOT NULL,
+        doctor_name VARCHAR(255),
         FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);

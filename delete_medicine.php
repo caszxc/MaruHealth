@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once "config.php"; // Include database connection
+require_once "config.php";
 
 // Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'health_staff'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access.']);
     exit();
 }
@@ -26,9 +26,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Begin transaction
         $conn->beginTransaction();
 
-        // Delete from medicines_catalog table
-        $stmt = $conn->prepare("DELETE FROM medicines_catalog WHERE id = ?");
-        $stmt->execute([$id]);
+        // Fetch medicine details for history logging
+        $currentStmt = $conn->prepare("SELECT * FROM medicines_catalog WHERE id = ?");
+        $currentStmt->execute([$id]);
+        $medicine = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$medicine) {
+            throw new PDOException("Medicine not found.");
+        }
+
+        // Log deletion in medicine_history before deletion
+        $details = "Deleted medicine: {$medicine['generic_name']}" . ($medicine['brand_name'] ? " ({$medicine['brand_name']})" : "") . ", Dosage: {$medicine['dosage']} {$medicine['dosage_form']}";
+        $historyStmt = $conn->prepare("INSERT INTO medicine_history (catalog_id, action_type, details, performed_by) VALUES (:catalog_id, 'delete_catalog', :details, :performed_by)");
+        $historyStmt->execute([
+            ':catalog_id' => $id,
+            ':details' => $details,
+            ':performed_by' => $admin_id
+        ]);
+
+        // Delete from medicines_catalog
+        $deleteStmt = $conn->prepare("DELETE FROM medicines_catalog WHERE id = ?");
+        $deleteStmt->execute([$id]);
 
         // Commit transaction
         $conn->commit();

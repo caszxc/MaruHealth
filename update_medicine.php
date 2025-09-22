@@ -66,6 +66,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // If no errors, update the medicine in the catalog
     if (empty($errors)) {
         try {
+            $conn->beginTransaction();
+
+            // Fetch current medicine details for comparison
+            $currentStmt = $conn->prepare("SELECT * FROM medicines_catalog WHERE id = :medicine_id");
+            $currentStmt->execute([':medicine_id' => $medicine_id]);
+            $current = $currentStmt->fetch(PDO::FETCH_ASSOC);
+
+            // Update medicines_catalog
             $stmt = $conn->prepare("UPDATE medicines_catalog SET therapeutic_category = :therapeutic_category, generic_name = :generic_name, brand_name = :brand_name, dosage = :dosage, dosage_form = :dosage_form, unit = :unit, min_stock = :min_stock WHERE id = :medicine_id");
             $stmt->execute([
                 ':therapeutic_category' => $therapeutic_category,
@@ -78,9 +86,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 ':medicine_id' => $medicine_id
             ]);
 
+            // Log changes in medicine_history
+            $changes = [];
+            if ($current['therapeutic_category'] !== $therapeutic_category) $changes[] = "Therapeutic Category: {$current['therapeutic_category']} to $therapeutic_category";
+            if ($current['generic_name'] !== $generic_name) $changes[] = "Generic Name: {$current['generic_name']} to $generic_name";
+            if ($current['brand_name'] !== ($brand_name ?: null)) $changes[] = "Brand Name: {$current['brand_name']} to " . ($brand_name ?: 'None');
+            if ($current['dosage'] !== $dosage) $changes[] = "Dosage: {$current['dosage']} to $dosage";
+            if ($current['dosage_form'] !== $dosage_form) $changes[] = "Dosage Form: {$current['dosage_form']} to $dosage_form";
+            if ($current['unit'] !== $unit) $changes[] = "Unit: {$current['unit']} to $unit";
+            if ($current['min_stock'] !== $min_stock) $changes[] = "Min Stock: {$current['min_stock']} to $min_stock";
+
+            if (!empty($changes)) {
+                $details = "Updated medicine: " . implode(', ', $changes);
+                $historyStmt = $conn->prepare("INSERT INTO medicine_history (catalog_id, action_type, details, performed_by) VALUES (:catalog_id, 'update_catalog', :details, :performed_by)");
+                $historyStmt->execute([
+                    ':catalog_id' => $medicine_id,
+                    ':details' => $details,
+                    ':performed_by' => $_SESSION['admin_id']
+                ]);
+            }
+
+            $conn->commit();
+
             echo json_encode(['success' => true, 'message' => 'Medicine updated successfully!']);
             exit();
         } catch (PDOException $e) {
+            $conn->rollBack();
             $errors[] = "Error updating medicine: " . $e->getMessage();
         }
     }

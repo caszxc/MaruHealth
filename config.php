@@ -249,18 +249,6 @@ try {
     FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);
-
-/*     $sql = "CREATE TABLE IF NOT EXISTS stock_history (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    medicine_id INT NOT NULL,
-    quantity_change INT NOT NULL,
-    reason VARCHAR(255) NOT NULL,
-    changed_by INT NOT NULL,
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON DELETE CASCADE,
-    FOREIGN KEY (changed_by) REFERENCES admin_staff(id) ON DELETE CASCADE
-    )";
-    $conn->exec($sql); */
     
     // Create Medicine Request Table
    $sql = "CREATE TABLE IF NOT EXISTS medicine_requests (
@@ -296,20 +284,35 @@ try {
     )";
     $conn->exec($sql);
 
-    // Create medicine_distributions table
-/*     $sql = "CREATE TABLE IF NOT EXISTS medicine_distributions (
+    // Create medicine history table
+     $sql = "CREATE TABLE IF NOT EXISTS medicine_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        catalog_id INT NULL,
+        batch_id INT NULL,
+        action_type ENUM('add_catalog', 'update_catalog', 'delete_catalog', 'add_batch', 'update_batch', 'delete_batch', 'distribute', 'return') NOT NULL,
+        details TEXT NOT NULL,
+        performed_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE SET NULL,
+        FOREIGN KEY (batch_id) REFERENCES medicine_batches(id) ON DELETE SET NULL,
+        FOREIGN KEY (performed_by) REFERENCES admin_staff(id) ON DELETE CASCADE
+    )";
+    $conn->exec($sql); 
+
+    // Create medicine distribution table
+     $sql = "CREATE TABLE IF NOT EXISTS medicine_distributions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         request_id INT NOT NULL,
         requested_medicine_id INT NOT NULL,
-        inventory_medicine_id INT NOT NULL,
-        quantity INT NOT NULL DEFAULT 1,
+        batch_id INT NOT NULL,
+        quantity INT NOT NULL,
         status ENUM('reserved', 'claimed', 'returned') NOT NULL DEFAULT 'reserved',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (request_id) REFERENCES medicine_requests(id) ON DELETE CASCADE,
         FOREIGN KEY (requested_medicine_id) REFERENCES requested_medicines(id) ON DELETE CASCADE,
-        FOREIGN KEY (inventory_medicine_id) REFERENCES medicines(id) ON DELETE CASCADE
+        FOREIGN KEY (batch_id) REFERENCES medicine_batches(id) ON DELETE CASCADE
     )";
-    $conn->exec($sql); */
+    $conn->exec($sql); 
 
     // Create Family Number Table
     $sql = "CREATE TABLE IF NOT EXISTS families (

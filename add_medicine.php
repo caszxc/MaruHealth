@@ -61,22 +61,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // If no errors, insert the medicine into the catalog
     if (empty($errors)) {
         try {
+            $conn->beginTransaction();
+
+            // Insert into medicines_catalog
             $stmt = $conn->prepare("INSERT INTO medicines_catalog (therapeutic_category, generic_name, brand_name, dosage, dosage_form, unit, min_stock) VALUES (:therapeutic_category, :generic_name, :brand_name, :dosage, :dosage_form, :unit, :min_stock)");
             $stmt->execute([
                 ':therapeutic_category' => $therapeutic_category,
                 ':generic_name' => $generic_name,
-                ':brand_name' => $brand_name ?: null, // Handle empty brand_name
+                ':brand_name' => $brand_name ?: null,
                 ':dosage' => $dosage,
                 ':dosage_form' => $dosage_form,
                 ':unit' => $unit,
                 ':min_stock' => $min_stock
             ]);
 
-            // Redirect back to medicine management with success message
+            // Get the inserted catalog ID
+            $catalog_id = $conn->lastInsertId();
+
+            // Log the action in medicine_history
+            $details = "Added medicine: $generic_name" . ($brand_name ? " ($brand_name)" : "") . ", Dosage: $dosage $dosage_form, Unit: $unit, Min Stock: $min_stock";
+            $historyStmt = $conn->prepare("INSERT INTO medicine_history (catalog_id, action_type, details, performed_by) VALUES (:catalog_id, 'add_catalog', :details, :performed_by)");
+            $historyStmt->execute([
+                ':catalog_id' => $catalog_id,
+                ':details' => $details,
+                ':performed_by' => $_SESSION['admin_id']
+            ]);
+
+            $conn->commit();
+
             $_SESSION['success'] = "Medicine added successfully!";
             header("Location: medicine_management.php");
             exit();
         } catch (PDOException $e) {
+            $conn->rollBack();
             $errors[] = "Error adding medicine: " . $e->getMessage();
         }
     }

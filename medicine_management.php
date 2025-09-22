@@ -389,7 +389,60 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             } else if (tabName === 'history') {
                 document.getElementById('historyTab').style.display = 'block';
                 tabs[2].classList.add('active');
+                fetchHistory(selectedMedicineId);
             }
+        }
+
+        function fetchHistory(catalogId) {
+            const historyTab = document.getElementById('historyTab');
+            historyTab.innerHTML = '<p>Loading history...</p>';
+
+            fetch('get_medicine_history.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `catalog_id=${encodeURIComponent(catalogId)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.data.length === 0) {
+                        historyTab.innerHTML = '<p>No history available for this medicine.</p>';
+                    } else {
+                        let tableHTML = `
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Action</th>
+                                        <th>Details</th>
+                                        <th>Performed By</th>
+                                        <th>Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        data.data.forEach(entry => {
+                            tableHTML += `
+                                <tr>
+                                    <td>${entry.action_type}</td>
+                                    <td>${entry.details}</td>
+                                    <td>${entry.performed_by}</td>
+                                    <td>${entry.created_at}</td>
+                                </tr>
+                            `;
+                        });
+                        tableHTML += '</tbody></table>';
+                        historyTab.innerHTML = tableHTML;
+                    }
+                } else {
+                    historyTab.innerHTML = `<p style="color: red;">Error: ${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                historyTab.innerHTML = '<p style="color: red;">Failed to load history.</p>';
+            });
         }
 
         function fetchBatchSummary(catalogId) {

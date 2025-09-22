@@ -18,16 +18,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $height = $_POST['height'];
         $bmi = $_POST['bmi'];
         $bmi_status = $_POST['bmi_status'];
+        $status = 'active'; // Default status for new patients
 
-        
-
-        // Insert family details into the families table
+        // Insert patient details into the patients table
         $query = "INSERT INTO patients (
             family_number, first_name, middle_name, last_name, birthdate, sex, 
-            contact_number, address, weight, height, bmi, bmi_status
+            contact_number, address, weight, height, bmi, bmi_status, status
         ) VALUES (
             :family_number, :first_name, :middle_name, :last_name, :birthdate, :sex, 
-            :contact_number, :address, :weight, :height, :bmi, :bmi_status
+            :contact_number, :address, :weight, :height, :bmi, :bmi_status, :status
         )";
         $stmt = $conn->prepare($query);
         $stmt->execute([
@@ -42,7 +41,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ':weight' => $weight,
             ':height' => $height,
             ':bmi' => $bmi,
-            ':bmi_status' => $bmi_status
+            ':bmi_status' => $bmi_status,
+            ':status' => $status
         ]);
         echo "Patient successfully added!";
     } catch (PDOException $e) {

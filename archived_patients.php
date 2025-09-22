@@ -1,7 +1,7 @@
 <?php
-//patient_management.php
+//archived_patients.php
 session_start();
-require 'config.php';
+require_once "config.php";
 
 // Check if user is logged in as health staff
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
@@ -25,13 +25,13 @@ if (!empty($search)) {
     $params[':search'] = "%$search%";
 }
 
-$conditions[] = "status = 'active'";
+$conditions[] = "status = 'archived'";
 $searchCondition = '';
 if (!empty($conditions)) {
     $searchCondition = "WHERE " . implode(" AND ", $conditions);
 }
 
-// Count total patients (for pagination)
+// Count total archived patients (for pagination)
 $countQuery = "SELECT COUNT(*) FROM patients $searchCondition";
 $countStmt = $conn->prepare($countQuery);
 foreach ($params as $key => $value) {
@@ -45,7 +45,7 @@ $totalPages = ceil($totalItems / $itemsPerPage);
 if ($page < 1) $page = 1;
 if ($page > $totalPages && $totalPages > 0) $page = $totalPages;
 
-// Fetch patients with pagination
+// Fetch archived patients with pagination
 $query = "SELECT * FROM patients $searchCondition ORDER BY id DESC LIMIT :offset, :limit";
 $stmt = $conn->prepare($query);
 foreach ($params as $key => $value) {
@@ -76,7 +76,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Management</title>
+    <title>Archived Patients</title>
     <link rel="stylesheet" href="css/patient_management.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -155,10 +155,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'health_staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/patient_icon_active.png" alt="">
-                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
+                <a href="patient_management.php" class="<?= ($current_page == 'patient_management.php' || $current_page == 'archived_patients.php') ? 'active' : '' ?>">Patient Management</a>
             </div>
             
             <div class="menu-link">
@@ -168,7 +168,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
-                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
+                <a href="medicine_requests.php" class="<?= ($current_page == 'medicine_requests.php' || $current_page == 'requests.php') ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
 
@@ -181,21 +181,22 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <div class="patient-content">
-        <!-- Search and Add Patient -->
-        <div class="search-container">
+        <div class="title-con">
+            <a href="patient_management.php" class="back-button">← Back</a>
+            <h2>Archived Patients</h2>
+        </div>
+        
+        <!-- Search -->
+        <div class="search-container" style="justify-content: end;">
             <form method="GET" action="" id="searchForm">
                 <div class="search-row">
                     <input type="text" name="search" id="searchInput" placeholder="Search for ID No./Name" value="<?= htmlspecialchars($search) ?>" autocomplete="off">
-                    <a href="patient_management.php" class="clear-btn">Clear</a>
+                    <a href="archived_patients.php" class="clear-btn">Clear</a>
                 </div>
             </form>
-            <div class="button-group">
-                <button class="add-button" onclick="openModal()">Add Patient</button>
-                <a href="archived_patients.php" class="archive-button">View Archived Patients</a>
-            </div>
         </div>
 
-        <!-- Patient List Table -->
+        <!-- Archived Patients Table -->
         <div class="table-wrapper">
             <table class="patient-table">
                 <thead>
@@ -214,7 +215,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <tbody>
                     <?php if (empty($patients)): ?>
                         <tr>
-                            <td colspan="10" class="no-patients" style="text-align: center;">No patients found.</td>
+                            <td colspan="10" class="no-patients" style="text-align: center;">No archived patients found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($patients as $patient): ?>
@@ -229,7 +230,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <td><?= htmlspecialchars($patient['created_at']) ?></td>
                             <td class="action-buttons">
                                 <a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">VIEW</a>
-                                <a href="archive_patient.php?id=<?= $patient['id'] ?>" class="archive-btn" onclick="return confirm('Are you sure you want to archive this patient?')">ARCHIVE</a>
+                                <a href="restore_patient.php?id=<?= $patient['id'] ?>" class="restore-btn" onclick="return confirm('Are you sure you want to restore this patient?')">RESTORE</a>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -265,169 +266,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <?php endif; ?>
     </div>
 
-    <!-- Add Patient Modal -->
-    <div id="addPatientModal" class="modal">
-        <div class="modal-content">
-            <h2 class="title">Add Patient</h2>
-            <form id="addPatientForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <div class="form-row-address">
-                            <label>Family Number</label>
-                            <input type="text" id="family_number" name="family_number" autocomplete="off" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>First Name</label>
-                            <input type="text" id="first_name" name="first_name" autocomplete="off" required>
-                        </div>
-                        <div class="form-row">
-                            <label>Middle Name</label>
-                            <input type="text" id="middle_name" name="middle_name" autocomplete="off">
-                        </div>
-                        <div class="form-row">
-                            <label>Last Name</label>
-                            <input type="text" id="last_name" name="last_name" autocomplete="off" required>
-                        </div>
-                    </div>
-                    <p>Demographic-Socio Economic Profile</p>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Birthdate</label>
-                            <input type="date" id="birthdate" name="birthdate" required>
-                        </div>
-                        <div class="form-row">
-                            <label>Sex</label>
-                            <select name="sex" id="sex" required>
-                                <option value="" disabled selected>Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Contact Number</label>
-                            <input type="tel" id="contact_number" name="contact_number" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row-address">
-                            <label>Address</label>
-                            <input type="text" id="address" name="address" autocomplete="off">
-                        </div>
-                    </div>
-                    <p>Anthropometric Measurement</p>
-                    <p>Insert your height and weight to compute for your BMI and status</p>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Weight (kg)</label>
-                            <input type="number" id="weight" name="weight">
-                        </div>
-                        <div class="form-row">
-                            <label>Height (cm)</label>
-                            <input type="number" id="height" name="height">
-                        </div>
-                        <div class="form-row">
-                            <label>BMI</label>
-                            <input type="number" id="bmi" name="bmi" readonly>
-                        </div>
-                        <div class="form-row">
-                            <label>Status</label>
-                            <input type="text" id="bmi_status" name="bmi_status" readonly>
-                        </div>
-                        <div class="form-row">
-                            <div class="legend-box">
-                                <div class="legend-item">
-                                    <span class="circle blue"></span> Underweight (< 18.5)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle green"></span> Normal (18.5 - 22.9)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle orange"></span> Overweight (> 23 - 24.9)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle red"></span> Obese (> 25)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Submit and Cancel Buttons -->
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="submit-btn">Add</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
-        function openModal() {
-            let modal = document.getElementById("addPatientModal");
-            modal.classList.add("show");
-        }
-
-        function closeModal() {
-            let modal = document.getElementById("addPatientModal");
-            modal.classList.remove("show");
-        }
-
-        // AJAX Form Submission
-        document.getElementById("addPatientForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-
-            let formData = new FormData(this);
-
-            fetch("add_patient_ajax.php", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                alert(data);
-                closeModal();
-                location.reload(); // Refresh page after submission
-            })
-            .catch(error => console.error("Error:", error));
-        });
-
         // Auto-submit search form on input
         document.getElementById("searchInput").addEventListener("input", function() {
             document.getElementById("searchForm").submit();
-        });
-    </script>
-
-    <!-- Calculation -->  
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            function calculateBMI() {
-                let weight = parseFloat(document.getElementById("weight").value);
-                let height = parseFloat(document.getElementById("height").value) / 100; // Convert cm to meters
-                
-                if (weight > 0 && height > 0) {
-                    let bmi = (weight / (height * height)).toFixed(2);
-                    document.getElementById("bmi").value = bmi;
-                    
-                    let status = "";
-                    if (bmi < 18.5) {
-                        status = "Underweight";
-                    } else if (bmi < 24.9) {
-                        status = "Normal";
-                    } else if (bmi < 29.9) {
-                        status = "Overweight";
-                    } else {
-                        status = "Obese";
-                    }
-                    document.getElementById("bmi_status").value = status;
-                }
-            }
-
-            // Attach event listeners
-            document.getElementById("weight").addEventListener("input", calculateBMI);
-            document.getElementById("height").addEventListener("input", calculateBMI);
         });
     </script>
 </body>

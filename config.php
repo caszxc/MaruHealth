@@ -336,6 +336,7 @@ try {
     height DECIMAL(5,2),
     bmi DECIMAL(4,1),
     bmi_status ENUM('Underweight', 'Normal', 'Overweight', 'Obese'),
+    status ENUM('active', 'archived') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     

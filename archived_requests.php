@@ -1,5 +1,4 @@
 <?php
-//archived_requests.php
 session_start();
 require_once "config.php";
 
@@ -9,13 +8,13 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
     exit();
 }
 
-// Fetch medicine requests with 'claimed' or 'declined' status
+// Fetch medicine requests with 'claimed', 'declined', or 'cancelled' status
 $requestsQuery = "SELECT mr.id, mr.request_id, mr.full_name, 
                  DATE_FORMAT(mr.request_date, '%m/%d/%Y %h:%i%p') as formatted_request_date,
                  DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date,
                  mr.request_status 
                  FROM medicine_requests mr 
-                 WHERE mr.request_status IN ('claimed', 'declined')
+                 WHERE mr.request_status IN ('claimed', 'declined', 'cancelled')
                  ORDER BY mr.claimed_date DESC, mr.request_date DESC";
 $requestsStmt = $conn->prepare($requestsQuery);
 $requestsStmt->execute();
@@ -35,7 +34,6 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 // Format role for display (convert super_admin to Super Admin)
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -61,19 +59,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             display: inline-block;
             min-width: 80px;
         }
-        
         .status-pending {
             background-color: #FFA500;
         }
-        
         .status-claimed {
             background-color: #28a745;
         }
-        
         .status-declined {
             background-color: #dc3545;
         }
-        
+        .status-cancelled {
+            background-color: #6c757d;
+        }
         /* Style for view modal */
         .medicine-status {
             display: inline-block;
@@ -85,19 +82,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             width: 20%;
             text-align: center;
         }
-        
         .status-reserved {
             background-color: #17a2b8;
         }
-        
         .status-declined {
             background-color: #dc3545;
         }
-        
         .status-claimed {
             background-color: #28a745;
         }
-        
+        .status-returned {
+            background-color: #6c757d;
+        }
         .date-claim-info {
             background-color: #f8f9fa;
             padding: 10px;
@@ -105,30 +101,25 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             margin-top: 10px;
             border: 1px solid #ddd;
         }
-        
         .date-claim-info p {
             margin: 5px 0;
             font-size: 14px;
         }
-        
         .action-buttons {
             display: flex;
             gap: 10px;
         }
-        
         /* Style for checkboxes in table */
         .checkbox-col {
             width: 30px;
             text-align: center;
         }
-        
         .batch-actions {
             margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
@@ -150,78 +141,59 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-
                 // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
-                if ($adminRole === 'super_admin') {
-                    $dashboard_url = 'superadmin_dashboard.php';
-                } elseif ($adminRole === 'admin') {
-                    $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'health_staff') {
-                    $dashboard_url = 'healthstaff_dashboard.php';
-                }
+                $dashboard_url = $adminRole === 'super_admin' ? 'superadmin_dashboard.php' : 
+                                ($adminRole === 'admin' ? 'admin_dashboard.php' : 'healthstaff_dashboard.php');
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
-            
             <p class="menu-header">BASE</p>
-
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
             </div>
             <?php endif; ?>
-            
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
-
-            <?php if ($adminRole == 'health_staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/med_icon.png" alt="">
                 <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
             </div>
-            
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/reqmd_icon_active.png" alt="">
                 <a href="medicine_requests.php" class="<?= ($current_page == 'medicine_requests.php' || $current_page == 'archived_requests.php') ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
-
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
-            
         </div>
     </div>
 
@@ -237,7 +209,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Request ID</th>
                         <th>Name</th>
                         <th>Date/Time Requested</th>
-                        <th>Date/Time Claimed/Declined</th>
+                        <th>Date/Time Claimed/Declined/Cancelled</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -351,7 +323,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         </div>
                     </div>`;
                     
-            // Add claim information section if it exists and the request was claimed
+            // Add claim information section if it exists and the request was claimed or cancelled
             if (data.request.request_status === 'claimed' && data.request.formatted_claim_date) {
                 modalHTML += `
                     <div class="form-row">
@@ -360,6 +332,17 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                 <h4>Claim Information</h4>
                                 <p><strong>Claim Date Range:</strong> ${data.request.formatted_claim_date} - ${data.request.formatted_until_date}</p>
                                 <p><strong>Actual Claimed Date:</strong> ${data.request.formatted_claimed_date || 'Not recorded'}</p>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (data.request.request_status === 'cancelled' && data.request.formatted_claim_date) {
+                modalHTML += `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="date-claim-info">
+                                <h4>Scheduled Claim Information</h4>
+                                <p><strong>Scheduled Claim Date Range:</strong> ${data.request.formatted_claim_date} - ${data.request.formatted_until_date}</p>
+                                <p><strong>Status:</strong> Cancelled</p>
                             </div>
                         </div>
                     </div>`;
@@ -373,18 +356,29 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             // Add each requested medicine with status and distribution information
             data.medicines.forEach((medicine) => {
                 let statusBadge = '';
-                if (medicine.status === 'approved') {
+                if (medicine.status === 'approved' && data.request.request_status === 'claimed') {
                     statusBadge = `<div class="medicine-status status-claimed">Approved & Claimed</div>`;
+                } else if (medicine.status === 'approved' && data.request.request_status === 'cancelled') {
+                    statusBadge = `<div class="medicine-status status-returned">Approved & Returned</div>`;
                 } else if (medicine.status === 'declined') {
                     statusBadge = `<div class="medicine-status status-declined">Declined</div>`;
+                } else if (medicine.status === 'requested' && data.request.request_status === 'cancelled') {
+                    statusBadge = `<div class="medicine-status status-returned">Cancelled</div>`;
                 }
                 
                 let distributionInfo = '';
-                if (medicine.distribution) {
+                if (medicine.distribution && data.request.request_status === 'claimed') {
                     distributionInfo = `
                         <div class="distribution-info">
                             <p><strong>Provided Medicine:</strong> ${medicine.distribution.medicine_name}</p>
                             <p><strong>Quantity Provided:</strong> ${medicine.distribution.quantity}</p>
+                        </div>`;
+                } else if (medicine.distribution && data.request.request_status === 'cancelled') {
+                    distributionInfo = `
+                        <div class="distribution-info">
+                            <p><strong>Reserved Medicine:</strong> ${medicine.distribution.medicine_name}</p>
+                            <p><strong>Quantity Reserved:</strong> ${medicine.distribution.quantity}</p>
+                            <p><strong>Status:</strong> Returned to Inventory</p>
                         </div>`;
                 }
                 
@@ -420,8 +414,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             
             modal.innerHTML = modalHTML;
         }
-
     </script>
-
 </body>
 </html>

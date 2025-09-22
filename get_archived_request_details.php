@@ -1,5 +1,4 @@
 <?php
-//get_archived_request_details.php
 session_start();
 require_once "config.php";
 
@@ -25,7 +24,7 @@ $requestQuery = "SELECT mr.*,
                 DATE_FORMAT(mr.claim_until_date, '%m/%d/%Y') as formatted_until_date,
                 DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date
                 FROM medicine_requests mr 
-                WHERE mr.id = :id AND mr.request_status IN ('claimed', 'declined')";
+                WHERE mr.id = :id AND mr.request_status IN ('claimed', 'declined', 'cancelled')";
 $requestStmt = $conn->prepare($requestQuery);
 $requestStmt->bindParam(':id', $requestId);
 $requestStmt->execute();
@@ -60,7 +59,7 @@ foreach ($medicines as &$medicine) {
                             JOIN medicine_batches mb ON md.batch_id = mb.id
                             JOIN medicines_catalog mc ON mb.catalog_id = mc.id
                             WHERE md.requested_medicine_id = :requested_medicine_id
-                            AND md.status IN ('claimed', 'reserved')";
+                            AND md.status IN ('claimed', 'returned')";
         $distributionStmt = $conn->prepare($distributionQuery);
         $distributionStmt->bindParam(':requested_medicine_id', $medicine['id']);
         $distributionStmt->execute();

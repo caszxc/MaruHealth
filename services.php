@@ -1,4 +1,5 @@
 <?php
+// services.php
 session_start();
 include 'config.php';
 
@@ -34,7 +35,7 @@ $service = $serviceStmt->fetch(PDO::FETCH_ASSOC);
 $subServices = [];
 
 if ($service) {
-    $subStmt = $conn->prepare("SELECT id, name FROM sub_services WHERE service_id = :service_id");
+    $subStmt = $conn->prepare("SELECT id, name, doctor_name FROM sub_services WHERE service_id = :service_id");
     $subStmt->execute(['service_id' => $service['id']]);
     $subs = $subStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -45,6 +46,7 @@ if ($service) {
         
         $subServices[] = [
             'name' => $sub['name'],
+            'doctor_name' => $sub['doctor_name'],
             'schedule' => $schedules
         ];
     }
@@ -194,6 +196,7 @@ if ($service) {
                             <div class="schedule-header">
                                 <span class="header">Services</span>
                                 <span class="header">Day</span>
+                                <span class="header">Doctor</span>
                             </div>
                             <?php if (!empty($subServices)): ?>
                                 <?php foreach ($subServices as $i => $sub): ?>
@@ -205,6 +208,11 @@ if ($service) {
                                                 <div class="service-name empty"></div>
                                             <?php endif; ?>
                                             <div class="schedule-day"><?= htmlspecialchars($day) ?></div>
+                                            <?php if ($index === 0): ?>
+                                                <div class="doctor-name"><?= htmlspecialchars($sub['doctor_name'] ?? 'No doctor assigned') ?></div>
+                                            <?php else: ?>
+                                                <div class="doctor-name empty"></div>
+                                            <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
                                     <?php if ($i < count($subServices) - 1): ?>
@@ -212,7 +220,7 @@ if ($service) {
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <p>No schedule available.</p>
+                                <p style="text-align: center;">No schedule available.</p>
                             <?php endif; ?>
                         </div>
                     </div>

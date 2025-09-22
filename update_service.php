@@ -16,6 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $intro = $_POST['serviceIntro'] ?? '';
     $subServiceNames = $_POST['serviceName'] ?? [];
     $scheduleDays = $_POST['scheduleDay'] ?? [];
+    $doctorNames = $_POST['doctorName'] ?? []; // Added to capture doctor names
     $imagesToDelete = !empty($_POST['imagesToDelete']) ? json_decode($_POST['imagesToDelete'], true) : [];
 
     // Validate required fields
@@ -88,15 +89,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $deleteSubServices->execute(['service_id' => $serviceId]);
 
         // 4. Re-insert sub-services and schedules
-        $insertSub = $conn->prepare("INSERT INTO sub_services (service_id, name) VALUES (:service_id, :name)");
+        $insertSub = $conn->prepare("INSERT INTO sub_services (service_id, name, doctor_name) VALUES (:service_id, :name, :doctor_name)");
         $insertSchedule = $conn->prepare("INSERT INTO schedules (sub_service_id, day_of_schedule) VALUES (:sub_service_id, :day)");
 
         foreach ($subServiceNames as $index => $subName) {
             if (trim($subName) === '') continue; // Skip empty sub-service names
 
+            $doctorName = !empty($doctorNames[$index]) ? trim($doctorNames[$index]) : null;
             $insertSub->execute([
                 'service_id' => $serviceId,
-                'name' => $subName
+                'name' => $subName,
+                'doctor_name' => $doctorName, // Bind doctor_name (NULL if empty)
             ]);
 
             $subServiceId = $conn->lastInsertId();

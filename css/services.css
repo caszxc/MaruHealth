@@ -46,7 +46,7 @@ body::-webkit-scrollbar{
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 30%;
+    width: 40%;
 }
 
 .services-menu {
@@ -134,7 +134,7 @@ body::-webkit-scrollbar{
 }
 
 .service-name,
-.schedule-day {
+.schedule-day, .doctor-name {
     background-color: #eee;
     padding: 8px 12px;
     border-radius: 6px;
@@ -142,7 +142,7 @@ body::-webkit-scrollbar{
     flex: 1;
 }
 
-.service-name.empty {
+.service-name.empty, .doctor-name.empty {
     background: none;
 }
 

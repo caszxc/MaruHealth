@@ -34,6 +34,7 @@ $subServiceStmt = $conn->prepare("
         ss.service_id,
         ss.id AS sub_service_id, 
         ss.name AS sub_service_name, 
+        ss.doctor_name,
         GROUP_CONCAT(s.day_of_schedule ORDER BY s.day_of_schedule SEPARATOR ', ') AS days
     FROM sub_services ss
     LEFT JOIN schedules s ON ss.id = s.sub_service_id
@@ -220,17 +221,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             <tr>
                                 <th>Name of Service</th>
                                 <th>Day(s) of Schedule</th>
+                                <th>Doctor</th>
                             </tr>
                             <?php if (!empty($subServices[$service['id']])): ?>
                                 <?php foreach ($subServices[$service['id']] as $sub): ?>
                                     <tr>
                                         <td><?= htmlspecialchars($sub['sub_service_name']) ?></td>
                                         <td><?= htmlspecialchars($sub['days'] ?? 'No schedule') ?></td>
+                                        <td><?= htmlspecialchars($sub['doctor_name'] ?? 'No doctor assigned') ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="2" style="text-align: center;">No schedules found.</td>
+                                    <td colspan="3" style="text-align: center;">No schedules found.</td>
                                 </tr>
                             <?php endif; ?>
                         </table>
@@ -532,6 +535,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                     </button>
                                 </div>
                             </div>
+                            <div class="row">
+                                <label>Doctor Name</label>
+                                <input type="text" name="doctorName[]" value="${sub.doctor_name || ''}" autocomplete="off">
+                            </div>
                         </div>
                     `;
                     
@@ -584,6 +591,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 + Add Schedule
                             </button>
                         </div>
+                    </div>
+                    <div class="row">
+                        <label>Doctor Name</label>
+                        <input type="text" name="doctorName[]" placeholder="Doctor Name" autocomplete="off">
                     </div>
                 </div>
             `;
@@ -865,6 +876,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 + Add Schedule
                             </button>
                         </div>
+                    </div>
+                    <div class="row">
+                        <label>Doctor Name</label>
+                        <input type="text" name="doctorName[]" placeholder="Doctor Name" autocomplete="off">
                     </div>
                 </div>
             `;

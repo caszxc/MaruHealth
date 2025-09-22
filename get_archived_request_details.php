@@ -1,10 +1,10 @@
 <?php
-// get_archived_request_details.php
+//get_archived_request_details.php
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+// Check if user is logged in as health staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header('HTTP/1.1 403 Forbidden');
     echo json_encode(['error' => 'Unauthorized access']);
     exit();
@@ -44,21 +44,21 @@ $medicinesStmt->bindParam(':request_id', $requestId);
 $medicinesStmt->execute();
 $medicines = $medicinesStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// For each approved medicine, get the distribution information (which inventory medicine was assigned)
+// For each approved medicine, get the distribution information
 foreach ($medicines as &$medicine) {
     if ($medicine['status'] === 'approved') {
-        // Modified query to handle both 'claimed' and 'reserved' status since we're looking at archived requests
-        $distributionQuery = "SELECT md.quantity, 
-                            m.id as medicine_id, 
+        $distributionQuery = "SELECT md.quantity, md.batch_id, 
+                            mc.id as catalog_id, 
                             CONCAT(
-                                CASE WHEN m.brand_name IS NOT NULL AND m.brand_name != '' 
-                                    THEN CONCAT(m.brand_name, ' - ')
+                                CASE WHEN mc.brand_name IS NOT NULL AND mc.brand_name != '' 
+                                    THEN CONCAT(mc.brand_name, ' - ')
                                     ELSE ''
                                 END,
-                                m.generic_name, ' ', m.dosage, ' ', m.dosage_form
+                                mc.generic_name, ' ', mc.dosage, ' ', mc.dosage_form
                             ) as medicine_name
                             FROM medicine_distributions md
-                            JOIN medicines m ON md.inventory_medicine_id = m.id
+                            JOIN medicine_batches mb ON md.batch_id = mb.id
+                            JOIN medicines_catalog mc ON mb.catalog_id = mc.id
                             WHERE md.requested_medicine_id = :requested_medicine_id
                             AND md.status IN ('claimed', 'reserved')";
         $distributionStmt = $conn->prepare($distributionQuery);

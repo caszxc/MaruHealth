@@ -1,5 +1,4 @@
 <?php
-//requests.php
 session_start();
 require_once "config.php";
 
@@ -18,17 +17,6 @@ $requestsStmt = $conn->prepare($requestsQuery);
 $requestsStmt->execute();
 $requests = $requestsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch all available medicines for the dropdown
-$medicinesQuery = "SELECT id, generic_name, brand_name, dosage, dosage_form, stocks 
-                FROM medicines 
-                WHERE stocks > 0 
-                AND stock_status IN ('In Stock', 'Low Stock') 
-                AND expiry_status != 'Expired'
-                ORDER BY generic_name ASC";
-$medicinesStmt = $conn->prepare($medicinesQuery);
-$medicinesStmt->execute();
-$availableMedicines = $medicinesStmt->fetchAll(PDO::FETCH_ASSOC);
-
 // Fetch the admin's name
 $adminId = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
@@ -44,7 +32,6 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,10 +43,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-
 </head>
 <body>
-
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
@@ -81,9 +66,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-
-                // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
+                $dashboard_url = '';
                 if ($adminRole === 'super_admin') {
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
@@ -93,66 +76,55 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
             
             <p class="menu-header">BASE</p>
-
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
             </div>
             <?php endif; ?>
-            
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
-
             <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/med_icon.png" alt="">
                 <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
             </div>
-            
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/reqmd_icon_active.png" alt="">
                 <a href="medicine_requests.php" class="<?= ($current_page == 'medicine_requests.php' || $current_page == 'requests.php') ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
-
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
-            
         </div>
     </div>
 
@@ -199,20 +171,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <!-- Content will be populated by JavaScript -->
         </div>
     </div>
-    
-
-    <!-- Hidden template for medicine options -->
-    <select id="medicine_options_template" style="display: none;">
-        <?php foreach ($availableMedicines as $medicine): ?>
-            <?php 
-                $medicineName = !empty($medicine['brand_name']) 
-                    ? $medicine['brand_name'] . ' - ' . $medicine['generic_name'] 
-                    : $medicine['generic_name'];
-                $medicineInfo = $medicineName . ' - ' . $medicine['dosage'] . ' ' . $medicine['dosage_form'] . ' - ' . $medicine['stocks'];
-            ?>
-            <option value="<?= $medicine['id'] ?>"><?= htmlspecialchars($medicineInfo) ?></option>
-        <?php endforeach; ?>
-    </select>
 
     <script>
         function openModal(requestId) {
@@ -297,7 +255,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 let availabilityInfo = '';
                 let checkboxHtml = '';
                 if (medicine.available_stock) {
-                    window.matchedMedicinesData[medicine.id] = medicine.matched_medicines;
+                    window.matchedMedicinesData[medicine.id] = medicine.matched_batches;
                     availabilityInfo = `<div class="availability available">
                         Available Medicines:<br>
                         ${medicine.medicine_details}
@@ -419,7 +377,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 selectFormGroup.className = 'form-group';
                 const selectLabel = document.createElement('label');
                 selectLabel.htmlFor = `distribute_medicine_${medicineId}`;
-                selectLabel.textContent = `Select Inventory Medicine for: ${medicineName}`;
+                selectLabel.textContent = `Select Inventory Batch for: ${medicineName}`;
                 selectFormGroup.appendChild(selectLabel);
                 const select = document.createElement('select');
                 select.id = `distribute_medicine_${medicineId}`;
@@ -427,14 +385,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 select.required = true;
                 
                 if (window.matchedMedicinesData && window.matchedMedicinesData[medicineId]) {
-                    const matchedMedicines = window.matchedMedicinesData[medicineId];
-                    matchedMedicines.forEach(medicine => {
+                    const matchedBatches = window.matchedMedicinesData[medicineId];
+                    matchedBatches.forEach(batch => {
                         const option = document.createElement('option');
-                        option.value = medicine.id;
-                        option.dataset.stock = medicine.stocks;
-                        const medicineName = !empty(medicine.brand_name) ? `${medicine.brand_name} - ${medicine.generic_name}` : medicine.generic_name;
-                        const medicineInfo = `${medicineName} - ${medicine.dosage} ${medicine.dosage_form} - ${medicine.stocks} in stock`;
-                        option.textContent = medicineInfo;
+                        option.value = batch.batch_id;
+                        option.dataset.stock = batch.stocks;
+                        const medicineName = !empty(batch.brand_name) ? `${batch.brand_name} - ${batch.generic_name}` : batch.generic_name;
+                        const batchInfo = `${medicineName} - ${batch.dosage} ${batch.dosage_form} - Batch ${batch.batch_lot_number} - ${batch.stocks} in stock`;
+                        option.textContent = batchInfo;
                         select.appendChild(option);
                     });
                 }
@@ -464,7 +422,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     const maxStock = getMaxStock(this);
                     const maxApprovable = Math.min(requestedQuantity, maxStock);
                     quantityInput.max = maxApprovable;
-                    if (quantityInput.value > maxApprovable) {
+                    if (parseInt(quantityInput.value) > maxApprovable) {
                         quantityInput.value = maxApprovable;
                     }
                 });
@@ -511,6 +469,5 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             return `${year}-${month}-${day}`;
         }
     </script>
-
 </body>
 </html>

@@ -9,7 +9,7 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
     exit();
 }
 
-// Fetch medicine requests with 'to be claimed' status (approved but not yet claimed)
+// Fetch medicine requests with 'to be claimed' status
 $requestsQuery = "SELECT mr.id, mr.request_id, mr.full_name, 
                  DATE_FORMAT(mr.request_date, '%m/%d/%Y %h:%i%p') as formatted_request_date,
                  DATE_FORMAT(mr.claim_date, '%m/%d/%Y') as formatted_claim_date,
@@ -33,7 +33,7 @@ $admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
 $adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
 $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 
-// Format role for display (convert super_admin to Super Admin)
+// Format role for display
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 ?>
 
@@ -50,7 +50,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <style>
-        /* Additional Styles for Status Badge */
         .status-badge {
             padding: 5px 10px;
             border-radius: 15px;
@@ -61,20 +60,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             display: inline-block;
             min-width: 80px;
         }
-        
         .status-to-be-claimed {
-            background-color: #007bff; /* Blue to distinguish from orange */
+            background-color: #007bff;
         }
-        
         .status-claimed {
             background-color: #28a745;
         }
-        
         .status-declined {
             background-color: #dc3545;
         }
-        
-        /* Style for view modal */
+        .status-expired {
+            background-color: #6c757d;
+        }
         .medicine-status {
             display: inline-block;
             padding: 3px 8px;
@@ -83,17 +80,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             font-weight: bold;
             color: white;
             width: 10%;
-            text-align: center
+            text-align: center;
         }
-        
         .status-reserved {
             background-color: #17a2b8;
         }
-        
         .status-declined {
             background-color: #dc3545;
         }
-        
         .date-claim-info {
             background-color: #f8f9fa;
             padding: 10px;
@@ -101,24 +95,23 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             margin-top: 10px;
             border: 1px solid #ddd;
         }
-        
         .date-claim-info p {
             margin: 5px 0;
             font-size: 14px;
         }
-        
         .action-buttons {
             display: flex;
             gap: 10px;
         }
-        
         .btn-claim {
             background-color: #28a745;
+        }
+        .btn-return {
+            background-color: #6c757d;
         }
     </style>
 </head>
 <body>
-
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
@@ -140,78 +133,58 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-
-                // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
-                if ($adminRole === 'super_admin') {
-                    $dashboard_url = 'superadmin_dashboard.php';
-                } elseif ($adminRole === 'admin') {
-                    $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'healthstaff') {
-                    $dashboard_url = 'healthstaff_dashboard.php';
-                }
+                $dashboard_url = $adminRole === 'super_admin' ? 'superadmin_dashboard.php' : 
+                                ($adminRole === 'admin' ? 'admin_dashboard.php' : 'healthstaff_dashboard.php');
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
-            
             <p class="menu-header">BASE</p>
-
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
             </div>
             <?php endif; ?>
-            
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
-
-            <?php if ($adminRole == 'health_staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/med_icon.png" alt="">
                 <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
             </div>
-            
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/reqmd_icon_active.png" alt="">
                 <a href="medicine_requests.php" class="<?= ($current_page == 'medicine_requests.php' || $current_page == 'pending_requests.php') ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
-
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
-            
         </div>
     </div>
 
@@ -224,7 +197,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <table>
                 <thead>
                     <tr>
-                        <th>Request ID</th> <!-- Added Request ID column -->
+                        <th>Request ID</th>
                         <th>Name</th>
                         <th>Date/Time Requested</th>
                         <th>Date/Time of Claim</th>
@@ -240,7 +213,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <?php else: ?>
                         <?php foreach ($requests as $request): ?>
                             <tr>
-                                <td><?= htmlspecialchars($request['request_id']) ?></td> <!-- Display Request ID -->
+                                <td><?= htmlspecialchars($request['request_id']) ?></td>
                                 <td><?= htmlspecialchars($request['full_name']) ?></td>
                                 <td><?= htmlspecialchars($request['formatted_request_date']) ?></td>
                                 <td><?= htmlspecialchars($request['formatted_claim_date']) ?> - <?= htmlspecialchars($request['formatted_until_date']) ?></td>
@@ -269,7 +242,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     
     <script>
         function openModal(requestId) {
-            // Get the request details via AJAX
             fetch('get_pending_request_details.php?id=' + requestId)
                 .then(response => response.json())
                 .then(data => {
@@ -287,8 +259,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
         function populateModal(data) {
             const modal = document.querySelector('.modal-content');
-            
-            // Create the HTML for the modal
             let modalHTML = `
                 <div class="modal-header">
                     <span class="close" onclick="closeModal()">×</span>
@@ -301,7 +271,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <div class="detail-box">${data.request.full_name}</div>
                         </div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group half">
                             <label>Gender <span class="sub-label">(Kasarian)</span></label>
@@ -312,7 +281,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <div class="detail-box">${data.request.birthdate}</div>
                         </div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group half">
                             <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
@@ -323,14 +291,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <div class="detail-box">${data.request.phone}</div>
                         </div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
                             <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
                         </div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>Prescription <span class="sub-label">(Reseta)</span></label>
@@ -339,7 +305,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             </div>
                         </div>
                     </div>
-                    
                     ${data.request.note && data.request.note.trim() !== '' ? `
                     <div class="form-row">
                         <div class="form-group">
@@ -348,7 +313,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         </div>
                     </div>
                     ` : ''}
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <div class="date-claim-info">
@@ -359,11 +323,9 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         </div>
                     </div>
                 </div>
-                
                 <h3>Requested Medicines</h3>
                 <div class="requested-medicines">`;
             
-            // Add each requested medicine with status and distribution information
             data.medicines.forEach((medicine) => {
                 let statusBadge = '';
                 if (medicine.status === 'approved') {
@@ -371,7 +333,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 } else if (medicine.status === 'declined') {
                     statusBadge = `<div class="medicine-status status-declined">Declined</div>`;
                 }
-                
                 let distributionInfo = '';
                 if (medicine.distribution) {
                     distributionInfo = `
@@ -380,7 +341,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <p><strong>Quantity:</strong> ${medicine.distribution.quantity}</p>
                         </div>`;
                 }
-                
                 modalHTML += `
                     <div class="medicine-item">
                         <div class="medicine-details">
@@ -406,10 +366,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             
             modalHTML += `
                 </div>
-                
                 <div class="button-group">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>
+                    ${data.request.is_past_due ? `
+                    <button type="button" class="btn-return" onclick="processReturn(${data.request.id})">Return to Inventory</button>
+                    ` : `
                     <button type="button" class="btn-claim" onclick="processClaim(${data.request.id})">Mark as Claimed</button>
+                    `}
                 </div>`;
             
             modal.innerHTML = modalHTML;
@@ -417,21 +380,46 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
         function processClaim(requestId) {
             if (confirm('Are you sure you want to mark this request as claimed?')) {
-                // Create form data
                 const formData = new FormData();
                 formData.append('request_id', requestId);
                 formData.append('action', 'claim');
-                
-                // Send to the server
                 fetch('process_claim.php', {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.text())
+                .then(response => response.json())
                 .then(data => {
-                    // Close the modal and refresh the page
-                    closeModal();
-                    window.location.reload();
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        closeModal();
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your request.');
+                });
+            }
+        }
+
+        function processReturn(requestId) {
+            if (confirm('Are you sure you want to return the unclaimed medicines to inventory? This will mark the request as expired.')) {
+                const formData = new FormData();
+                formData.append('request_id', requestId);
+                formData.append('action', 'return');
+                fetch('process_return.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        closeModal();
+                        window.location.reload();
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -440,6 +428,5 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             }
         }
     </script>
-
 </body>
 </html>

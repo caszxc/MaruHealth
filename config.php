@@ -261,7 +261,7 @@ try {
         address VARCHAR(100),
         phone VARCHAR(20) NOT NULL,
         reason TEXT,
-        request_status ENUM('pending', 'to be claimed', 'claimed', 'declined') NOT NULL DEFAULT 'pending',
+        request_status ENUM('pending', 'to be claimed', 'claimed', 'declined', 'cancelled') NOT NULL DEFAULT 'pending',
         prescription VARCHAR(255) NOT NULL,
         request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         claim_date DATETIME NULL,

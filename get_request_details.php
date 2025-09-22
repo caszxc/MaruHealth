@@ -1,10 +1,9 @@
 <?php
-//get_request_details.php
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+// Check if user is logged in as health staff
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -44,41 +43,40 @@ $medicines = $medicinesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // For each medicine, check if it's available in stock
 foreach ($medicines as &$medicine) {
-    // Check if this medicine is available in our inventory
-    $availabilityQuery = "SELECT mc.id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form, SUM(mb.stocks) as stocks 
-                     FROM medicines_catalog mc 
-                     JOIN medicine_batches mb ON mc.id = mb.catalog_id
-                     WHERE (mc.generic_name LIKE :name OR mc.brand_name LIKE :name) 
-                     AND mc.dosage LIKE :dosage
-                     AND mb.stocks > 0 
-                     AND mb.stock_status IN ('In Stock', 'Low Stock') 
-                     AND mb.expiry_status != 'Expired'
-                     GROUP BY mc.id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form";
+    // Check if this medicine is available in our inventory, listing all batches
+    $availabilityQuery = "SELECT mb.id AS batch_id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form, mb.stocks, mb.batch_lot_number 
+                         FROM medicines_catalog mc 
+                         JOIN medicine_batches mb ON mc.id = mb.catalog_id
+                         WHERE (mc.generic_name LIKE :name OR mc.brand_name LIKE :name) 
+                         AND mc.dosage LIKE :dosage
+                         AND mb.stocks > 0 
+                         AND mb.stock_status IN ('In Stock', 'Low Stock') 
+                         AND mb.expiry_status != 'Expired'";
     $availabilityStmt = $conn->prepare($availabilityQuery);
     $searchName = "%" . $medicine['medicine_name'] . "%";
     $searchDosage = "%" . $medicine['dosage'] . "%";
     $availabilityStmt->bindParam(':name', $searchName);
     $availabilityStmt->bindParam(':dosage', $searchDosage);
     $availabilityStmt->execute();
-    $availableMeds = $availabilityStmt->fetchAll(PDO::FETCH_ASSOC);
+    $availableBatches = $availabilityStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    if (count($availableMeds) > 0) {
+    if (count($availableBatches) > 0) {
         $medicine['available_stock'] = true;
         
-        // Format the available medicines information
+        // Format the available medicines information for display
         $medicineDetails = '';
-        foreach ($availableMeds as $med) {
-            $name = !empty($med['brand_name']) ? $med['brand_name'] . ' (' . $med['generic_name'] . ')' : $med['generic_name'];
-            $medicineDetails .= $name . ' - ' . $med['dosage'] . ' ' . $med['dosage_form'] . ' - ' . $med['stocks'] . " in stock<br>";
+        foreach ($availableBatches as $batch) {
+            $name = !empty($batch['brand_name']) ? $batch['brand_name'] . ' (' . $batch['generic_name'] . ')' : $batch['generic_name'];
+            $medicineDetails .= $name . ' - ' . $batch['dosage'] . ' ' . $batch['dosage_form'] . ' - Batch: ' . $batch['batch_lot_number'] . ' - ' . $batch['stocks'] . " in stock<br>";
         }
         $medicine['medicine_details'] = $medicineDetails;
         
-        // Store the matched medicines for this requested medicine
-        $medicine['matched_medicines'] = $availableMeds;
+        // Store the matched batches for this requested medicine
+        $medicine['matched_batches'] = $availableBatches;
     } else {
         $medicine['available_stock'] = false;
         $medicine['medicine_details'] = 'No stock available';
-        $medicine['matched_medicines'] = [];
+        $medicine['matched_batches'] = [];
     }
 }
 

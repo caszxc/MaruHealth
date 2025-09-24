@@ -1,5 +1,6 @@
 <?php
 //add_patient_ajax.php
+session_start();
 require 'config.php';
 
 // Check if user is logged in as health staff

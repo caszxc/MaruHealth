@@ -1,9 +1,9 @@
 <?php
-//healthstaff_dashboard.php
+// healthstaff_dashboard.php
 session_start();
 require_once "config.php";
 
-// Check if user is logged in and is staff
+// Check if user is logged in and is health staff
 if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'health_staff') {
     header("Location: login.php");
     exit();
@@ -21,46 +21,57 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
 // Get expiring medicines (within next 60 days)
 $expiryDate = date('Y-m-d', strtotime('+60 days'));
-$expiringStmt = $conn->prepare("SELECT id, generic_name, brand_name, expiration_date, stocks 
-                               FROM medicines 
-                               WHERE expiration_date <= :expiryDate 
-                               AND expiration_date >= CURDATE() 
-                               AND stocks > 0
-                               ORDER BY expiration_date ASC
-                               LIMIT 5");
+$expiringStmt = $conn->prepare("
+    SELECT mc.id, mc.generic_name, mc.brand_name, mb.expiration_date, mb.stocks 
+    FROM medicines_catalog mc
+    JOIN medicine_batches mb ON mc.id = mb.catalog_id
+    WHERE mb.expiration_date <= :expiryDate 
+    AND mb.expiration_date >= CURDATE() 
+    AND mb.stocks > 0
+    ORDER BY mb.expiration_date ASC
+    LIMIT 5
+");
 $expiringStmt->bindParam(':expiryDate', $expiryDate);
 $expiringStmt->execute();
 $expiringMedicines = $expiringStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get low stock medicines (below min_stock level)
-$lowStockStmt = $conn->prepare("SELECT id, generic_name, brand_name, stocks, min_stock 
-                               FROM medicines 
-                               WHERE stocks <= min_stock 
-                               AND stocks > 0
-                               ORDER BY (stocks/min_stock) ASC
-                               LIMIT 5");
+$lowStockStmt = $conn->prepare("
+    SELECT mc.id, mc.generic_name, mc.brand_name, mb.stocks, mc.min_stock 
+    FROM medicines_catalog mc
+    JOIN medicine_batches mb ON mc.id = mb.catalog_id
+    WHERE mb.stocks <= mc.min_stock 
+    AND mb.stocks > 0
+    AND mb.expiry_status != 'Expired'
+    ORDER BY (mb.stocks / mc.min_stock) ASC
+    LIMIT 5
+");
 $lowStockStmt->execute();
 $lowStockMedicines = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get pending medicine requests
-$pendingRequestsStmt = $conn->prepare("SELECT mr.id, mr.full_name, mr.request_date, 
-                                     COUNT(rm.id) as medicine_count
-                                     FROM medicine_requests mr
-                                     JOIN requested_medicines rm ON mr.id = rm.request_id
-                                     WHERE mr.request_status IN ('requested', 'pending')
-                                     GROUP BY mr.id
-                                     ORDER BY mr.request_date ASC
-                                     LIMIT 5");
+$pendingRequestsStmt = $conn->prepare("
+    SELECT mr.id, mr.full_name, mr.request_date, 
+           COUNT(rm.id) as medicine_count
+    FROM medicine_requests mr
+    JOIN requested_medicines rm ON mr.id = rm.request_id
+    WHERE mr.request_status IN ('pending', 'to be claimed')
+    GROUP BY mr.id
+    ORDER BY mr.request_date ASC
+    LIMIT 5
+");
 $pendingRequestsStmt->execute();
 $pendingRequests = $pendingRequestsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get recent consultations
-$recentConsultationsStmt = $conn->prepare("SELECT c.id, CONCAT(p.first_name, ' ', p.last_name) as patient_name,
-                                        c.consultation_type, c.consultation_date
-                                        FROM consultations c
-                                        JOIN patients p ON c.patient_id = p.id
-                                        ORDER BY c.created_at DESC
-                                        LIMIT 5");
+$recentConsultationsStmt = $conn->prepare("
+    SELECT c.id, CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+           c.consultation_type, c.consultation_date
+    FROM consultations c
+    JOIN patients p ON c.patient_id = p.id
+    ORDER BY c.created_at DESC
+    LIMIT 5
+");
 $recentConsultationsStmt->execute();
 $recentConsultations = $recentConsultationsStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -68,12 +79,12 @@ $recentConsultations = $recentConsultationsStmt->fetchAll(PDO::FETCH_ASSOC);
 $totalPatientsStmt = $conn->query("SELECT COUNT(*) FROM patients");
 $totalPatients = $totalPatientsStmt->fetchColumn();
 
-// Count total medicines
-$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines");
+// Count total medicines (count distinct medicines in medicines_catalog)
+$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog");
 $totalMedicines = $totalMedicinesStmt->fetchColumn();
 
 // Count pending medicine requests
-$pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status IN ('requested', 'pending')");
+$pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status IN ('pending', 'to be claimed')");
 $pendingReqCount = $pendingReqCountStmt->fetchColumn();
 
 // Count consultations this month

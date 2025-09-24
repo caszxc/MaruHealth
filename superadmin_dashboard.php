@@ -1,5 +1,5 @@
 <?php
-//superadmin_dashboard.php
+// superadmin_dashboard.php
 session_start();
 require_once "config.php";
 
@@ -28,17 +28,16 @@ $pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHER
 $pendingReqCount = $pendingReqCountStmt->fetchColumn();
 
 // Count expired medicines
-$expiredMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines WHERE expiration_date < CURDATE() AND expiry_status = 'Expired'");
+$expiredMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiration_date < CURDATE() AND expiry_status = 'Expired'");
 $expiredMedicines = $expiredMedicinesStmt->fetchColumn();
 
 // Count out of stock medicines
-$outOfStockMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines WHERE stocks = 0 AND stock_status = 'Out of Stock' AND expiry_status != 'Expired'");
+$outOfStockMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE stocks = 0 AND stock_status = 'Out of Stock' AND expiry_status != 'Expired'");
 $outOfStockMedicines = $outOfStockMedicinesStmt->fetchColumn();
 
-// Count to be claimed medicines (requests with status 'claimed', not yet picked up, and claim_until_date not expired)
+// Count to be claimed medicines
 $toBeClaimedMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status = 'to be claimed' AND claimed_date IS NULL AND claim_until_date >= CURDATE()");
 $toBeClaimedMedicines = $toBeClaimedMedicinesStmt->fetchColumn();
-
 
 // Count active announcements
 $totalAnnouncementsStmt = $conn->query("SELECT COUNT(*) FROM announcements WHERE status = 'active'");
@@ -48,34 +47,35 @@ $totalAnnouncements = $totalAnnouncementsStmt->fetchColumn();
 $upcomingEventsStmt = $conn->query("SELECT COUNT(*) FROM events WHERE event_date >= CURDATE()");
 $upcomingEvents = $upcomingEventsStmt->fetchColumn();
 
-// Fetch expiring medicines (Expiring within a month, a week, or already expired)
+// Fetch expiring medicines
 $expiringMedicinesStmt = $conn->query("
-    SELECT generic_name, brand_name, expiration_date, expiry_status 
-    FROM medicines 
-    WHERE expiry_status IN ('Expiring within a month', 'Expiring within a week')
-    ORDER BY expiration_date ASC
+    SELECT mc.generic_name, mc.brand_name, mb.expiration_date, mb.expiry_status 
+    FROM medicines_catalog mc
+    JOIN medicine_batches mb ON mc.id = mb.catalog_id
+    WHERE mb.expiry_status IN ('Expiring within a month', 'Expiring within a week')
+    ORDER BY mb.expiration_date ASC
     LIMIT 5
 ");
 $expiringMedicines = $expiringMedicinesStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch low stock medicines (Low Stock or Out of Stock)
+// Fetch low stock medicines
 $lowStockMedicinesStmt = $conn->query("
-    SELECT generic_name, brand_name, stocks, min_stock, stock_status 
-    FROM medicines 
-    WHERE stock_status IN ('Low Stock', 'Out of Stock')
-    AND expiry_status != 'Expired'
-    ORDER BY stocks ASC
+    SELECT mc.generic_name, mc.brand_name, mb.stocks, mc.min_stock, mb.stock_status 
+    FROM medicines_catalog mc
+    JOIN medicine_batches mb ON mc.id = mb.catalog_id
+    WHERE mb.stock_status IN ('Low Stock', 'Out of Stock')
+    AND mb.expiry_status != 'Expired'
+    ORDER BY mb.stocks ASC
     LIMIT 5
 ");
 $lowStockMedicines = $lowStockMedicinesStmt->fetchAll(PDO::FETCH_ASSOC);
-
 
 // Count total users
 $totalUsersStmt = $conn->query("SELECT COUNT(*) FROM users");
 $totalUsers = $totalUsersStmt->fetchColumn();
 
-// Count total medicines
-$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines");
+// Count total medicines (count distinct medicines in medicines_catalog)
+$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog");
 $totalMedicines = $totalMedicinesStmt->fetchColumn();
 
 // Count total patients

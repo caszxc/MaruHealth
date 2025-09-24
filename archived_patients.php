@@ -182,19 +182,23 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
     <div class="patient-content">
         <div class="title-con">
-            <a href="patient_management.php" class="back-button">← Back</a>
-            <h2>Archived Patients</h2>
+            <div class="title">
+                <a href="patient_management.php" class="back-button">← Back</a>
+                <h2>Archived Patients</h2>
+            </div>
+            
+            <!-- Search -->
+            <div class="search-container">
+                <form method="GET" action="" id="searchForm">
+                    <div class="search-row">
+                        <input type="text" name="search" id="searchInput" placeholder="Search for ID No./Name" value="<?= htmlspecialchars($search) ?>" autocomplete="off">
+                        <a href="archived_patients.php" class="clear-btn">Clear</a>
+                    </div>
+                </form>
+            </div>
         </div>
         
-        <!-- Search -->
-        <div class="search-container" style="justify-content: end;">
-            <form method="GET" action="" id="searchForm">
-                <div class="search-row">
-                    <input type="text" name="search" id="searchInput" placeholder="Search for ID No./Name" value="<?= htmlspecialchars($search) ?>" autocomplete="off">
-                    <a href="archived_patients.php" class="clear-btn">Clear</a>
-                </div>
-            </form>
-        </div>
+        
 
         <!-- Archived Patients Table -->
         <div class="table-wrapper">

@@ -133,7 +133,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .title-con {
     display: flex;
     align-items: center;
-    gap: 15px;
+    justify-content: space-between;
     padding: 15px;
     background-color: #fff;
     border-radius: 8px;
@@ -141,7 +141,12 @@ input[type="number"]::-webkit-inner-spin-button {
     margin-bottom: 20px;
 }
 
-.title-con h2 {
+.title{
+    display: flex;
+    gap: 15px;
+}
+
+.title h2 {
     font-size: 24px;
     color: #800000;
     margin: 0;

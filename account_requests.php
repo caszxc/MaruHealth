@@ -1,4 +1,5 @@
 <?php
+// account_requests.php
 session_start();
 require_once "config.php"; // include your database connection
 require_once "email_function.php"; // include email functionality
@@ -25,34 +26,111 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $userName = $userData['first_name'] . ' ' . $userData['last_name'];
         
         if ($action === 'approve') {
-            // Transfer user from pending_users to users, including all necessary fields
-            $approveStmt = $conn->prepare("
-                INSERT INTO users (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role)
-                SELECT first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role
-                FROM pending_users
-                WHERE id = :id
-            ");
-            $approveStmt->execute([':id' => $pendingUserId]);
-            
-            // Compose approval email
-            $subject = "Maru-Health Account Approval";
-            $message = "
-                <h2>Account Approved</h2>
-                <p>Dear $userName,</p>
-                <p>Your Maru-Health account registration has been approved. You may now log in to our Website</p>
-                <p>Best regards,<br>Maru-Health Team</p>
-            ";
-            
-            // Send email notification
-            $emailResponse = sendEmail($userEmail, $userName, $subject, $message);
-            
-            // Remove from pending_users
-            $deleteStmt = $conn->prepare("DELETE FROM pending_users WHERE id = :id");
-            $deleteStmt->execute([':id' => $pendingUserId]);
-            
-            
-            header("Location: account_approval.php");
-            exit();
+            // Begin transaction to ensure data consistency
+            $conn->beginTransaction();
+            try {
+                // Transfer user from pending_users to users
+                $approveStmt = $conn->prepare("
+                    INSERT INTO users (
+                        registration_type, age_category, first_name, last_name, middle_name, 
+                        gender, birthday, address, email, phone_number, valid_id_front, 
+                        password, role, date_registered
+                    )
+                    SELECT 
+                        registration_type, age_category, first_name, last_name, middle_name, 
+                        gender, birthday, address, email, phone_number, valid_id_front, 
+                        password, role, date_registered
+                    FROM pending_users
+                    WHERE id = :id
+                ");
+                $approveStmt->execute([':id' => $pendingUserId]);
+                
+                // Get the newly inserted user ID
+                $newUserId = $conn->lastInsertId();
+
+                // Check if a patient record already exists
+                $checkPatientStmt = $conn->prepare("
+                    SELECT id FROM patients 
+                    WHERE first_name = :first_name 
+                    AND last_name = :last_name 
+                    AND birthdate = :birthdate
+                    AND status = 'active'
+                ");
+                $checkPatientStmt->execute([
+                    ':first_name' => $userData['first_name'],
+                    ':last_name' => $userData['last_name'],
+                    ':birthdate' => $userData['birthday']
+                ]);
+                $existingPatient = $checkPatientStmt->fetch(PDO::FETCH_ASSOC);
+
+                // Only insert into patients table if no existing record is found
+                if (!$existingPatient) {
+                    // Generate or set family number (leave blank if not provided)
+                    $familyNumber = ''; // Default to empty
+                    if (isset($_GET['family_number']) && !empty(trim($_GET['family_number']))) {
+                        $familyNumber = trim($_GET['family_number']);
+                        // Insert into families table if it doesn't exist
+                        $familyStmt = $conn->prepare("
+                            INSERT INTO families (family_number, member_count)
+                            SELECT :family_number, 1
+                            WHERE NOT EXISTS (
+                                SELECT 1 FROM families WHERE family_number = :family_number
+                            )
+                        ");
+                        $familyStmt->execute([':family_number' => $familyNumber]);
+                    }
+
+                    // Insert into patients table
+                    $patientStmt = $conn->prepare("
+                        INSERT INTO patients (
+                            family_number, first_name, middle_name, last_name, birthdate, 
+                            sex, contact_number, address, weight, height, bmi, bmi_status, status
+                        )
+                        VALUES (
+                            :family_number, :first_name, :middle_name, :last_name, :birthdate, 
+                            :sex, :contact_number, :address, NULL, NULL, NULL, NULL, 'active'
+                        )
+                    ");
+                    $patientStmt->execute([
+                        ':family_number' => $familyNumber,
+                        ':first_name' => $userData['first_name'],
+                        ':middle_name' => $userData['middle_name'] ?: null,
+                        ':last_name' => $userData['last_name'],
+                        ':birthdate' => $userData['birthday'],
+                        ':sex' => $userData['gender'],
+                        ':contact_number' => $userData['phone_number'] ?: null,
+                        ':address' => $userData['address'] ?: null
+                    ]);
+                }
+
+                // Compose approval email
+                $subject = "Maru-Health Account Approval";
+                $message = "
+                    <h2>Account Approved</h2>
+                    <p>Dear $userName,</p>
+                    <p>Your Maru-Health account registration has been approved. You may now log in to our Website.</p>
+                    <p>Best regards,<br>Maru-Health Team</p>
+                ";
+                
+                // Send email notification
+                $emailResponse = sendEmail($userEmail, $userName, $subject, $message);
+                
+                // Remove from pending_users
+                $deleteStmt = $conn->prepare("DELETE FROM pending_users WHERE id = :id");
+                $deleteStmt->execute([':id' => $pendingUserId]);
+                
+                // Commit transaction
+                $conn->commit();
+                
+                header("Location: account_approval.php");
+                exit();
+            } catch (Exception $e) {
+                // Rollback transaction on error
+                $conn->rollBack();
+                $_SESSION['approval_message'] = "Error approving account: " . $e->getMessage();
+                header("Location: account_approval.php");
+                exit();
+            }
         
         } elseif ($action === 'reject') {
             // Fetch the uploaded file paths
@@ -148,10 +226,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-
 </head>
 <body>
-
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
@@ -180,19 +256,17 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'staff') {
-                    $dashboard_url = 'staff_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
             
             <p class="menu-header">BASE</p>
-
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
@@ -200,39 +274,34 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
             
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole === 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
                 <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'account_requests.php')? 'active' : '' ?>">Account Approval</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
-
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
-                <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
+                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/med_icon.png" alt="">
                 <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
             </div>
-            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
                 <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
@@ -244,7 +313,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
-            
         </div>
     </div>
 
@@ -307,7 +375,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Account Details</h2>
-
             <div class="user-info">
                 <div class="info-group">
                     <label>Last Name</label>
@@ -321,7 +388,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                      <label>Middle Name</label>
                     <span id="middleName"></span>
                 </div>
-
                 <div class="info-row">
                     <div class="info-group">
                         <label>Gender</label>
@@ -332,7 +398,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <span id="birthday"></span>
                     </div>
                 </div>
-
                 <div class="info-group">
                     <label>Address</label>
                     <span id="address"></span>
@@ -350,7 +415,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <label>Upload Valid ID</label>
                 <img id="idFront" src="" alt="Valid ID Front">
             </div>
-
             <button type="button" class="close-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
@@ -364,8 +428,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             viewButtons.forEach(button => {
                 button.addEventListener("click", function (event) {
                     event.preventDefault();
-
-                    // Get data attributes
                     document.getElementById("lastName").textContent = this.dataset.lastname;
                     document.getElementById("firstName").textContent = this.dataset.firstname;
                     document.getElementById("middleName").textContent = this.dataset.middlename;
@@ -374,11 +436,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     document.getElementById("address").textContent = this.dataset.address;
                     document.getElementById("email").textContent = this.dataset.email;
                     document.getElementById("phone").textContent = this.dataset.phone;
-
-                    // Set images
                     document.getElementById("idFront").src = this.dataset.idfront;
-
-                    // Show modal
                     modal.style.display = "flex";
                 });
             });
@@ -389,15 +447,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             modal.style.display = "none";
         }
 
-        // Attach close event to close button
         document.addEventListener("DOMContentLoaded", function () {
             const closeModalButtons = document.querySelectorAll(".close-btn");
-
             closeModalButtons.forEach(button => {
                 button.addEventListener("click", closeModal);
             });
-
-            // Close modal when clicking outside of it
             window.addEventListener("click", function (event) {
                 const modal = document.getElementById("viewModal");
                 if (event.target === modal) {
@@ -406,6 +460,5 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             });
         });
     </script>
-
 </body>
 </html>

@@ -417,7 +417,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <div class="form-group">
                         <div class="form-row-address">
                             <label>Family Number</label>
-                            <input type="text" id="edit_family_number" name="family_number" value="' . htmlspecialchars($patient['family_number']) . '" readonly>
+                            <input type="text" id="edit_family_number" name="family_number" value="' . htmlspecialchars($patient['family_number']) . '">
                         </div>
                     </div>
                     <div class="form-group">

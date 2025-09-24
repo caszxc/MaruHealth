@@ -151,7 +151,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
@@ -240,7 +240,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                         <select id="role" name="role" required>
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
-                            <option value="staff">Staff</option>
+                            <option value="health_staff">Health Staff</option>
                         </select>
                     </div>
                     

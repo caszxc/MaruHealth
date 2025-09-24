@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Full name is required";
     }
     
-    if (empty($role) || !in_array($role, ['admin', 'staff'])) {
+    if (empty($role) || !in_array($role, ['admin', 'health_staff'])) {
         $errors[] = "Valid role is required";
     }
     

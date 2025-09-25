@@ -70,86 +70,7 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         /* Scoped styles for the resident consultation details modal */
-        #viewConsultationModal .modal-content {
-            width: 90%;
-            max-width: 1000px;
-            background: #fff;
-            border-radius: 10px;
-            padding: 24px;
-        }
-        #viewConsultationModal .title {
-            text-align: center;
-            color: #7A0000;
-            margin: 0 0 18px 0;
-        }
-        #viewConsultationModal .form-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        #viewConsultationModal .form-group { width: 100%; }
-        #viewConsultationModal .form-row,
-        #viewConsultationModal .form-row-vitals {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        #viewConsultationModal label {
-            min-width: 200px;
-            font-weight: 600;
-            color: #333;
-        }
-        #viewConsultationModal input[readonly] {
-            flex: 1;
-            padding: 10px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            background: #f9f9f9;
-            color: #333;
-        }
-        #viewConsultationModal .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 16px;
-        }
-        #viewConsultationModal .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 18px;
-        }
-        #viewConsultationModal .cancel-btn {
-            background: #d1d1d1;
-            color: #111;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        #viewConsultationModal .cancel-btn:hover { background: #c4c4c4; }
-
-        /* Patient Record metrics and table styling */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 18px;
-        }
-        .metric-card {
-            background: #eee;
-            border-radius: 6px;
-            padding: 12px 16px;
-            text-align: center;
-        }
-        .metric-card .metric-label { color: #555; font-weight: 600; margin-bottom: 6px; }
-        .metric-card .metric-value { background:#fff; border-radius:6px; padding:10px 0; font-weight:600; }
-
-        .record-table { width: 100%; border-collapse: collapse; }
-        .record-table thead tr { background:#7A0000; color:#fff; }
-        .record-table th, .record-table td { padding: 12px 14px; }
-        .record-table tbody tr:nth-child(odd) { background:#f7f7f7; }
-        .record-table tbody tr:nth-child(even) { background:#eee; }
-        .record-table .view-btn { background:#3d51b5; color:#fff; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; }
-        .record-table .view-btn:hover { background:#2f3ea0; }
+        
     </style>
 </head>
 <body>
@@ -304,60 +225,62 @@ try {
 
                 <!-- Patient Record Tab -->
                 <div id="patient-record" class="tab-content" style="display: none;">
-                    <div class="content-con">
-                        <h3 class="title">Anthropometric Measurement</h3>
-                        <?php if ($patient): ?>
-                        <div class="metrics-grid">
-                            <div class="metric-card">
-                                <div class="metric-label">Height:</div>
-                                <div class="metric-value"><?= htmlspecialchars($patient['height'] ?? 'N/A') ?></div>
+                    <div class="patient-con">
+                        <div class="content-con">
+                            <h3 class="title">Anthropometric Measurement</h3>
+                            <?php if ($patient): ?>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-label">Height:</div>
+                                    <div class="metric-value"><?= htmlspecialchars($patient['height'] ?? 'N/A') ?></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Weight:</div>
+                                    <div class="metric-value"><?= htmlspecialchars($patient['weight'] ?? 'N/A') ?></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">BMI:</div>
+                                    <div class="metric-value"><?= htmlspecialchars($patient['bmi'] ?? 'N/A') ?></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Status:</div>
+                                    <div class="metric-value"><?= htmlspecialchars($patient['bmi_status'] ?? 'N/A') ?></div>
+                                </div>
                             </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Weight:</div>
-                                <div class="metric-value"><?= htmlspecialchars($patient['weight'] ?? 'N/A') ?></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">BMI:</div>
-                                <div class="metric-value"><?= htmlspecialchars($patient['bmi'] ?? 'N/A') ?></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Status:</div>
-                                <div class="metric-value"><?= htmlspecialchars($patient['bmi_status'] ?? 'N/A') ?></div>
-                            </div>
+                            <?php else: ?>
+                                <p>No patient record found yet.</p>
+                            <?php endif; ?>
                         </div>
-                        <?php else: ?>
-                            <p>No patient record found yet.</p>
-                        <?php endif; ?>
-                    </div>
 
-                    <div class="content-con">
-                        <h3 class="title">Consultation History</h3>
-                        <?php if ($patient && !empty($consultations)): ?>
-                            <div class="table-container">
-                                <table class="record-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Date & Time Requested</th>
-                                            <th>Type</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($consultations as $c): ?>
+                        <div class="content-con">
+                            <h3 class="title">Consultation History</h3>
+                            <?php if ($patient && !empty($consultations)): ?>
+                                <div class="table-container">
+                                    <table class="record-table">
+                                        <thead>
                                             <tr>
-                                                <td><?= htmlspecialchars(date('n/j/Y g:ia', strtotime($c['consultation_date']))) ?></td>
-                                                <td><?= htmlspecialchars($c['consultation_type']) ?></td>
-                                                <td><button class="view-btn" data-cid="<?= $c['id'] ?>" onclick="viewConsultation(this)">View</button></td>
+                                                <th>Date & Time Requested</th>
+                                                <th>Type</th>
+                                                <th></th>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php elseif ($patient): ?>
-                            <p>No consultations yet.</p>
-                        <?php else: ?>
-                            <p>Consultations will appear once a patient record is created.</p>
-                        <?php endif; ?>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($consultations as $c): ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars(date('n/j/Y g:ia', strtotime($c['consultation_date']))) ?></td>
+                                                    <td><?= htmlspecialchars($c['consultation_type']) ?></td>
+                                                    <td><button class="view-btn" data-cid="<?= $c['id'] ?>" onclick="viewConsultation(this)">View</button></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php elseif ($patient): ?>
+                                <p>No consultations yet.</p>
+                            <?php else: ?>
+                                <p>Consultations will appear once a patient record is created.</p>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>

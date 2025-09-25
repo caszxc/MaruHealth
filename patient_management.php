@@ -305,13 +305,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                 <option value="Female">Female</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-group">
                         <div class="form-row">
                             <label>Contact Number</label>
                             <input type="tel" id="contact_number" name="contact_number" autocomplete="off">
                         </div>
                     </div>
+                    
                     <div class="form-group">
                         <div class="form-row-address">
                             <label>Address</label>

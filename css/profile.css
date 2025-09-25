@@ -1,4 +1,4 @@
-body::-webkit-scrollbar{
+body::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
 
@@ -6,26 +6,23 @@ body::-webkit-scrollbar{
     border: 3px solid white;
 }
 
-
-.profile-container{
-    padding-top: 30px;
+.profile-container {
+    padding: 30px 0;
     margin-top: 80px;
     background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
     display: flex;
-    max-height: calc(100vh - 80px);
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    overflow: hidden;
 }
 
-.page-title{
+.page-title {
     color: white;
     font-size: 3rem;
     margin: 20px;
 }
 
-.profile-box{
+.profile-box {
     background-color: #800000;
     display: flex;
     width: 90%;
@@ -33,7 +30,7 @@ body::-webkit-scrollbar{
     justify-content: space-between;
 }
 
-.profile-img{
+.profile-img {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -81,12 +78,12 @@ body::-webkit-scrollbar{
     color: #800000;
 }
 
-.profile-img .full-name{
+.profile-img .full-name {
     font-weight: bold;
     font-size: 20px;
 }
 
-.profile-img .logout-button{
+.profile-img .logout-button {
     background-color: #800000;
     color: white;
     border: none;
@@ -95,7 +92,7 @@ body::-webkit-scrollbar{
     height: 30px;
 }
 
-.profile-info{
+.profile-info {
     width: 70%;
     display: flex;
     flex-direction: column;
@@ -104,7 +101,7 @@ body::-webkit-scrollbar{
     background-color: #f7f7f7;
 }
 
-.tab-buttons{
+.tab-buttons {
     background-color: #800000;
     width: 100%;
     height: 15%;
@@ -132,7 +129,7 @@ body::-webkit-scrollbar{
     border-radius: 5px;
 }
 
-#details, #request-history{
+#details, #request-history, #patient-record {
     padding: 20px;
     width: 100%;
     height: 85%;
@@ -141,39 +138,38 @@ body::-webkit-scrollbar{
     justify-content: flex-start;
 }
 
-#details .title{
+#details .title {
     color: #800000;
 }
 
-#details .group-row{
+#details .group-row {
     padding: 10px;
 }
 
-#details .row{
+#details .row {
     display: flex;
     width: 100%;
     border-bottom: solid 1px #800000;
     padding: 5px;
 }
 
-#details .label{
+#details .label {
     width: 200px;
     font-weight: bold;
 }
 
 /* Table Styles */
-/* Table Container for Scrollable Table */
 .table-container {
-    max-height: 500px; /* Adjust this value based on your needs */
-    height: 90%;
-    overflow-y: auto; /* Enable vertical scrolling */
+    padding: 10px 0;
+    max-height: 400px; /* Adjusted to accommodate pagination */
+    height: 80%;
+    overflow-y: auto;
     width: 100%;
     background-color: #fff;
     border-radius: 5px;
-    position: relative; /* Ensures proper positioning for the sticky header */
+    position: relative;
 }
 
-/* Table Styles */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -189,23 +185,22 @@ table th, table td {
 table th {
     background-color: #800000;
     color: #fff;
-    position: sticky; /* Keep header fixed while scrolling */
-    top: 0; /* Stick to the top of the table-container */
-    z-index: 10; /* Ensure header stays above table content */
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-/* Ensure the table header doesn't get cut off */
 .table-container::-webkit-scrollbar {
-    width: 8px; /* Scrollbar width for WebKit browsers */
+    width: 8px;
 }
 
 .table-container::-webkit-scrollbar-thumb {
-    background-color: #800000; /* Scrollbar color */
+    background-color: #800000;
     border-radius: 4px;
 }
 
 .table-container::-webkit-scrollbar-track {
-    background-color: #f1f1f1; /* Scrollbar track color */
+    background-color: #f1f1f1;
 }
 
 .status-badge {
@@ -230,20 +225,19 @@ table th {
 }
 
 /* Modal Styles */
-/* Ensure the modal covers everything */
 .modal {
-    display: none; /* Hide by default */
+    display: none;
     position: fixed;
-    z-index: 1000; /* High value to keep it on top */
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+    background-color: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
-    visibility: hidden; /* Ensures modal is not visible */
-    opacity: 0; /* Fully transparent */
+    visibility: hidden;
+    opacity: 0;
     transition: opacity 0.3s ease-in-out, visibility 0.3s;
 }
 
@@ -255,28 +249,28 @@ table th {
 
 #changeProfileModal .modal-content {
     background-color: #fff;
-    max-width: 1900px; /* Set a max width */
-    max-height: 90vh; /* Set a max height relative to the viewport */
+    max-width: 1900px;
+    max-height: 90vh;
     padding: 20px;
     border-radius: 8px;
     position: relative;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    overflow-y: auto; /* Enable vertical scrolling */
-    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    overflow-y: auto;
+    scrollbar-width: none;
     -ms-overflow-style: none;
 }
 
-#viewRequestModal .modal-content {
+#viewRequestModal .modal-content, #viewConsultationModal .modal-content {
     background-color: #fff;
-    max-width: 1900px; /* Set a max width */
+    max-width: 1900px;
     width: 80%;
-    max-height: 90vh; /* Set a max height relative to the viewport */
+    max-height: 90vh;
     padding: 20px;
     border-radius: 8px;
     position: relative;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    overflow-y: auto; /* Enable vertical scrolling */
-    scrollbar-width: none; /* Hides scrollbar in Firefox */
+    overflow-y: auto;
+    scrollbar-width: none;
     -ms-overflow-style: none;
 }
 
@@ -290,8 +284,6 @@ table th {
     padding-bottom: 10px;
 }
 
-
-/* For Profile picture change */
 .image-preview {
     display: flex;
     justify-content: center;
@@ -313,7 +305,6 @@ table th {
     font-size: 16px;
 }
 
-/* Footer buttons */
 .modal-footer {
     display: flex;
     justify-content: center;
@@ -348,8 +339,6 @@ table th {
     background-color: #a00000;
 }
 
-
-/* View Request Modal */
 .modal-container {
     display: flex;
     flex-direction: column;
@@ -504,83 +493,24 @@ table th {
     border: 1px solid #800000 !important;
 }
 
-#viewConsultationModal .modal-content {
-    width: 90%;
-    max-width: 1000px;
-    background: #fff;
-    border-radius: 10px;
-    padding: 24px;
-}
-#viewConsultationModal .title {
-    text-align: center;
-    color: #7A0000;
-    margin: 0 0 18px 0;
-}
-#viewConsultationModal .form-grid {
+.patient-con {
     display: flex;
     flex-direction: column;
-    gap: 14px;
 }
-#viewConsultationModal .form-group { width: 100%; }
-#viewConsultationModal .form-row,
-#viewConsultationModal .form-row-vitals {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-#viewConsultationModal label {
-    min-width: 200px;
-    font-weight: 600;
-    color: #333;
-}
-#viewConsultationModal input[readonly] {
-    flex: 1;
-    padding: 10px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    background: #f9f9f9;
-    color: #333;
-}
-#viewConsultationModal .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 16px;
-}
-#viewConsultationModal .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 18px;
-}
-#viewConsultationModal .cancel-btn {
-    background: #d1d1d1;
-    color: #111;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-#viewConsultationModal .cancel-btn:hover { background: #c4c4c4; }
 
-/* Patient Record metrics and table styling */
 .metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 18px;
+    display: flex;
+    width: 100%;
+    padding: 10px 0;
+    justify-content: space-around;
 }
-.metric-card {
-    background: #eee;
-    border-radius: 6px;
-    padding: 12px 16px;
-    text-align: center;
-}
-.metric-card .metric-label { color: #555; font-weight: 600; margin-bottom: 6px; }
-.metric-card .metric-value { background:#fff; border-radius:6px; padding:10px 0; font-weight:600; }
 
-.record-table { width: 100%; border-collapse: collapse; }
-.record-table thead tr { background:#7A0000; color:#fff; }
-.record-table th, .record-table td { padding: 12px 14px; }
-.record-table tbody tr:nth-child(odd) { background:#f7f7f7; }
-.record-table tbody tr:nth-child(even) { background:#eee; }
-.record-table .view-btn { background:#3d51b5; color:#fff; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; }
-.record-table .view-btn:hover { background:#2f3ea0; }
+.metric-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-value {
+    background-color: #D9D9D9;
+    padding: 20px;
+}

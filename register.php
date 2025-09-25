@@ -13,12 +13,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Initialize variables
         $firstName = $lastName = $middleName = $gender = $birthday = $address = '';
         $email = $phone = $password = $confirmPassword = '';
+        $familyNumber = null;
         $guardianData = null;
         $validIdFiles = [];
         
         // Handle different registration types
         switch ($registrationType) {
             case 'personal':
+                $familyNumber = filter_input(INPUT_POST, 'family_number', FILTER_SANITIZE_STRING); 
                 $firstName = filter_input(INPUT_POST, 'firstName', FILTER_SANITIZE_STRING);
                 $lastName = filter_input(INPUT_POST, 'lastName', FILTER_SANITIZE_STRING);
                 $middleName = filter_input(INPUT_POST, 'middleName', FILTER_SANITIZE_STRING);
@@ -31,6 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 break;
                 
             case 'child':
+                $familyNumber = filter_input(INPUT_POST, 'child_family_number', FILTER_SANITIZE_STRING);
                 $firstName = filter_input(INPUT_POST, 'child_firstName', FILTER_SANITIZE_STRING);
                 $lastName = filter_input(INPUT_POST, 'child_lastName', FILTER_SANITIZE_STRING);
                 $middleName = filter_input(INPUT_POST, 'child_middleName', FILTER_SANITIZE_STRING);
@@ -54,6 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 break;
                 
             case 'senior':
+                $familyNumber = filter_input(INPUT_POST, 'senior_family_number', FILTER_SANITIZE_STRING);
                 $firstName = filter_input(INPUT_POST, 'senior_firstName', FILTER_SANITIZE_STRING);
                 $lastName = filter_input(INPUT_POST, 'senior_lastName', FILTER_SANITIZE_STRING);
                 $middleName = filter_input(INPUT_POST, 'senior_middleName', FILTER_SANITIZE_STRING);
@@ -241,9 +245,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             
                             // Insert into pending_users table
                             $stmt = $conn->prepare("INSERT INTO pending_users 
-                                (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, registration_type, age_category, date_registered) 
+                                (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, registration_type, age_category, family_number, date_registered) 
                                 VALUES 
-                                (:firstName, :lastName, :middleName, :gender, :birthday, :address, :email, :phone, :validIDFront, :password, :registrationType, :ageCategory, NOW())");
+                                (:firstName, :lastName, :middleName, :gender, :birthday, :address, :email, :phone, :validIDFront, :password, :registrationType, :ageCategory, :familyNumber, NOW())");
 
                             $stmt->execute([
                                 ':firstName' => $firstName,
@@ -257,7 +261,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 ':validIDFront' => $userIdPath,
                                 ':password' => $hashedPassword,
                                 ':registrationType' => $registrationType,
-                                ':ageCategory' => $ageCategory
+                                ':ageCategory' => $ageCategory,
+                                ':familyNumber' => $familyNumber
                             ]);
                             
                             $pendingUserId = $conn->lastInsertId();
@@ -407,6 +412,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
 
                             <div class="group-col">
+                                <label>Family Number (Optional)</label>
+                                <input type="text" name="family_number" value="<?= htmlspecialchars($_POST['family_number'] ?? '') ?>" placeholder="Enter family number if applicable" autocomplete="off">
+                                <small class="field-hint">Optional: Enter your family number for record linking</small>
+                            </div>
+
+                            <div class="group-col">
                                 <label>Upload Valid ID <span class="required">*</span></label>
                                 <div class="file-upload">
                                     <label for="file-upload" class="custom-file-upload">
@@ -460,6 +471,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="group-col">
                                 <label>Address <span class="required">*</span></label>
                                 <input type="text" name="child_address" id="child_address" autocomplete="off">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Family Number (Optional)</label>
+                                <input type="text" name="child_family_number" id="child_family_number" placeholder="Enter family number if applicable" autocomplete="off">
+                                <small class="field-hint">Optional: Enter your family number for record linking</small>
                             </div>
 
                             <div class="group-col">
@@ -559,6 +576,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="group-col">
                                 <label>Address <span class="required">*</span></label>
                                 <input type="text" name="senior_address" id="senior_address" autocomplete="off">
+                            </div>
+
+                            <div class="group-col">
+                                <label>Family Number (Optional)</label>
+                                <input type="text" name="senior_family_number" id="senior_family_number" placeholder="Enter family number if applicable" autocomplete="off">
+                                <small class="field-hint">Optional: Enter your family number for record linking</small>
                             </div>
 
                             <div class="group-col">
@@ -688,6 +711,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="group-col">
                                 <label>Address</label>
                                 <span id="reviewAddress"></span>
+                            </div>
+                            <div class="group-col" id="reviewFamilyNumberContainer" style="display: none;">
+                                <label>Family Number</label>
+                                <span id="reviewFamilyNumber"></span>
                             </div>
                             
                             <!-- Contact Information (changes based on registration type) -->
@@ -1431,6 +1458,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             document.getElementById("guardianIdImg").style.display = "block";
                         }
                         break;
+                }
+
+                const familyNumber = getFamilyNumber(); 
+                const familyNumberContainer = document.getElementById("reviewFamilyNumberContainer");
+                const reviewFamilyNumber = document.getElementById("reviewFamilyNumber");
+                
+                if (familyNumber && familyNumber.trim()) {
+                    familyNumberContainer.style.display = "block";
+                    reviewFamilyNumber.textContent = familyNumber;
+                } else {
+                    familyNumberContainer.style.display = "none";
+                }
+            }
+
+            function getFamilyNumber() {
+                const registrationType = document.querySelector('input[name="registration_type"]').value;
+                switch (registrationType) {
+                    case 'personal':
+                        return document.querySelector('input[name="family_number"]').value;
+                    case 'child':
+                        return document.querySelector('input[name="child_family_number"]').value;
+                    case 'senior':
+                        return document.querySelector('input[name="senior_family_number"]').value;
+                    default:
+                        return '';
                 }
             }
             

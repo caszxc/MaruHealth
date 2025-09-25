@@ -1,5 +1,4 @@
 <?php
-// account_requests.php
 session_start();
 require_once "config.php"; // include your database connection
 require_once "email_function.php"; // include email functionality
@@ -32,12 +31,12 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 // Transfer user from pending_users to users
                 $approveStmt = $conn->prepare("
                     INSERT INTO users (
-                        registration_type, age_category, first_name, last_name, middle_name, 
+                        registration_type, age_category, family_number, first_name, last_name, middle_name, 
                         gender, birthday, address, email, phone_number, valid_id_front, 
                         password, role, date_registered
                     )
                     SELECT 
-                        registration_type, age_category, first_name, last_name, middle_name, 
+                        registration_type, age_category, family_number, first_name, last_name, middle_name, 
                         gender, birthday, address, email, phone_number, valid_id_front, 
                         password, role, date_registered
                     FROM pending_users
@@ -65,8 +64,8 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
 
                 // Only insert into patients table if no existing record is found
                 if (!$existingPatient) {
-                    // Generate or set family number (leave blank if not provided)
-                    $familyNumber = ''; // Default to empty
+                    // Use family_number from pending_users or GET parameter
+                    $familyNumber = $userData['family_number'] ?: '';
                     if (isset($_GET['family_number']) && !empty(trim($_GET['family_number']))) {
                         $familyNumber = trim($_GET['family_number']);
                         // Insert into families table if it doesn't exist
@@ -149,6 +148,14 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                         unlink($filePath); // Delete the file
                     }
                 }
+
+                // Delete guardian ID file if exists
+                if (!empty($files['valid_id_path'])) {
+                    $guardianFilePath = $uploadDir . basename($files['valid_id_path']);
+                    if (file_exists($guardianFilePath)) {
+                        unlink($guardianFilePath); // Delete the file
+                    }
+                }
             }
             
             // Compose rejection email
@@ -178,23 +185,30 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
-// Fetch all pending users
+// Fetch all pending users and their guardian information
 $pendingUsersStmt = $conn->prepare("
-    SELECT id, 
-        CONCAT(first_name, ' ', last_name) AS full_name, 
-        first_name,
-        last_name,
-        middle_name, 
-        gender, 
-        birthday, 
-        address, 
-        email, 
-        phone_number, 
-        valid_id_front, 
-        role,  
-        date_registered 
-    FROM pending_users 
-    ORDER BY date_registered DESC
+    SELECT 
+        pu.id, 
+        CONCAT(pu.first_name, ' ', pu.last_name) AS full_name, 
+        pu.first_name,
+        pu.last_name,
+        pu.middle_name, 
+        pu.gender, 
+        pu.birthday, 
+        pu.address, 
+        pu.email, 
+        pu.phone_number, 
+        pu.valid_id_front, 
+        pu.role,
+        pu.registration_type,
+        g.full_name AS guardian_name,
+        g.relationship AS guardian_relationship,
+        g.phone_number AS guardian_phone,
+        g.email AS guardian_email,
+        g.valid_id_path AS guardian_id_path
+    FROM pending_users pu
+    LEFT JOIN guardians g ON pu.id = g.pending_user_id
+    ORDER BY pu.date_registered DESC
 ");
 
 $pendingUsersStmt->execute();
@@ -330,7 +344,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone Number</th>
-                        <th>Date Registered</th>
+                        <th>Registration Type</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -345,7 +359,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <td><?php echo htmlspecialchars($user['full_name']); ?></td>
                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                             <td><?php echo htmlspecialchars($user['phone_number']); ?></td>
-                            <td><?php echo $user['date_registered']; ?></td>
+                            <td><?php echo htmlspecialchars(ucfirst($user['registration_type'])); ?></td>
                             <td>
                                 <a href="#" 
                                     class="view-btn" 
@@ -359,6 +373,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                     data-gender="<?php echo htmlspecialchars($user['gender']); ?>"
                                     data-birthday="<?php echo htmlspecialchars($user['birthday']); ?>"
                                     data-idfront="<?php echo htmlspecialchars($user['valid_id_front']); ?>"
+                                    data-registrationtype="<?php echo htmlspecialchars($user['registration_type']); ?>"
+                                    data-guardianname="<?php echo htmlspecialchars($user['guardian_name'] ?: ''); ?>"
+                                    data-guardianrelationship="<?php echo htmlspecialchars($user['guardian_relationship'] ?: ''); ?>"
+                                    data-guardianphone="<?php echo htmlspecialchars($user['guardian_phone'] ?: ''); ?>"
+                                    data-guardianemail="<?php echo htmlspecialchars($user['guardian_email'] ?: ''); ?>"
+                                    data-guardianid="<?php echo htmlspecialchars($user['guardian_id_path'] ?: ''); ?>"
                                     >View</a>
                                 <a href="account_requests.php?action=approve&id=<?php echo $user['id']; ?>" class="approve-btn" onclick="return confirm('Are you sure you want to approve this account? An email notification will be sent to the user.')">Approve</a>
                                 <a href="account_requests.php?action=reject&id=<?php echo $user['id']; ?>" class="reject-btn" onclick="return confirm('Are you sure you want to reject this account? An email notification will be sent to the user.')">Reject</a>
@@ -375,7 +395,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Account Details</h2>
+
             <div class="user-info">
+                <h4>Personal Information</h4>
+                <div class="info-group">
+                    <label>Registration Type</label>
+                    <span id="registrationType"></span>
+                </div>
                 <div class="info-group">
                     <label>Last Name</label>
                     <span id="lastName"></span>
@@ -385,7 +411,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <span id="firstName"></span>
                 </div>
                 <div class="info-group">
-                     <label>Middle Name</label>
+                    <label>Middle Name</label>
                     <span id="middleName"></span>
                 </div>
                 <div class="info-row">
@@ -407,27 +433,59 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <span id="email"></span>
                 </div>
                 <div class="info-group">
-                     <label>Phone Number</label>
+                    <label>Phone Number</label>
                     <span id="phone"></span>
                 </div>
+
+                <div id="guardianInfo" style="display: none;">
+                    <h4>Guardian Information</h4>
+                    <div class="info-group">
+                        <label>Guardian Name</label>
+                        <span id="guardianName"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>Relationship</label>
+                        <span id="guardianRelationship"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>Guardian Phone</label>
+                        <span id="guardianPhone"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>Guardian Email</label>
+                        <span id="guardianEmail"></span>
+                    </div>
+                </div>
             </div>
+
             <div class="id-preview">
-                <label>Upload Valid ID</label>
-                <img id="idFront" src="" alt="Valid ID Front">
+                <h4>Uploaded Documents</h4>
+                <div id="userIdPreview">
+                    <label id="idLabel">Valid ID</label>
+                    <img id="idFront" src="" alt="Valid ID Front">
+                </div>
+                <div id="guardianIdPreview" style="display: none;">
+                    <label>Guardian's Valid ID</label>
+                    <img id="guardianId" src="" alt="Guardian Valid ID">
+                </div>
             </div>
+
             <button type="button" class="close-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
-
+    
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const modal = document.getElementById("viewModal");
             const viewButtons = document.querySelectorAll(".view-btn");
-            
+
             // Function to open modal and populate with data
             viewButtons.forEach(button => {
                 button.addEventListener("click", function (event) {
                     event.preventDefault();
+
+                    // Populate user information
+                    document.getElementById("registrationType").textContent = this.dataset.registrationtype.charAt(0).toUpperCase() + this.dataset.registrationtype.slice(1);
                     document.getElementById("lastName").textContent = this.dataset.lastname;
                     document.getElementById("firstName").textContent = this.dataset.firstname;
                     document.getElementById("middleName").textContent = this.dataset.middlename;
@@ -436,7 +494,37 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     document.getElementById("address").textContent = this.dataset.address;
                     document.getElementById("email").textContent = this.dataset.email;
                     document.getElementById("phone").textContent = this.dataset.phone;
+
+                    // Handle guardian information
+                    const guardianInfo = document.getElementById("guardianInfo");
+                    const guardianIdPreview = document.getElementById("guardianIdPreview");
+                    const idLabel = document.getElementById("idLabel");
+
+                    if (this.dataset.registrationtype === 'child' || this.dataset.registrationtype === 'senior') {
+                        guardianInfo.style.display = 'block';
+                        document.getElementById("guardianName").textContent = this.dataset.guardianname || 'N/A';
+                        document.getElementById("guardianRelationship").textContent = this.dataset.guardianrelationship || 'N/A';
+                        document.getElementById("guardianPhone").textContent = this.dataset.guardianphone || 'N/A';
+                        document.getElementById("guardianEmail").textContent = this.dataset.guardianemail || 'N/A';
+                        
+                        if (this.dataset.guardianid) {
+                            guardianIdPreview.style.display = 'block';
+                            document.getElementById("guardianId").src = this.dataset.guardianid;
+                        } else {
+                            guardianIdPreview.style.display = 'none';
+                        }
+
+                        idLabel.textContent = this.dataset.registrationtype === 'child' ? "Child's ID/Birth Certificate" : "Senior's Valid ID";
+                    } else {
+                        guardianInfo.style.display = 'none';
+                        guardianIdPreview.style.display = 'none';
+                        idLabel.textContent = "Valid ID";
+                    }
+
+                    // Set user ID image
                     document.getElementById("idFront").src = this.dataset.idfront;
+
+                    // Show modal
                     modal.style.display = "flex";
                 });
             });

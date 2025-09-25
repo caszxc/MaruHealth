@@ -37,6 +37,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS users (
         registration_type ENUM('personal', 'child', 'senior') DEFAULT 'personal',
         age_category ENUM('adult', 'child', 'senior') DEFAULT 'adult',
+        family_number VARCHAR(50) NULL,
         id INT AUTO_INCREMENT PRIMARY KEY,
         first_name VARCHAR(255) NOT NULL,
         last_name VARCHAR(255) NOT NULL,
@@ -59,6 +60,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS pending_users (
         registration_type ENUM('personal', 'child', 'senior') DEFAULT 'personal',
         age_category ENUM('adult', 'child', 'senior') DEFAULT 'adult',
+        family_number VARCHAR(50) NULL,
         id INT AUTO_INCREMENT PRIMARY KEY,
         first_name VARCHAR(255) NOT NULL,
         last_name VARCHAR(255) NOT NULL,

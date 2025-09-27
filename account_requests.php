@@ -1,4 +1,5 @@
 <?php
+//account_requests.php
 session_start();
 require_once "config.php"; // include your database connection
 require_once "email_function.php"; // include email functionality

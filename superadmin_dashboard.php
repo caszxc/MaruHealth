@@ -88,6 +88,10 @@ $consultationsThisMonthStmt = $conn->prepare("SELECT COUNT(*) FROM consultations
 $consultationsThisMonthStmt->bindParam(':currentMonth', $currentMonth);
 $consultationsThisMonthStmt->execute();
 $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
+
+// Count total admin and staff (excluding super admin)
+$totalAdminStaffStmt = $conn->query("SELECT COUNT(*) FROM admin_staff WHERE role IN ('admin', 'health_staff')");
+$totalAdminStaff = $totalAdminStaffStmt->fetchColumn();
 ?>
 
 <!DOCTYPE html>
@@ -310,6 +314,12 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                 <h3>Pending Accounts</h3>
                 <div class="count"><?= $pendingAccounts ?></div>
                 <a href="account_requests.php" class="view-all">View Details</a>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Admin & Staff</h3>
+                <div class="count"><?= $totalAdminStaff ?></div>
+                <a href="manage_staff.php" class="view-all">View Details</a>
             </div>
 
             <div class="stat-card">

@@ -971,7 +971,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 const reviewFamilyNumberContainer = document.getElementById("reviewFamilyNumberContainer");
                 const reviewFamilyNumber = document.getElementById("reviewFamilyNumber");
                 const familyNumber = getFamilyNumber();
-                reviewFamilyNumberContainer.style.display = familyNumber.trim() ? "block" : "none";
+                reviewFamilyNumberContainer.style.display = familyNumber.trim() ? "block" : "flex";
                 reviewFamilyNumber.textContent = familyNumber;
                 const isGuardianType = registrationType !== 'personal';
                 guardianInfo.classList.toggle("hidden", !isGuardianType);

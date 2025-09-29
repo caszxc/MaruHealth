@@ -70,7 +70,45 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         /* Scoped styles for the resident consultation details modal */
-        
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+        }
+        .modal-content form .group-row {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-content form .group-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-content form label {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .modal-content form input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .modal-content form select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .modal-content form input[type="password"] {
+            width: 100%;
+        }
+        .error-message {
+            color: #FF0000;
+            font-size: 12px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -108,13 +146,15 @@ try {
         <h2 class="page-title">Profile</h2>
         <div class="profile-box">
             <div class="profile-img">
-                <div class="profile-pic-wrapper" onclick="openModal()">
+                <div class="profile-pic-wrapper" onclick="openProfilePicModal()">
                     <img src="<?= htmlspecialchars($profilePic) ?>" alt="profile">
-                    <button class="icon-button" onclick="openModal(event)">
+                    <button class="icon-button" onclick="openProfilePicModal(event)">
                         <i class="fas fa-pen"></i>
                     </button>
                 </div>
                 <p class="full-name"><?php echo htmlspecialchars($user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']); ?></p>
+                <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
+                <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
                 <form action="logout.php" method="POST">
                     <button type="submit" class="logout-button">Log Out</button>
                 </form>
@@ -287,9 +327,10 @@ try {
         </div>
     </div>
 
+    <!-- Profile Picture Modal -->
     <div id="changeProfileModal" class="modal">
         <div class="modal-content">
-            <h2>Change Profile</h2>
+            <h2>Change Profile Picture</h2>
             <form action="upload_profilePic.php" method="POST" enctype="multipart/form-data">
                 <div class="image-preview">
                     <img id="preview-img" src="<?= htmlspecialchars($profilePic) ?>" alt="Preview">
@@ -298,14 +339,95 @@ try {
                     <input type="file" name="profile_photo" id="profile-photo" accept="image/*">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="cancel-btn" onclick="closeProfilePicModal()">Cancel</button>
                     <button type="submit" class="save-btn">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- View Consultation Modal (reusing staff-like UI for residents) -->
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Profile</h2>
+            <form id="editProfileForm" action="update_profile.php" method="POST">
+                <div class="group-row">
+                    <div class="group-col">
+                        <label for="first_name">First Name <span class="required">*</span></label>
+                        <input type="text" id="first_name" name="first_name" value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                    </div>
+                    <div class="group-col">
+                        <label for="last_name">Last Name <span class="required">*</span></label>
+                        <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                    </div>
+                </div>
+                <div class="group-row">
+                    <div class="group-col">
+                        <label for="middle_name">Middle Name <span class="required">*</span></label>
+                        <input type="text" id="middle_name" name="middle_name" value="<?= htmlspecialchars($user['middle_name']) ?>" required>
+                    </div>
+                    <div class="group-col">
+                        <label for="gender">Gender <span class="required">*</span></label>
+                        <select id="gender" name="gender" required>
+                            <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                            <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="group-col">
+                    <label for="birthday">Date of Birth <span class="required">*</span></label>
+                    <input type="date" id="birthday" name="birthday" value="<?= htmlspecialchars($user['birthday']) ?>" required>
+                </div>
+                <div class="group-col">
+                    <label for="address">Address <span class="required">*</span></label>
+                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($user['address']) ?>" required>
+                </div>
+                <div class="group-row">
+                    <div class="group-col">
+                        <label for="phone_number">Phone Number <span class="required">*</span></label>
+                        <input type="text" id="phone_number" name="phone_number" value="<?= htmlspecialchars($user['phone_number']) ?>" required>
+                    </div>
+                    <div class="group-col">
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                    </div>
+                </div>
+                <div class="error-message" id="editProfileError"></div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-btn" onclick="closeEditProfileModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content">
+            <h2>Change Password</h2>
+            <form id="changePasswordForm" action="change_password.php" method="POST">
+                <div class="group-col">
+                    <label for="current_password">Current Password <span class="required">*</span></label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+                <div class="group-col">
+                    <label for="new_password">New Password <span class="required">*</span></label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
+                <div class="group-col">
+                    <label for="confirm_password">Confirm New Password <span class="required">*</span></label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                <div class="error-message" id="changePasswordError"></div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-btn" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Consultation Modal -->
     <div id="viewConsultationModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Consultation Details</h2>
@@ -334,8 +456,6 @@ try {
                             <label>Blood Pressure</label>
                             <input type="text" id="view_blood_pressure" readonly>
                         </div>
-                    </div>
-                    <div class="form-group">
                         <div class="form-row">
                             <label>Temperature</label>
                             <input type="text" id="view_temperature" readonly>
@@ -457,19 +577,98 @@ try {
     </div>
 
     <script>
-        function openModal(e) {
+        function openProfilePicModal(e) {
             if (e) e.stopPropagation();
             const modal = document.getElementById("changeProfileModal");
             modal.classList.add("show");
         }
 
-        function closeModal() {
+        function closeProfilePicModal() {
             document.getElementById("changeProfileModal").classList.remove("show");
         }
 
         function closeViewModal() {
             document.getElementById("viewRequestModal").classList.remove("show");
         }
+
+        function openChangePasswordModal() {
+            document.getElementById("changePasswordModal").classList.add("show");
+            document.getElementById("changePasswordError").textContent = "";
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById("changePasswordModal").classList.remove("show");
+            document.getElementById("changePasswordForm").reset();
+            document.getElementById("changePasswordError").textContent = "";
+        }
+
+        document.getElementById("changePasswordForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch("change_password.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const errorDiv = document.getElementById("changePasswordError");
+                errorDiv.textContent = data.message;
+                
+                if (data.success) {
+                    errorDiv.style.color = "#28a745"; // Green for success
+                    setTimeout(() => {
+                        closeChangePasswordModal();
+                    }, 1500);
+                } else {
+                    errorDiv.style.color = "#FF0000"; // Red for error
+                }
+            })
+            .catch(error => {
+                document.getElementById("changePasswordError").textContent = "An error occurred. Please try again.";
+                console.error(error);
+            });
+        });
+
+        function openEditProfileModal() {
+            document.getElementById("editProfileModal").classList.add("show");
+            document.getElementById("editProfileError").textContent = "";
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById("editProfileModal").classList.remove("show");
+            document.getElementById("editProfileError").textContent = "";
+        }
+
+        document.getElementById("editProfileForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch("update_profile.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const errorDiv = document.getElementById("editProfileError");
+                errorDiv.textContent = data.message;
+                
+                if (data.success) {
+                    errorDiv.style.color = "#28a745"; // Green for success
+                    setTimeout(() => {
+                        location.reload(); // Reload to reflect updated profile data
+                    }, 1500);
+                } else {
+                    errorDiv.style.color = "#FF0000"; // Red for error
+                }
+            })
+            .catch(error => {
+                document.getElementById("editProfileError").textContent = "An error occurred. Please try again.";
+                console.error(error);
+            });
+        });
 
         document.getElementById("profile-photo").addEventListener("change", function(event) {
             const file = event.target.files[0];

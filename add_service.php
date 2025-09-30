@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if (empty($serviceTitle) || empty($serviceDescription)) {
         $_SESSION['error'] = "Title and description are required.";
-        header("Location: content_management.php");
+        header("Location: service_management.php");
         exit();
     }
 
@@ -118,17 +118,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Commit transaction
         $conn->commit();
         $_SESSION['success'] = "Service added successfully.";
-        header("Location: content_management.php");
+        header("Location: service_management.php");
         exit();
 
     } catch (Exception $e) {
         $conn->rollBack();
         $_SESSION['error'] = "Error adding service: " . $e->getMessage();
-        header("Location: content_management.php");
+        header("Location: service_management.php");
         exit();
     }
 } else {
-    header("Location: content_management.php");
+    header("Location: service_management.php");
     exit();
 }
 ?>

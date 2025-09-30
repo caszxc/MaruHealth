@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validate required fields
     if (empty($serviceId) || empty($title) || empty($description)) {
         $_SESSION['error'] = "Required fields are missing.";
-        header("Location: content_management.php");
+        header("Location: service_management.php");
         exit();
     }
 
@@ -172,12 +172,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $conn->commit();
 
         $_SESSION['success'] = "Service updated successfully!";
-        header("Location: content_management.php");
+        header("Location: service_management.php");
         exit();
     } catch (Exception $e) {
         $conn->rollBack();
         $_SESSION['error'] = "Update failed: " . $e->getMessage();
-        header("Location: content_management.php");
+        header("Location: service_management.php");
         exit();
     }
 }

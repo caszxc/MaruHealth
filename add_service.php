@@ -89,7 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         // Handle image uploads
         if (!empty($images['name'][0])) {
-            $uploadDir = 'Uploads/service_images/';
+            $uploadDir = 'images/uploads/service_images/';
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }

@@ -1,5 +1,5 @@
 <?php
-//content_management.php
+//service_management.php
 session_start();
 require_once "config.php"; 
 

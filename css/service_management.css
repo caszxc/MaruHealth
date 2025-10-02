@@ -364,7 +364,7 @@
     border-radius: 5px;
 }
 
-.modal-content #serviceImages {
+.modal-content #serviceImages, .modal-content #newServiceImages {
     display: none;
 }
 

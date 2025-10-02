@@ -3,7 +3,7 @@ session_start();
 require_once "config.php";
 
 // Check if user is logged in as super admin or staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'staff'])) {
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -609,7 +609,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
                 } elseif ($adminRole === 'staff') {
-                    $dashboard_url = 'staff_dashboard.php';
+                    $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
@@ -650,7 +650,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>

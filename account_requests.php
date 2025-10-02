@@ -1,5 +1,5 @@
 <?php
-//account_requests.php
+// account_requests.php
 session_start();
 require_once "config.php"; // include your database connection
 require_once "email_function.php"; // include email functionality
@@ -15,7 +15,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     $action = $_GET['action'];
     $pendingUserId = intval($_GET['id']);
     
-    // Fetch user data first to get contact information
+    // Fetch user data first to get contact information and family number
     $fetchUserStmt = $conn->prepare("SELECT * FROM pending_users WHERE id = :id");
     $fetchUserStmt->execute([':id' => $pendingUserId]);
     $userData = $fetchUserStmt->fetch(PDO::FETCH_ASSOC);
@@ -24,83 +24,77 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $userPhone = $userData['phone_number'];
         $userEmail = $userData['email'];
         $userName = $userData['first_name'] . ' ' . $userData['last_name'];
+        $familyNumber = $userData['family_number'];
         
         if ($action === 'approve') {
-            // Begin transaction to ensure data consistency
-            $conn->beginTransaction();
             try {
+                // Begin transaction to ensure atomicity
+                $conn->beginTransaction();
+
                 // Transfer user from pending_users to users
                 $approveStmt = $conn->prepare("
-                    INSERT INTO users (
-                        registration_type, age_category, family_number, first_name, last_name, middle_name, 
-                        gender, birthday, address, email, phone_number, valid_id_front, 
-                        password, role, date_registered
-                    )
-                    SELECT 
-                        registration_type, age_category, family_number, first_name, last_name, middle_name, 
-                        gender, birthday, address, email, phone_number, valid_id_front, 
-                        password, role, date_registered
+                    INSERT INTO users (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role, family_number)
+                    SELECT first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role, family_number
                     FROM pending_users
                     WHERE id = :id
                 ");
                 $approveStmt->execute([':id' => $pendingUserId]);
-                
-                // Get the newly inserted user ID
-                $newUserId = $conn->lastInsertId();
 
-                // Check if a patient record already exists
+                // Get the newly inserted user ID
+                $userId = $conn->lastInsertId();
+
+                // Check if patient already exists in patients table
                 $checkPatientStmt = $conn->prepare("
                     SELECT id FROM patients 
                     WHERE first_name = :first_name 
                     AND last_name = :last_name 
+                    AND middle_name = :middle_name 
                     AND birthdate = :birthdate
-                    AND status = 'active'
                 ");
                 $checkPatientStmt->execute([
                     ':first_name' => $userData['first_name'],
                     ':last_name' => $userData['last_name'],
+                    ':middle_name' => $userData['middle_name'],
                     ':birthdate' => $userData['birthday']
                 ]);
                 $existingPatient = $checkPatientStmt->fetch(PDO::FETCH_ASSOC);
 
-                // Only insert into patients table if no existing record is found
                 if (!$existingPatient) {
-                    // Use family_number from pending_users or GET parameter
-                    $familyNumber = $userData['family_number'] ?: '';
-                    if (isset($_GET['family_number']) && !empty(trim($_GET['family_number']))) {
-                        $familyNumber = trim($_GET['family_number']);
-                        // Insert into families table if it doesn't exist
-                        $familyStmt = $conn->prepare("
-                            INSERT INTO families (family_number, member_count)
-                            SELECT :family_number, 1
-                            WHERE NOT EXISTS (
-                                SELECT 1 FROM families WHERE family_number = :family_number
-                            )
-                        ");
-                        $familyStmt->execute([':family_number' => $familyNumber]);
-                    }
-
-                    // Insert into patients table
+                    // Insert into patients table if no existing record
                     $patientStmt = $conn->prepare("
-                        INSERT INTO patients (
-                            family_number, first_name, middle_name, last_name, birthdate, 
-                            sex, contact_number, address, weight, height, bmi, bmi_status, status
-                        )
-                        VALUES (
-                            :family_number, :first_name, :middle_name, :last_name, :birthdate, 
-                            :sex, :contact_number, :address, NULL, NULL, NULL, NULL, 'active'
-                        )
+                        INSERT INTO patients (family_number, first_name, middle_name, last_name, birthdate, sex, contact_number, address)
+                        VALUES (:family_number, :first_name, :middle_name, :last_name, :birthdate, :sex, :contact_number, :address)
                     ");
                     $patientStmt->execute([
-                        ':family_number' => $familyNumber,
+                        ':family_number' => $familyNumber ?? '',
                         ':first_name' => $userData['first_name'],
-                        ':middle_name' => $userData['middle_name'] ?: null,
+                        ':middle_name' => $userData['middle_name'],
                         ':last_name' => $userData['last_name'],
                         ':birthdate' => $userData['birthday'],
-                        ':sex' => $userData['gender'],
-                        ':contact_number' => $userData['phone_number'] ?: null,
-                        ':address' => $userData['address'] ?: null
+                        ':sex' => $userData['gender'], // Mapping gender to sex
+                        ':contact_number' => $userData['phone_number'],
+                        ':address' => $userData['address']
                     ]);
+                }
+
+                // Handle family number in families table
+                if (!empty($familyNumber)) {
+                    // Check if family number exists
+                    $familyStmt = $conn->prepare("SELECT id, member_count FROM families WHERE family_number = :family_number");
+                    $familyStmt->execute([':family_number' => $familyNumber]);
+                    $family = $familyStmt->fetch(PDO::FETCH_ASSOC);
+
+                    if ($family) {
+                        // Update member count only if patient was not already in the patients table
+                        if (!$existingPatient) {
+                            $updateFamilyStmt = $conn->prepare("UPDATE families SET member_count = member_count + 1 WHERE family_number = :family_number");
+                            $updateFamilyStmt->execute([':family_number' => $familyNumber]);
+                        }
+                    } else {
+                        // Insert new family record
+                        $insertFamilyStmt = $conn->prepare("INSERT INTO families (family_number, member_count) VALUES (:family_number, 1)");
+                        $insertFamilyStmt->execute([':family_number' => $familyNumber]);
+                    }
                 }
 
                 // Compose approval email
@@ -108,7 +102,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 $message = "
                     <h2>Account Approved</h2>
                     <p>Dear $userName,</p>
-                    <p>Your Maru-Health account registration has been approved. You may now log in to our Website.</p>
+                    <p>Your Maru-Health account registration has been approved. You may now log in to our website.</p>
                     <p>Best regards,<br>Maru-Health Team</p>
                 ";
                 
@@ -122,13 +116,13 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 // Commit transaction
                 $conn->commit();
                 
-                header("Location: account_approval.php");
+                header("Location: account_requests.php");
                 exit();
-            } catch (Exception $e) {
+            } catch (PDOException $e) {
                 // Rollback transaction on error
                 $conn->rollBack();
                 $_SESSION['approval_message'] = "Error approving account: " . $e->getMessage();
-                header("Location: account_approval.php");
+                header("Location: account_requests.php");
                 exit();
             }
         
@@ -147,14 +141,6 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                     $filePath = $uploadDir . basename($files['valid_id_front']);
                     if (file_exists($filePath)) {
                         unlink($filePath); // Delete the file
-                    }
-                }
-
-                // Delete guardian ID file if exists
-                if (!empty($files['valid_id_path'])) {
-                    $guardianFilePath = $uploadDir . basename($files['valid_id_path']);
-                    if (file_exists($guardianFilePath)) {
-                        unlink($guardianFilePath); // Delete the file
                     }
                 }
             }
@@ -176,42 +162,35 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             $rejectStmt = $conn->prepare("DELETE FROM pending_users WHERE id = :id");
             $rejectStmt->execute([':id' => $pendingUserId]);
             
-            header("Location: account_approval.php");
+            header("Location: account_requests.php");
             exit();
         }
     } else {
         $_SESSION['approval_message'] = "Error: User not found.";
-        header("Location: account_approval.php");
+        header("Location: account_requests.php");
         exit();
     }
 }
 
-// Fetch all pending users and their guardian information
+// Fetch all pending users
 $pendingUsersStmt = $conn->prepare("
-    SELECT 
-        pu.id, 
-        CONCAT(pu.first_name, ' ', pu.last_name) AS full_name, 
-        pu.first_name,
-        pu.last_name,
-        pu.middle_name, 
-        pu.gender, 
-        pu.birthday, 
-        pu.address, 
-        pu.email, 
-        pu.phone_number, 
-        pu.valid_id_front, 
-        pu.role,
-        pu.registration_type,
-        g.full_name AS guardian_name,
-        g.relationship AS guardian_relationship,
-        g.phone_number AS guardian_phone,
-        g.email AS guardian_email,
-        g.valid_id_path AS guardian_id_path
-    FROM pending_users pu
-    LEFT JOIN guardians g ON pu.id = g.pending_user_id
-    ORDER BY pu.date_registered DESC
+    SELECT id, 
+        CONCAT(first_name, ' ', last_name) AS full_name, 
+        first_name,
+        last_name,
+        middle_name, 
+        gender, 
+        birthday, 
+        address, 
+        email, 
+        phone_number, 
+        valid_id_front, 
+        role, 
+        family_number,
+        date_registered 
+    FROM pending_users 
+    ORDER BY date_registered DESC
 ");
-
 $pendingUsersStmt->execute();
 $pendingUsers = $pendingUsersStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -264,15 +243,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-
-                // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
+                $dashboard_url = '';
                 if ($adminRole === 'super_admin') {
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'health_staff') {
-                    $dashboard_url = 'healthstaff_dashboard.php';
+                } elseif ($adminRole === 'staff') {
+                    $dashboard_url = 'staff_dashboard.php';
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
@@ -289,10 +266,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <?php endif; ?>
             
-            <?php if ($adminRole == 'super_admin' || $adminRole === 'admin'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'account_requests.php')? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'account_requests.php') ? 'active' : '' ?>">Account Approval</a>
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
@@ -304,11 +281,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
-                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
+                <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
-
-            <?php if ($adminRole == 'health_staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
@@ -322,7 +298,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
-
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
@@ -345,14 +320,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone Number</th>
-                        <th>Registration Type</th>
+                        <th>Family Number</th>
+                        <th>Date Registered</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($pendingUsers)): ?>
                     <tr>
-                        <td colspan="5" style="text-align: center;">No pending requests found.</td>
+                        <td colspan="6" style="text-align: center;">No pending requests found.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($pendingUsers as $user): ?>
@@ -360,7 +336,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <td><?php echo htmlspecialchars($user['full_name']); ?></td>
                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                             <td><?php echo htmlspecialchars($user['phone_number']); ?></td>
-                            <td><?php echo htmlspecialchars(ucfirst($user['registration_type'])); ?></td>
+                            <td><?php echo htmlspecialchars($user['family_number'] ?? 'Not provided'); ?></td>
+                            <td><?php echo $user['date_registered']; ?></td>
                             <td>
                                 <a href="#" 
                                     class="view-btn" 
@@ -374,12 +351,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                     data-gender="<?php echo htmlspecialchars($user['gender']); ?>"
                                     data-birthday="<?php echo htmlspecialchars($user['birthday']); ?>"
                                     data-idfront="<?php echo htmlspecialchars($user['valid_id_front']); ?>"
-                                    data-registrationtype="<?php echo htmlspecialchars($user['registration_type']); ?>"
-                                    data-guardianname="<?php echo htmlspecialchars($user['guardian_name'] ?: ''); ?>"
-                                    data-guardianrelationship="<?php echo htmlspecialchars($user['guardian_relationship'] ?: ''); ?>"
-                                    data-guardianphone="<?php echo htmlspecialchars($user['guardian_phone'] ?: ''); ?>"
-                                    data-guardianemail="<?php echo htmlspecialchars($user['guardian_email'] ?: ''); ?>"
-                                    data-guardianid="<?php echo htmlspecialchars($user['guardian_id_path'] ?: ''); ?>"
+                                    data-familynumber="<?php echo htmlspecialchars($user['family_number'] ?? 'Not provided'); ?>"
                                     >View</a>
                                 <a href="account_requests.php?action=approve&id=<?php echo $user['id']; ?>" class="approve-btn" onclick="return confirm('Are you sure you want to approve this account? An email notification will be sent to the user.')">Approve</a>
                                 <a href="account_requests.php?action=reject&id=<?php echo $user['id']; ?>" class="reject-btn" onclick="return confirm('Are you sure you want to reject this account? An email notification will be sent to the user.')">Reject</a>
@@ -396,13 +368,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Account Details</h2>
-
             <div class="user-info">
-                <h4>Personal Information</h4>
-                <div class="info-group">
-                    <label>Registration Type</label>
-                    <span id="registrationType"></span>
-                </div>
                 <div class="info-group">
                     <label>Last Name</label>
                     <span id="lastName"></span>
@@ -430,6 +396,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <span id="address"></span>
                 </div>
                 <div class="info-group">
+                    <label>Family Number</label>
+                    <span id="familyNumber"></span>
+                </div>
+                <div class="info-group">
                     <label>E-mail Address</label>
                     <span id="email"></span>
                 </div>
@@ -437,56 +407,25 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <label>Phone Number</label>
                     <span id="phone"></span>
                 </div>
-
-                <div id="guardianInfo" style="display: none;">
-                    <h4>Guardian Information</h4>
-                    <div class="info-group">
-                        <label>Guardian Name</label>
-                        <span id="guardianName"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>Relationship</label>
-                        <span id="guardianRelationship"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>Guardian Phone</label>
-                        <span id="guardianPhone"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>Guardian Email</label>
-                        <span id="guardianEmail"></span>
-                    </div>
-                </div>
             </div>
-
             <div class="id-preview">
-                <h4>Uploaded Documents</h4>
-                <div id="userIdPreview">
-                    <label id="idLabel">Valid ID</label>
-                    <img id="idFront" src="" alt="Valid ID Front">
-                </div>
-                <div id="guardianIdPreview" style="display: none;">
-                    <label>Guardian's Valid ID</label>
-                    <img id="guardianId" src="" alt="Guardian Valid ID">
-                </div>
+                <label>Upload Valid ID</label>
+                <img id="idFront" src="" alt="Valid ID Front">
             </div>
-
             <button type="button" class="close-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
-    
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const modal = document.getElementById("viewModal");
             const viewButtons = document.querySelectorAll(".view-btn");
-
+            
             // Function to open modal and populate with data
             viewButtons.forEach(button => {
                 button.addEventListener("click", function (event) {
                     event.preventDefault();
-
-                    // Populate user information
-                    document.getElementById("registrationType").textContent = this.dataset.registrationtype.charAt(0).toUpperCase() + this.dataset.registrationtype.slice(1);
+                    // Populate modal fields
                     document.getElementById("lastName").textContent = this.dataset.lastname;
                     document.getElementById("firstName").textContent = this.dataset.firstname;
                     document.getElementById("middleName").textContent = this.dataset.middlename;
@@ -495,36 +434,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     document.getElementById("address").textContent = this.dataset.address;
                     document.getElementById("email").textContent = this.dataset.email;
                     document.getElementById("phone").textContent = this.dataset.phone;
-
-                    // Handle guardian information
-                    const guardianInfo = document.getElementById("guardianInfo");
-                    const guardianIdPreview = document.getElementById("guardianIdPreview");
-                    const idLabel = document.getElementById("idLabel");
-
-                    if (this.dataset.registrationtype === 'child' || this.dataset.registrationtype === 'senior') {
-                        guardianInfo.style.display = 'block';
-                        document.getElementById("guardianName").textContent = this.dataset.guardianname || 'N/A';
-                        document.getElementById("guardianRelationship").textContent = this.dataset.guardianrelationship || 'N/A';
-                        document.getElementById("guardianPhone").textContent = this.dataset.guardianphone || 'N/A';
-                        document.getElementById("guardianEmail").textContent = this.dataset.guardianemail || 'N/A';
-                        
-                        if (this.dataset.guardianid) {
-                            guardianIdPreview.style.display = 'block';
-                            document.getElementById("guardianId").src = this.dataset.guardianid;
-                        } else {
-                            guardianIdPreview.style.display = 'none';
-                        }
-
-                        idLabel.textContent = this.dataset.registrationtype === 'child' ? "Child's ID/Birth Certificate" : "Senior's Valid ID";
-                    } else {
-                        guardianInfo.style.display = 'none';
-                        guardianIdPreview.style.display = 'none';
-                        idLabel.textContent = "Valid ID";
-                    }
-
-                    // Set user ID image
+                    document.getElementById("familyNumber").textContent = this.dataset.familynumber;
                     document.getElementById("idFront").src = this.dataset.idfront;
-
                     // Show modal
                     modal.style.display = "flex";
                 });
@@ -536,6 +447,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             modal.style.display = "none";
         }
 
+        // Attach close event to close button and outside click
         document.addEventListener("DOMContentLoaded", function () {
             const closeModalButtons = document.querySelectorAll(".close-btn");
             closeModalButtons.forEach(button => {

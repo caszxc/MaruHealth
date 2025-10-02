@@ -14,7 +14,7 @@ $patient = null; // linked patient record (if any)
 $consultations = []; // patient's consultation history
 
 // Fetch user details
-$sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture FROM users WHERE id = :user_id";
+$sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture, family_number FROM users WHERE id = :user_id";
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 $stmt->execute();
@@ -166,6 +166,7 @@ try {
                     <button class="tab-button active" onclick="openTab(event, 'details')">Details</button>
                     <button class="tab-button" onclick="openTab(event, 'request-history')">Request History</button>
                     <button class="tab-button" onclick="openTab(event, 'patient-record')">Patient Record</button>
+                    <button class="tab-button" onclick="openTab(event, 'dependents')">Dependents</button>
                 </div>
                 
                 <!-- Details buttons -->
@@ -173,6 +174,12 @@ try {
                     <div class="content-con">
                         <h3 class="title">General Information</h3>
                         <div class="group-row">
+                            <?php if (!empty($user['family_number'])): ?>
+                            <div class="row">
+                                <p class="label">Family Number</p>
+                                <p class="value"><?php echo htmlspecialchars($user['family_number']); ?></p>
+                            </div>
+                            <?php endif; ?>
                             <div class="row">
                                 <p class="label">Last Name</p>
                                 <p class="value"><?php echo htmlspecialchars($user['last_name']); ?></p>
@@ -321,6 +328,12 @@ try {
                                 <p>Consultations will appear once a patient record is created.</p>
                             <?php endif; ?>
                         </div>
+                    </div>
+                </div>
+
+                <div id="dependents" class="tab-content" style="display: none;">
+                    <div class="dependents-con">
+                        
                     </div>
                 </div>
             </div>

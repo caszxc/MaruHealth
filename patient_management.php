@@ -207,7 +207,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Sex</th>
                         <th>Birthdate</th>
                         <th>Contact Number</th>
-                        <th>Date Registered</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -219,14 +218,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <?php else: ?>
                         <?php foreach ($patients as $patient): ?>
                         <tr>
-                            <td><?= htmlspecialchars($patient['family_number']) ?></td>
+                            <td><?= !empty($patient['family_number']) ? htmlspecialchars($patient['family_number']) : 'Not Provided' ?></td>
                             <td><?= htmlspecialchars($patient['last_name']) ?></td>
                             <td><?= htmlspecialchars($patient['first_name']) ?></td>
                             <td><?= htmlspecialchars($patient['middle_name']) ?></td>
                             <td><?= htmlspecialchars($patient['sex']) ?></td>
                             <td><?= htmlspecialchars($patient['birthdate']) ?></td>
                             <td><?= htmlspecialchars($patient['contact_number']) ?></td>
-                            <td><?= htmlspecialchars($patient['created_at']) ?></td>
                             <td class="action-buttons">
                                 <a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">VIEW</a>
                                 <a href="archive_patient.php?id=<?= $patient['id'] ?>" class="archive-btn" onclick="return confirm('Are you sure you want to archive this patient?')">ARCHIVE</a>

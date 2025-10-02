@@ -134,7 +134,7 @@ nav {
 
 /* Form Steps */
 .hidden{
-    display: none;
+    display: none !important;
 }
 
 .form-step {
@@ -487,9 +487,4 @@ input[type="file"] {
 
 .error-summary li {
     margin-bottom: 5px;
-}
-#personalFields, #personalCredentials{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
 }

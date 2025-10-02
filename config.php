@@ -35,9 +35,6 @@ try {
 
     // Create Users Table
     $sql = "CREATE TABLE IF NOT EXISTS users (
-        registration_type ENUM('personal', 'child', 'senior') DEFAULT 'personal',
-        age_category ENUM('adult', 'child', 'senior') DEFAULT 'adult',
-        family_number VARCHAR(50) NULL,
         id INT AUTO_INCREMENT PRIMARY KEY,
         first_name VARCHAR(255) NOT NULL,
         last_name VARCHAR(255) NOT NULL,
@@ -45,22 +42,23 @@ try {
         gender ENUM('Male', 'Female') NOT NULL,
         birthday DATE NOT NULL,
         address TEXT NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        phone_number VARCHAR(20) UNIQUE NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone_number VARCHAR(20) NOT NULL,
         valid_id_front VARCHAR(255) NOT NULL,
         password VARCHAR(255) NOT NULL,
         profile_picture VARCHAR(255) DEFAULT NULL, 
         role VARCHAR(20),
-        date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        family_number VARCHAR(50) DEFAULT NULL,
+        primary_user_id INT DEFAULT NULL,
+        relationship VARCHAR(50) DEFAULT NULL,
+        date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE SET NULL
     )";
     
     $conn->exec($sql);
 
     // Create Pending Users Table
     $sql = "CREATE TABLE IF NOT EXISTS pending_users (
-        registration_type ENUM('personal', 'child', 'senior') DEFAULT 'personal',
-        age_category ENUM('adult', 'child', 'senior') DEFAULT 'adult',
-        family_number VARCHAR(50) NULL,
         id INT AUTO_INCREMENT PRIMARY KEY,
         first_name VARCHAR(255) NOT NULL,
         last_name VARCHAR(255) NOT NULL,
@@ -68,30 +66,18 @@ try {
         gender ENUM('Male', 'Female') NOT NULL,
         birthday DATE NOT NULL,
         address TEXT NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        phone_number VARCHAR(20) UNIQUE NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone_number VARCHAR(20) NOT NULL,
         valid_id_front VARCHAR(255) NOT NULL,
         password VARCHAR(255) NOT NULL,
-        role VARCHAR(20) default 'user',
-        date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        role VARCHAR(20) DEFAULT 'user',
+        family_number VARCHAR(50) DEFAULT NULL,
+        primary_user_id INT DEFAULT NULL,
+        relationship VARCHAR(50) DEFAULT NULL,
+        date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE SET NULL
     )";
 
-    $conn->exec($sql);
-
-    // Create Guardians Table
-    $sql = "CREATE TABLE IF NOT EXISTS guardians (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NULL,
-        pending_user_id INT NULL,
-        full_name VARCHAR(255) NOT NULL,
-        relationship VARCHAR(100) NOT NULL,
-        phone_number VARCHAR(20) NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        valid_id_path VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (pending_user_id) REFERENCES pending_users(id) ON DELETE CASCADE
-    )";
     $conn->exec($sql);
 
     $sql = "CREATE TABLE IF NOT EXISTS admin_staff (

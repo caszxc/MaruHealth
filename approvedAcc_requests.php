@@ -8,30 +8,22 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_
     exit();
 }
 
-// Fetch all approved users (excluding admin) with guardian information
+// Fetch all approved users (excluding admin)
 $approvedUsersStmt = $conn->prepare("
-    SELECT u.id, 
-        CONCAT(u.first_name, ' ', u.last_name) AS full_name, 
-        u.first_name,
-        u.last_name,
-        u.middle_name, 
-        u.gender, 
-        u.birthday, 
-        u.address, 
-        u.email, 
-        u.phone_number, 
-        u.valid_id_front, 
-        u.role,
-        u.registration_type,
-        g.full_name AS guardian_name,
-        g.relationship AS guardian_relationship,
-        g.phone_number AS guardian_phone,
-        g.email AS guardian_email,
-        g.valid_id_path AS guardian_id_path
-    FROM users u
-    LEFT JOIN guardians g ON u.id = g.user_id
-    WHERE u.role != 'admin' 
-    ORDER BY u.id DESC
+    SELECT id, CONCAT(first_name, ' ', last_name) AS full_name, 
+        first_name,
+        last_name,
+        middle_name, 
+        gender, 
+        birthday, 
+        address, 
+        email, 
+        phone_number, 
+        valid_id_front, 
+        role 
+    FROM users 
+    WHERE role != 'admin' 
+    ORDER BY id DESC
 ");
 
 $approvedUsersStmt->execute();
@@ -63,6 +55,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+
 </head>
 <body>
 
@@ -117,7 +110,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'approvedAcc_requests.php') ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'approvedAcc_requests.php')? 'active' : '' ?>">Account Approval</a>
             </div>
             
             <div class="menu-link">
@@ -132,11 +125,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
-                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
+                <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
@@ -158,6 +151,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
                 <a href="logout.php" class="logout-button">Log Out</a>
             </div>
+            
         </div>
     </div>
 
@@ -175,14 +169,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone Number</th>
-                        <th>Registration Type</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if (empty($approvedUsers)): ?>
                     <tr>
-                        <td colspan="5">No approved users found.</td>
+                        <td colspan="4">No approved users found.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($approvedUsers as $index => $user): ?>
@@ -190,27 +183,20 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <td><?php echo htmlspecialchars($user['full_name']); ?></td>
                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                             <td><?php echo htmlspecialchars($user['phone_number']); ?></td>
-                            <td><?php echo htmlspecialchars(ucfirst($user['registration_type'])); ?></td>
                             <td>
-                                <a href="#" 
-                                    class="view-btn" 
-                                    data-id="<?php echo $user['id']; ?>"
-                                    data-firstname="<?php echo htmlspecialchars($user['first_name']); ?>"
-                                    data-lastname="<?php echo htmlspecialchars($user['last_name']); ?>"
-                                    data-middlename="<?php echo htmlspecialchars($user['middle_name']); ?>"
-                                    data-email="<?php echo htmlspecialchars($user['email']); ?>"
-                                    data-phone="<?php echo htmlspecialchars($user['phone_number']); ?>"
-                                    data-address="<?php echo htmlspecialchars($user['address']); ?>"
-                                    data-gender="<?php echo htmlspecialchars($user['gender']); ?>"
-                                    data-birthday="<?php echo htmlspecialchars($user['birthday']); ?>"
-                                    data-idfront="<?php echo htmlspecialchars($user['valid_id_front']); ?>"
-                                    data-registrationtype="<?php echo htmlspecialchars($user['registration_type']); ?>"
-                                    data-guardianname="<?php echo htmlspecialchars($user['guardian_name'] ?? ''); ?>"
-                                    data-guardianrelationship="<?php echo htmlspecialchars($user['guardian_relationship'] ?? ''); ?>"
-                                    data-guardianphone="<?php echo htmlspecialchars($user['guardian_phone'] ?? ''); ?>"
-                                    data-guardianemail="<?php echo htmlspecialchars($user['guardian_email'] ?? ''); ?>"
-                                    data-guardianid="<?php echo htmlspecialchars($user['guardian_id_path'] ?? ''); ?>"
-                                    >View</a>
+                            <a href="#" 
+                                class="view-btn" 
+                                data-id="<?php echo $user['id']; ?>"
+                                data-firstname="<?php echo htmlspecialchars($user['first_name']); ?>"
+                                data-lastname="<?php echo htmlspecialchars($user['last_name']); ?>"
+                                data-middlename="<?php echo htmlspecialchars($user['middle_name']); ?>"
+                                data-email="<?php echo htmlspecialchars($user['email']); ?>"
+                                data-phone="<?php echo htmlspecialchars($user['phone_number']); ?>"
+                                data-address="<?php echo htmlspecialchars($user['address']); ?>"
+                                data-gender="<?php echo htmlspecialchars($user['gender']); ?>"
+                                data-birthday="<?php echo htmlspecialchars($user['birthday']); ?>"
+                                data-idfront="<?php echo htmlspecialchars($user['valid_id_front']); ?>"
+                                >View</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -226,11 +212,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <h2 class="title">Account Details</h2>
 
             <div class="user-info">
-                <h4>Personal Information</h4>
-                <div class="info-group">
-                    <label>Registration Type</label>
-                    <span id="registrationType"></span>
-                </div>
                 <div class="info-group">
                     <label>Last Name</label>
                     <span id="lastName"></span>
@@ -240,9 +221,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <span id="firstName"></span>
                 </div>
                 <div class="info-group">
-                    <label>Middle Name</label>
+                     <label>Middle Name</label>
                     <span id="middleName"></span>
                 </div>
+
                 <div class="info-row">
                     <div class="info-group">
                         <label>Gender</label>
@@ -253,6 +235,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <span id="birthday"></span>
                     </div>
                 </div>
+
                 <div class="info-group">
                     <label>Address</label>
                     <span id="address"></span>
@@ -262,41 +245,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <span id="email"></span>
                 </div>
                 <div class="info-group">
-                    <label>Phone Number</label>
+                     <label>Phone Number</label>
                     <span id="phone"></span>
                 </div>
-
-                <div id="guardianInfo" style="display: none;">
-                    <h4>Guardian Information</h4>
-                    <div class="info-group">
-                        <label>Guardian Name</label>
-                        <span id="guardianName"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>Relationship</label>
-                        <span id="guardianRelationship"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>Guardian Phone</label>
-                        <span id="guardianPhone"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>Guardian Email</label>
-                        <span id="guardianEmail"></span>
-                    </div>
-                </div>
             </div>
-
             <div class="id-preview">
-                <h4>Uploaded Documents</h4>
-                <div id="userIdPreview">
-                    <label id="idLabel">Valid ID</label>
-                    <img id="idFront" src="" alt="Valid ID Front">
-                </div>
-                <div id="guardianIdPreview" style="display: none;">
-                    <label>Guardian's Valid ID</label>
-                    <img id="guardianId" src="" alt="Guardian Valid ID">
-                </div>
+                <label>Upload Valid ID</label>
+                <img id="idFront" src="" alt="Valid ID Front">
             </div>
 
             <button type="button" class="close-btn" onclick="closeModal()">Close</button>
@@ -314,7 +269,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     event.preventDefault();
 
                     // Get data attributes
-                    document.getElementById("registrationType").textContent = this.dataset.registrationtype.charAt(0).toUpperCase() + this.dataset.registrationtype.slice(1);
                     document.getElementById("lastName").textContent = this.dataset.lastname;
                     document.getElementById("firstName").textContent = this.dataset.firstname;
                     document.getElementById("middleName").textContent = this.dataset.middlename;
@@ -324,33 +278,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     document.getElementById("email").textContent = this.dataset.email;
                     document.getElementById("phone").textContent = this.dataset.phone;
 
-                    // Handle guardian information
-                    const guardianInfo = document.getElementById("guardianInfo");
-                    const guardianIdPreview = document.getElementById("guardianIdPreview");
-                    const idLabel = document.getElementById("idLabel");
-
-                    if (this.dataset.registrationtype === 'child' || this.dataset.registrationtype === 'senior') {
-                        guardianInfo.style.display = 'block';
-                        document.getElementById("guardianName").textContent = this.dataset.guardianname || 'N/A';
-                        document.getElementById("guardianRelationship").textContent = this.dataset.guardianrelationship || 'N/A';
-                        document.getElementById("guardianPhone").textContent = this.dataset.guardianphone || 'N/A';
-                        document.getElementById("guardianEmail").textContent = this.dataset.guardianemail || 'N/A';
-                        
-                        if (this.dataset.guardianid) {
-                            guardianIdPreview.style.display = 'block';
-                            document.getElementById("guardianId").src = this.dataset.guardianid;
-                        } else {
-                            guardianIdPreview.style.display = 'none';
-                        }
-
-                        idLabel.textContent = this.dataset.registrationtype === 'child' ? "Child's ID/Birth Certificate" : "Senior's Valid ID";
-                    } else {
-                        guardianInfo.style.display = 'none';
-                        guardianIdPreview.style.display = 'none';
-                        idLabel.textContent = "Valid ID";
-                    }
-
-                    // Set user ID image
+                    // Set images
                     document.getElementById("idFront").src = this.dataset.idfront;
 
                     // Show modal

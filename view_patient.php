@@ -172,8 +172,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <div class="row">
                             <p class="label">Family Number</p>
                             <p class="value">
-                                <?= htmlspecialchars($patient['family_number']) ?>
-                                <a href="family_number.php?family_number=<?= urlencode($patient['family_number']) ?>" class="view-fam-btn">View</a>
+                                <?php if (!empty($patient['family_number'])): ?>
+                                    <?= htmlspecialchars($patient['family_number']) ?>
+                                    <a href="family_number.php?family_number=<?= urlencode($patient['family_number']) ?>" class="view-fam-btn">View</a>
+                                <?php else: ?>
+                                    Not Provided
+                                <?php endif; ?>
                             </p>
                         </div>
                         <div class="row">

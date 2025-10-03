@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $serviceIntro = trim($_POST['serviceIntro'] ?? '');
     $serviceNames = $_POST['serviceName'] ?? [];
     $scheduleDays = $_POST['scheduleDay'] ?? [];
-    $doctorNames = $_POST['doctorName'] ?? []; // Added to capture doctor names
+    $doctorNames = $_POST['doctorName'] ?? [];
     $images = $_FILES['serviceImages'] ?? [];
     $serviceIcon = $_FILES['serviceIcon'] ?? null;
 
@@ -61,9 +61,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute();
         $serviceId = $conn->lastInsertId();
 
+        // Initialize announcement content only if sub-services exist
+        $hasSubServices = false;
+        $announcementContent = "Dear Barangay Marulas Residents,\n\n";
+        $announcementContent .= "We are committed to providing the best healthcare services at the 3S Health Station. To better serve you, we have made some updates to our {$serviceTitle} service schedules. These changes include new or revised sub-services, updated availability days, and assigned doctors to ensure smoother access to medical care.\n\n";
+        $announcementContent .= "Here are the details of the updates:\n\n";
+
         // Insert sub-services and schedules
         foreach ($serviceNames as $index => $serviceName) {
             if (!empty($serviceName)) {
+                $hasSubServices = true; // Mark that we have at least one valid sub-service
                 // Insert sub-service with doctor_name
                 $doctorName = !empty($doctorNames[$index]) ? trim($doctorNames[$index]) : null;
                 $subStmt = $conn->prepare("INSERT INTO sub_services (service_id, name, doctor_name) VALUES (:service_id, :name, :doctor_name)");
@@ -73,7 +80,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $subStmt->execute();
                 $subServiceId = $conn->lastInsertId();
 
-                // Insert schedules
+                // Collect schedule days
+                $days = [];
                 if (!empty($scheduleDays[$index])) {
                     foreach ($scheduleDays[$index] as $day) {
                         if (!empty($day)) {
@@ -81,10 +89,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             $scheduleStmt->bindParam(':sub_service_id', $subServiceId);
                             $scheduleStmt->bindParam(':day', $day);
                             $scheduleStmt->execute();
+                            $days[] = $day;
                         }
                     }
                 }
+
+                // Add sub-service details to announcement
+                $daysList = !empty($days) ? implode(', ', $days) : 'TBD';
+                $doctor = $doctorName ?? 'TBD';
+                $announcementContent .= "Sub-Service: {$serviceName}\n";
+                $announcementContent .= "Doctor: {$doctor}\n";
+                $announcementContent .= "Schedule: {$daysList}\n";
+                $announcementContent .= "Notes: Available for general consultations and minor illnesses. Walk-ins welcome from 8:00 AM to 4:00 PM.\n\n";
             }
+        }
+
+        // Insert announcement into announcements table only if sub-services exist
+        if ($hasSubServices) {
+            $announcementTitle = "New {$serviceTitle} Service Schedules";
+            $adminId = $_SESSION['admin_id'];
+            $announcementStmt = $conn->prepare("INSERT INTO announcements (title, content, admin_id, status) VALUES (:title, :content, :admin_id, 'active')");
+            $announcementStmt->bindParam(':title', $announcementTitle);
+            $announcementStmt->bindParam(':content', $announcementContent);
+            $announcementStmt->bindParam(':admin_id', $adminId);
+            $announcementStmt->execute();
         }
 
         // Handle image uploads

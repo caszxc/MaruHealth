@@ -1,4 +1,5 @@
 <?php
+// change_password.php
 session_start();
 require_once "config.php";
 
@@ -57,18 +58,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Hash the new password
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
-        // Update the password in the database
+        // Begin transaction to ensure atomic updates
+        $conn->beginTransaction();
+
+        // Update the primary user's password
         $update_stmt = $conn->prepare("UPDATE users SET password = :password WHERE id = :user_id");
         $update_stmt->bindParam(':password', $hashed_password, PDO::PARAM_STR);
         $update_stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+        $update_stmt->execute();
 
-        if ($update_stmt->execute()) {
-            $response['success'] = true;
-            $response['message'] = 'Password updated successfully.';
-        } else {
-            $response['message'] = 'Failed to update password. Please try again.';
-        }
+        // Sync the password to all dependents
+        $sync_stmt = $conn->prepare("UPDATE users SET password = :password WHERE primary_user_id = :primary_user_id");
+        $sync_stmt->bindParam(':password', $hashed_password, PDO::PARAM_STR);
+        $sync_stmt->bindParam(':primary_user_id', $user_id, PDO::PARAM_INT);
+        $sync_stmt->execute();
+
+        // Commit transaction
+        $conn->commit();
+
+        $response['success'] = true;
+        $response['message'] = 'Password updated successfully for you and your dependents.';
     } catch (PDOException $e) {
+        $conn->rollBack();
         $response['message'] = 'An error occurred: ' . $e->getMessage();
     }
 } else {

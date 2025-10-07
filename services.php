@@ -3,16 +3,24 @@
 session_start();
 include 'config.php';
 
-$profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // default picture
+$profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // Default picture
+$primary_user_id = $_SESSION['user_id'] ?? null;
+$active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $primary_user_id;
 
-if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT profile_picture FROM users WHERE id = :id");
-    $stmt->bindParam(':id', $_SESSION['user_id'], PDO::PARAM_INT);
+// Fetch profile picture for the active user
+if (isset($active_user_id) && isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+    $stmt = $conn->prepare("SELECT id, primary_user_id, profile_picture FROM users WHERE id = :active_user_id");
+    $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
     $stmt->execute();
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user && !empty($user['profile_picture'])) {
-        $profilePic = htmlspecialchars($user['profile_picture']);
+
+    // Validate active_user_id
+    if ($user && ($active_user_id == $primary_user_id || $user['primary_user_id'] == $primary_user_id)) {
+        if (!empty($user['profile_picture'])) {
+            $profilePic = htmlspecialchars($user['profile_picture']);
+        }
+    } else {
+        error_log("Invalid active_user_id: $active_user_id for primary_user_id: $primary_user_id");
     }
 }
 
@@ -20,21 +28,20 @@ if (isset($_SESSION['user_id'])) {
 $adminStmt = $conn->prepare("SELECT first_name, last_name FROM users WHERE role = 'admin' LIMIT 1");
 $adminStmt->execute();
 $admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
-
-// Default to "Admin" if no admin is found
-$adminName = $admin ? $admin['first_name'] . ' ' . $admin['last_name'] : 'Admin';
+$adminName = $admin ? htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']) : 'Admin';
 
 // Determine active service
 $selectedService = $_GET['service'] ?? '';
-
-$serviceStmt = $conn->prepare("SELECT * FROM services WHERE name = :name");
+$serviceStmt = $conn->prepare("SELECT id, name, description FROM services WHERE name = :name");
 $serviceStmt->bindParam(':name', $selectedService);
 $serviceStmt->execute();
 $service = $serviceStmt->fetch(PDO::FETCH_ASSOC);
 
 $subServices = [];
+$serviceImages = [];
 
 if ($service) {
+    // Fetch sub-services
     $subStmt = $conn->prepare("SELECT id, name, doctor_name FROM sub_services WHERE service_id = :service_id");
     $subStmt->execute(['service_id' => $service['id']]);
     $subs = $subStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -45,16 +52,19 @@ if ($service) {
         $schedules = $schedStmt->fetchAll(PDO::FETCH_COLUMN);
         
         $subServices[] = [
-            'name' => $sub['name'],
-            'doctor_name' => $sub['doctor_name'],
-            'schedule' => $schedules
+            'name' => $sub['name'] ?? 'N/A',
+            'doctor_name' => $sub['doctor_name'] ?? 'No doctor assigned',
+            'schedule' => $schedules ?: ['N/A']
         ];
     }
     
     // Fetch service images for slideshow
     $imageStmt = $conn->prepare("SELECT image_path FROM service_images WHERE service_id = :service_id");
     $imageStmt->execute(['service_id' => $service['id']]);
-    $serviceImages = $imageStmt->fetchAll(PDO::FETCH_COLUMN);
+    $serviceImages = $imageStmt->fetchAll(PDO::FETCH_COLUMN) ?: ['images/about-img.png'];
+
+    // Log for debugging
+    error_log("Fetched service: name=" . ($service['name'] ?? 'NULL') . ", sub_services_count=" . count($subServices) . ", images_count=" . count($serviceImages));
 }
 
 ?>
@@ -146,7 +156,7 @@ if ($service) {
         .active-dot, .dot:hover {
             background-color: #717171;
         }
-
+        
     </style>
 </head>
 <body>
@@ -165,8 +175,7 @@ if ($service) {
                 <li><a href="calendar.php" class="links">CALENDAR</a></li>
                 <li><a href="request_medicine.php" class="links">MEDICINE REQUEST</a></li>
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
-
-                <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
+                <?php if (isset($active_user_id) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
                     <li>
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
@@ -209,7 +218,7 @@ if ($service) {
                                             <?php endif; ?>
                                             <div class="schedule-day"><?= htmlspecialchars($day) ?></div>
                                             <?php if ($index === 0): ?>
-                                                <div class="doctor-name"><?= htmlspecialchars($sub['doctor_name'] ?? 'No doctor assigned') ?></div>
+                                                <div class="doctor-name"><?= htmlspecialchars($sub['doctor_name']) ?></div>
                                             <?php else: ?>
                                                 <div class="doctor-name empty"></div>
                                             <?php endif; ?>
@@ -230,26 +239,21 @@ if ($service) {
                 <div class="service-content">
                     <!-- Image Slideshow -->
                     <div class="slideshow-container">
-                        <?php if (!empty($serviceImages)): ?>
-                            <?php foreach ($serviceImages as $index => $imagePath): ?>
-                                <img src="<?= htmlspecialchars($imagePath) ?>" 
-                                     class="service-slide <?= $index === 0 ? 'active-slide' : '' ?>" 
-                                     alt="<?= htmlspecialchars($service['name']) ?> Image">
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <!-- Default image if no service images are available -->
-                            <img src="images/about-img.png" class="service-slide active-slide" alt="Default Service Image">
-                        <?php endif; ?>
+                        <?php foreach ($serviceImages as $index => $imagePath): ?>
+                            <img src="<?= htmlspecialchars($imagePath) ?>" 
+                                 class="service-slide <?= $index === 0 ? 'active-slide' : '' ?>" 
+                                 alt="<?= htmlspecialchars($service['name'] ?? 'Service') ?> Image">
+                        <?php endforeach; ?>
                         
                         <!-- Next and previous buttons -->
-                        <?php if (!empty($serviceImages) && count($serviceImages) > 1): ?>
+                        <?php if (count($serviceImages) > 1): ?>
                             <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
                             <a class="next" onclick="plusSlides(1)">&#10095;</a>
                         <?php endif; ?>
                     </div>
                     
                     <!-- Dots/circles -->
-                    <?php if (!empty($serviceImages) && count($serviceImages) > 1): ?>
+                    <?php if (count($serviceImages) > 1): ?>
                         <div class="dots-container">
                             <?php foreach ($serviceImages as $index => $imagePath): ?>
                                 <span class="dot <?= $index === 0 ? 'active-dot' : '' ?>" onclick="currentSlide(<?= $index + 1 ?>)"></span>
@@ -259,7 +263,7 @@ if ($service) {
                     
                     <div class="service-description">
                         <h3><?= htmlspecialchars($service['name'] ?? 'Service') ?></h3>
-                        <p><?= $service['description'] ?? 'No description available.' ?></p>
+                        <p><?= htmlspecialchars($service['description'] ?? 'No description available.') ?></p>
                     </div>
                 </div>
             </div>

@@ -1,18 +1,28 @@
 <?php
-//index.php
+// index.php
 session_start();
 include 'config.php';
 
 $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // default picture
 
-if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT profile_picture FROM users WHERE id = :id");
-    $stmt->bindParam(':id', $_SESSION['user_id'], PDO::PARAM_INT);
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+    // Use active_user_id if set, otherwise fall back to user_id
+    $active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $_SESSION['user_id'];
+
+    // Validate the active_user_id
+    $stmt = $conn->prepare("SELECT profile_picture, primary_user_id FROM users WHERE id = :active_user_id");
+    $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
     $stmt->execute();
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user && !empty($user['profile_picture'])) {
-        $profilePic = htmlspecialchars($user['profile_picture']);
+
+    // Ensure the user exists and is either the primary user or a dependent of the logged-in primary user
+    if ($user && ($active_user_id == $_SESSION['user_id'] || $user['primary_user_id'] == $_SESSION['user_id'])) {
+        if (!empty($user['profile_picture'])) {
+            $profilePic = htmlspecialchars($user['profile_picture']);
+        }
+    } else {
+        // Invalid active_user_id, fall back to default or handle error
+        $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png';
     }
 }
 
@@ -59,6 +69,7 @@ try {
 ?>
 
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -121,9 +132,9 @@ try {
                             $latest = $announcements[0]; // Get only the first announcement 
                         ?>
                         <div class="latest-announcement-banner">
-                        <img src="images/uploads/announcement_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_announcement.png' ?>" 
-                        alt="<?= htmlspecialchars($latest['title']) ?>" 
-                            class="announcement-image">
+                            <img src="images/uploads/announcement_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_announcement.png' ?>" 
+                                 alt="<?= htmlspecialchars($latest['title']) ?>" 
+                                 class="announcement-image">
                             <div class="announcement-details">
                                 <p><strong><?= htmlspecialchars($latest['title']); ?></strong></p>
                                 <p><?= date("F j, Y", strtotime($latest['created_at'])); ?></p>
@@ -145,8 +156,8 @@ try {
                         ?>
                         <div class="latest-event-banner">
                             <img src="images/uploads/event_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_event.png' ?>" 
-                            alt="<?= htmlspecialchars($latest['title']) ?>" 
-                            class="event-image">
+                                 alt="<?= htmlspecialchars($latest['title']) ?>" 
+                                 class="event-image">
                             <div class="event-details">
                                 <h3 style="color: #800000;"><?= htmlspecialchars($latest['title']); ?></h3>
                                 <p><?= date("F j, Y", strtotime($latest['event_date'])); ?> - <?= date("g:i A", strtotime($latest['start'])); ?> - <?= date("g:i A", strtotime($latest['end'])); ?></p>
@@ -200,9 +211,9 @@ try {
                             <img src="images/uploads/announcement_images/<?= !empty($announcement['image']) ? htmlspecialchars($announcement['image']) : 'default_announcement.png' ?>" alt="Announcement Image">
                         </div>
                         <div class="announcement-info">
-                            <h3><?= $announcement['title'] ?></h3>
+                            <h3><?= htmlspecialchars($announcement['title']) ?></h3>
                             <small><?= date('M d, h:i A', strtotime($announcement['created_at'])) ?></small>
-                            <p><?= substr($announcement['content'], 0, 130) ?>...</p>
+                            <p><?= htmlspecialchars(substr($announcement['content'], 0, 130)) ?>...</p>
                             <a href="view_announcement.php?id=<?= $announcement['id'] ?>" class="read-more">Read More</a>
                         </div>
                     </div>
@@ -226,8 +237,8 @@ try {
                 <?php foreach ($events as $event): ?>
                     <div class="event-box">
                         <img src="images/uploads/event_images/<?= !empty($event['image']) ? htmlspecialchars($event['image']) : 'default_event.png' ?>" 
-                        alt="<?= htmlspecialchars($event['title']) ?>" 
-                        class="event-image">
+                             alt="<?= htmlspecialchars($event['title']) ?>" 
+                             class="event-image">
                         <div class="event-details">
                             <h3><?= htmlspecialchars($event['title']); ?></h3>
                             <p><strong>Date:</strong> <?= date("F j, Y", strtotime($event['event_date'])); ?></p>
@@ -241,9 +252,9 @@ try {
         <div class="view-more-wrapper">
             <a href="events_list.php" class="view-more-btn">View More</a>
         </div>
-    </section>>
+    </section>
 
-    <!-- Footer  -->
+    <!-- Footer -->
     <footer>
         <div class="footer-container">
             <div class="footer-logo-container">
@@ -256,23 +267,23 @@ try {
                     <p><i class="fa fa-phone"></i> 0968 351 1100</p>
                 </div>
             </div>
-            
+
 
             <div class="footer-links">
                 <h4>ABOUT US</h4>
                 <ul>
-                <li><a href="#">Mission and Vision</a></li>
-                <li><a href="#">About 3S Health Center</a></li>
-                <li><a href="#">PhilHealth Support for 3S Health Centers</a></li>
+                    <li><a href="#">Mission and Vision</a></li>
+                    <li><a href="#">About 3S Health Center</a></li>
+                    <li><a href="#">PhilHealth Support for 3S Health Centers</a></li>
                 </ul>
             </div>
             <div class="footer-links">
                 <h4>OUR SERVICES</h4>
                 <ul>
-                <li><a href="#">Check Up</a></li>
-                <li><a href="#">Vaccination</a></li>
-                <li><a href="#">Family Planning</a></li>
-                <li><a href="#">Dental Care</a></li>
+                    <li><a href="#">Check Up</a></li>
+                    <li><a href="#">Vaccination</a></li>
+                    <li><a href="#">Family Planning</a></li>
+                    <li><a href="#">Dental Care</a></li>
                 </ul>
             </div>
         </div>
@@ -280,12 +291,11 @@ try {
         <div class="footer-bottom">
             <p>© 2025 3S Barangay Marulas. All Rights Reserved.</p>
             <div class="footer-policy">
-            <a href="privacy_policy.php">Privacy & Policy</a> |
-            <a href="terms_condition.php">Terms & Conditions</a>
+                <a href="privacy_policy.php">Privacy & Policy</a> |
+                <a href="terms_condition.php">Terms & Conditions</a>
             </div>
         </div>
     </footer>
-
 
 
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
@@ -305,6 +315,6 @@ try {
             });
         });
     </script>
-
+    
 </body>
 </html>

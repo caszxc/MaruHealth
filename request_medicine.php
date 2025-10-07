@@ -1,31 +1,44 @@
 <?php
-//request_medicine.php
+// request_medicine.php
 session_start();
 require 'config.php'; // Include your DB connection
 
 $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // default picture
-
-if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT profile_picture FROM users WHERE id = :id");
-    $stmt->bindParam(':id', $_SESSION['user_id'], PDO::PARAM_INT);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user && !empty($user['profile_picture'])) {
-        $profilePic = htmlspecialchars($user['profile_picture']);
-    }
-}
-
 $userData = [];
 
-if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number FROM users WHERE id = :id");
-    $stmt->bindParam(':id', $_SESSION['user_id'], PDO::PARAM_INT);
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+    // Use active_user_id if set, otherwise fall back to user_id
+    $active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $_SESSION['user_id'];
+
+    // Validate the active_user_id and fetch profile picture and user data
+    $stmt = $conn->prepare("SELECT profile_picture, primary_user_id, first_name, last_name, middle_name, gender, birthday, address, phone_number FROM users WHERE id = :active_user_id");
+    $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Ensure the user exists and is either the primary user or a dependent of the logged-in primary user
+    if ($user && ($active_user_id == $_SESSION['user_id'] || $user['primary_user_id'] == $_SESSION['user_id'])) {
+        if (!empty($user['profile_picture'])) {
+            $profilePic = htmlspecialchars($user['profile_picture']);
+        }
+        $userData = [
+            'first_name' => $user['first_name'],
+            'last_name' => $user['last_name'],
+            'middle_name' => $user['middle_name'],
+            'gender' => $user['gender'],
+            'birthday' => $user['birthday'],
+            'address' => $user['address'],
+            'phone_number' => $user['phone_number']
+        ];
+    } else {
+        // Invalid active_user_id, fall back to default picture and empty user data
+        $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png';
+        $userData = [];
+    }
 }
 ?>
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -203,19 +216,16 @@ if (isset($_SESSION['user_id'])) {
             }
         });
 
-        document.addEventListener("DOMContentLoaded", function () {
+        function updateFileName() {
             const fileInput = document.getElementById('file-upload');
             const fileNameSpan = document.getElementById('file-name');
-
-            fileInput.addEventListener('change', function () {
-                if (fileInput.files.length > 0) {
-                    fileNameSpan.textContent = fileInput.files[0].name;
-                } else {
-                    fileNameSpan.textContent = 'No file chosen';
-                }
-            });
-        });
+            if (fileInput.files.length > 0) {
+                fileNameSpan.textContent = fileInput.files[0].name;
+            } else {
+                fileNameSpan.textContent = 'No file chosen';
+            }
+        }
     </script>
 </body>
-</html>
+
 </html>

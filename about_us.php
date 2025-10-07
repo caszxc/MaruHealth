@@ -1,21 +1,33 @@
 <?php
+// about_us.php
 session_start();
 include 'config.php';
 
 $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // default picture
 
-if (isset($_SESSION['user_id'])) {
-    $stmt = $conn->prepare("SELECT profile_picture FROM users WHERE id = :id");
-    $stmt->bindParam(':id', $_SESSION['user_id'], PDO::PARAM_INT);
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+    // Use active_user_id if set, otherwise fall back to user_id
+    $active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $_SESSION['user_id'];
+
+    // Validate the active_user_id
+    $stmt = $conn->prepare("SELECT profile_picture, primary_user_id FROM users WHERE id = :active_user_id");
+    $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
     $stmt->execute();
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user && !empty($user['profile_picture'])) {
-        $profilePic = htmlspecialchars($user['profile_picture']);
+
+    // Ensure the user exists and is either the primary user or a dependent of the logged-in primary user
+    if ($user && ($active_user_id == $_SESSION['user_id'] || $user['primary_user_id'] == $_SESSION['user_id'])) {
+        if (!empty($user['profile_picture'])) {
+            $profilePic = htmlspecialchars($user['profile_picture']);
+        }
+    } else {
+        // Invalid active_user_id, fall back to default picture
+        $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png';
     }
 }
 ?>
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -71,7 +83,7 @@ if (isset($_SESSION['user_id'])) {
             <p class="tagline" data-aos="fade-up" data-aos-delay="300">MaruHealth is the official web-based health services management system of Marulas 3S Health Center, dedicated to delivering efficient, accessible, and community-driven healthcare services to residents of Barangay Marulas.</p>
         </div>
     </div>
-
+    
 
     <div class="container">
         <section class="mission-vision" data-aos="fade-right">
@@ -95,16 +107,14 @@ if (isset($_SESSION['user_id'])) {
             </div>
             <div class="text-content">
                 <h2>About 3S Health Center</h2>
-                <p>The 3S (Simple, Speed, Service) Program of Valenzuela City is a government initiative designed to provide fast, efficient, and accessible public services to residents. It focuses on simplifying processes, ensuring quick response times, and delivering high-quality service in various sectors, including healthcare. Through this approach, the Marulas 3S Health Center upholds these principles by streamlining medical services, minimizing waiting times, and prioritizing the well-being of the community with a people-centered healthcare system.
-                </p>
+                <p>The 3S (Simple, Speed, Service) Program of Valenzuela City is a government initiative designed to provide fast, efficient, and accessible public services to residents. It focuses on simplifying processes, ensuring quick response times, and delivering high-quality service in various sectors, including healthcare. Through this approach, the Marulas 3S Health Center upholds these principles by streamlining medical services, minimizing waiting times, and prioritizing the well-being of the community with a people-centered healthcare system.</p>
             </div>
             
         </section>
         <section class="about-content" data-aos="fade-right">
             <div class="text-content">
                 <h2>PhilHealth Support for 3S Health Centers</h2>
-                <p>3S Health Center is a PhilHealth-accredited facility dedicated to providing accessible and affordable healthcare to the community. As part of Valenzuela City's 3S (Simple, Speed, and Service) Health Centers, it ensures that residents can avail of PhilHealth-covered medical services, including free consultations, laboratory tests, and essential treatments. With this support, patients can receive quality healthcare while maximizing their PhilHealth benefits for outpatient services, maternity care, and other essential medical needs. The center remains committed to delivering efficient and people-centered healthcare, ensuring that every resident receives the medical attention they deserve.
-                </p>
+                <p>3S Health Center is a PhilHealth-accredited facility dedicated to providing accessible and affordable healthcare to the community. As part of Valenzuela City's 3S (Simple, Speed, and Service) Health Centers, it ensures that residents can avail of PhilHealth-covered medical services, including free consultations, laboratory tests, and essential treatments. With this support, patients can receive quality healthcare while maximizing their PhilHealth benefits for outpatient services, maternity care, and other essential medical needs. The center remains committed to delivering efficient and people-centered healthcare, ensuring that every resident receives the medical attention they deserve.</p>
             </div>
             <div class="img-content">
                 <img src="images/philhealth_logo.png" alt="">
@@ -112,6 +122,7 @@ if (isset($_SESSION['user_id'])) {
         </section>
 
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
     <script>
         AOS.init({
@@ -138,9 +149,9 @@ if (isset($_SESSION['user_id'])) {
             banner.style.backgroundImage = `url('${images[currentIndex]}')`;
         }
 
-        // Change every 5 seconds
+        // Change every 4 seconds
         setInterval(changeBannerBackground, 4000);
     </script>
-
+    
 </body>
 </html>

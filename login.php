@@ -1,5 +1,5 @@
 <?php
-//login.php
+// login.php
 session_start();
 include 'config.php';
 
@@ -21,8 +21,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['role'] = 'user';
         $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
 
-        // Redirect to resident dashboard
-        header("Location: index.php");
+        // Check for dependents
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM dependent_relationships WHERE primary_user_id = :user_id");
+        $stmt->bindParam(':user_id', $user['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $dependent_count = $stmt->fetchColumn();
+
+        // Redirect based on whether the user has dependents
+        if ($dependent_count > 0) {
+            header("Location: switch_account.php");
+        } else {
+            header("Location: index.php");
+        }
         exit();
     } else {
         // If not found in users table, check admin_staff table

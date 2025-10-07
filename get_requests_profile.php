@@ -1,5 +1,5 @@
 <?php
-//get_requests_profile.php
+// get_requests_profile.php
 session_start();
 require_once "config.php";
 
@@ -14,16 +14,28 @@ if (!isset($_GET['id'])) {
 }
 
 $request_id = $_GET['id'];
-$user_id = $_SESSION['user_id'];
+$primary_user_id = $_SESSION['user_id'];
+$active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $primary_user_id;
+
+// Validate the active_user_id
+$stmt = $conn->prepare("SELECT id, primary_user_id FROM users WHERE id = :active_user_id");
+$stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
+$stmt->execute();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user || ($active_user_id != $primary_user_id && $user['primary_user_id'] != $primary_user_id)) {
+    header("HTTP/1.1 403 Forbidden");
+    exit();
+}
 
 try {
     $sql = "SELECT mr.request_id, mr.full_name, mr.gender AS sex, mr.birthdate, mr.address, mr.phone, mr.reason, 
                    mr.request_status, mr.prescription, mr.claim_date, mr.claim_until_date, mr.claimed_date, mr.note
             FROM medicine_requests mr
-            WHERE mr.id = :request_id AND mr.user_id = :user_id";
+            WHERE mr.id = :request_id AND mr.user_id = :active_user_id";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':request_id', $request_id, PDO::PARAM_INT);
-    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+    $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
     $stmt->execute();
     $request = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -45,7 +57,7 @@ try {
         'full_name' => $request['full_name'],
         'sex' => $request['sex'],
         'birthdate' => date("F j, Y", strtotime($request['birthdate'])),
-        'address' => $request['address'],
+        'address' => $request['address'] ?? 'N/A',
         'phone' => $request['phone'],
         'reason' => $request['reason'],
         'request_status' => $request['request_status'],

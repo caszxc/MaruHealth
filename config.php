@@ -49,9 +49,8 @@ try {
         profile_picture VARCHAR(255) DEFAULT NULL, 
         role VARCHAR(20),
         family_number VARCHAR(50) DEFAULT NULL,
-        primary_user_id INT DEFAULT NULL,
-        relationship VARCHAR(50) DEFAULT NULL,
         date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        primary_user_id INT NULL,
         FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE SET NULL
     )";
     
@@ -72,12 +71,34 @@ try {
         password VARCHAR(255) NOT NULL,
         role VARCHAR(20) DEFAULT 'user',
         family_number VARCHAR(50) DEFAULT NULL,
-        primary_user_id INT DEFAULT NULL,
-        relationship VARCHAR(50) DEFAULT NULL,
         date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE SET NULL
+        primary_user_id INT NULL
     )";
 
+    $conn->exec($sql);
+
+    // Create Dependent Relationships Table
+    $sql = "CREATE TABLE IF NOT EXISTS dependent_relationships (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        primary_user_id INT NOT NULL,
+        dependent_user_id INT NOT NULL,
+        relationship VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (dependent_user_id) REFERENCES users(id) ON DELETE CASCADE
+    )";
+    $conn->exec($sql);
+
+    // Create Pending Dependent Relationships Table
+    $sql = "CREATE TABLE IF NOT EXISTS pending_dependent_relationships (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        primary_user_id INT NOT NULL,
+        dependent_user_id INT NOT NULL,
+        relationship VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (dependent_user_id) REFERENCES pending_users(id) ON DELETE CASCADE
+    )";
     $conn->exec($sql);
 
     $sql = "CREATE TABLE IF NOT EXISTS admin_staff (
@@ -176,9 +197,8 @@ try {
         }
     }
 
-
     // Create Sub-Services Table (e.g., Daily Check Up, Prenatal Check Up)
-    $sql = "CREATE TABLE IF NOT EXISTS  sub_services (
+    $sql = "CREATE TABLE IF NOT EXISTS sub_services (
         id INT AUTO_INCREMENT PRIMARY KEY,
         service_id INT NOT NULL,
         name VARCHAR(255) NOT NULL,
@@ -187,8 +207,8 @@ try {
     )";
     $conn->exec($sql);
 
-    // Create Schedules Table(e.g., Monday, Friday)
-    $sql = "CREATE TABLE IF NOT EXISTS  schedules (
+    // Create Schedules Table (e.g., Monday, Friday)
+    $sql = "CREATE TABLE IF NOT EXISTS schedules (
         id INT AUTO_INCREMENT PRIMARY KEY,
         sub_service_id INT NOT NULL,
         day_of_schedule VARCHAR(20) NOT NULL,
@@ -208,38 +228,38 @@ try {
 
     // Create Medicine Catalog Table
     $sql = "CREATE TABLE IF NOT EXISTS medicines_catalog (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    therapeutic_category VARCHAR(50) NOT NULL,
-    generic_name VARCHAR(255) NOT NULL,
-    brand_name VARCHAR(255),
-    dosage VARCHAR(50),
-    dosage_form VARCHAR(100),
-    unit VARCHAR(50),
-    min_stock INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_medicine (generic_name, brand_name, dosage, dosage_form)
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        therapeutic_category VARCHAR(50) NOT NULL,
+        generic_name VARCHAR(255) NOT NULL,
+        brand_name VARCHAR(255),
+        dosage VARCHAR(50),
+        dosage_form VARCHAR(100),
+        unit VARCHAR(50),
+        min_stock INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_medicine (generic_name, brand_name, dosage, dosage_form)
     )";
     $conn->exec($sql);
 
     // Create Medicine Batches Table
     $sql = "CREATE TABLE IF NOT EXISTS medicine_batches (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    catalog_id INT NOT NULL,
-    batch_lot_number VARCHAR(50) NOT NULL,
-    pono VARCHAR(50),
-    manufacturing_date DATE,
-    expiration_date DATE,
-    stocks INT DEFAULT 0,
-    stock_status ENUM('In Stock', 'Low Stock', 'Out of Stock') DEFAULT 'In Stock',
-    expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
-    source VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE CASCADE
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        catalog_id INT NOT NULL,
+        batch_lot_number VARCHAR(50) NOT NULL,
+        pono VARCHAR(50),
+        manufacturing_date DATE,
+        expiration_date DATE,
+        stocks INT DEFAULT 0,
+        stock_status ENUM('In Stock', 'Low Stock', 'Out of Stock') DEFAULT 'In Stock',
+        expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
+        source VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);
     
     // Create Medicine Request Table
-   $sql = "CREATE TABLE IF NOT EXISTS medicine_requests (
+    $sql = "CREATE TABLE IF NOT EXISTS medicine_requests (
         id INT AUTO_INCREMENT PRIMARY KEY,
         request_id VARCHAR(50) UNIQUE NOT NULL,
         user_id INT NOT NULL,
@@ -262,18 +282,18 @@ try {
 
     // Create Requested Medicine Table
     $sql = "CREATE TABLE IF NOT EXISTS requested_medicines (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    request_id INT NOT NULL,
-    medicine_name VARCHAR(255) NOT NULL,
-    dosage VARCHAR(100),
-    quantity INT,
-    status ENUM('requested', 'approved', 'declined') NOT NULL DEFAULT 'requested',
-    FOREIGN KEY (request_id) REFERENCES medicine_requests(id) ON DELETE CASCADE
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        request_id INT NOT NULL,
+        medicine_name VARCHAR(255) NOT NULL,
+        dosage VARCHAR(100),
+        quantity INT,
+        status ENUM('requested', 'approved', 'declined') NOT NULL DEFAULT 'requested',
+        FOREIGN KEY (request_id) REFERENCES medicine_requests(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);
 
     // Create medicine history table
-     $sql = "CREATE TABLE IF NOT EXISTS medicine_history (
+    $sql = "CREATE TABLE IF NOT EXISTS medicine_history (
         id INT AUTO_INCREMENT PRIMARY KEY,
         catalog_id INT NULL,
         batch_id INT NULL,
@@ -288,7 +308,7 @@ try {
     $conn->exec($sql); 
 
     // Create medicine distribution table
-     $sql = "CREATE TABLE IF NOT EXISTS medicine_distributions (
+    $sql = "CREATE TABLE IF NOT EXISTS medicine_distributions (
         id INT AUTO_INCREMENT PRIMARY KEY,
         request_id INT NOT NULL,
         requested_medicine_id INT NOT NULL,
@@ -304,50 +324,50 @@ try {
 
     // Create Family Number Table
     $sql = "CREATE TABLE IF NOT EXISTS families (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    family_number VARCHAR(50) UNIQUE NOT NULL,
-    member_count INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        family_number VARCHAR(50) UNIQUE NOT NULL,
+        member_count INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
             
     $conn->exec($sql);
 
     // Create Patient Table
     $sql = "CREATE TABLE IF NOT EXISTS patients (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    family_number VARCHAR(50) NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    middle_name VARCHAR(100),
-    last_name VARCHAR(100) NOT NULL,
-    birthdate DATE NOT NULL,
-    sex ENUM('Male', 'Female', 'Other') NOT NULL,
-    contact_number VARCHAR(20),
-    address VARCHAR(100),
-    weight DECIMAL(5,2),
-    height DECIMAL(5,2),
-    bmi DECIMAL(4,1),
-    bmi_status ENUM('Underweight', 'Normal', 'Overweight', 'Obese'),
-    status ENUM('active', 'archived') DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        family_number VARCHAR(50) NOT NULL,
+        first_name VARCHAR(100) NOT NULL,
+        middle_name VARCHAR(100),
+        last_name VARCHAR(100) NOT NULL,
+        birthdate DATE NOT NULL,
+        sex ENUM('Male', 'Female', 'Other') NOT NULL,
+        contact_number VARCHAR(20),
+        address VARCHAR(100),
+        weight DECIMAL(5,2),
+        height DECIMAL(5,2),
+        bmi DECIMAL(4,1),
+        bmi_status ENUM('Underweight', 'Normal', 'Overweight', 'Obese'),
+        status ENUM('active', 'archived') DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     
     $conn->exec($sql);
 
     // Create Patient Consultation Table
     $sql = "CREATE TABLE IF NOT EXISTS consultations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    patient_id INT NOT NULL,
-    consultation_type ENUM('General Check Up', 'Vaccination', 'Prenatal', 'Dentistry', 'Family Planning') NOT NULL,
-    consultation_date DATE NOT NULL,
-    reason_for_consultation TEXT NOT NULL,
-    blood_pressure VARCHAR(20),
-    temperature DECIMAL(4,1),
-    diagnosis TEXT NOT NULL,
-    prescribed_medicine TEXT,
-    treatment_given TEXT,
-    consulting_physician_nurse VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT NOT NULL,
+        consultation_type ENUM('General Check Up', 'Vaccination', 'Prenatal', 'Dentistry', 'Family Planning') NOT NULL,
+        consultation_date DATE NOT NULL,
+        reason_for_consultation TEXT NOT NULL,
+        blood_pressure VARCHAR(20),
+        temperature DECIMAL(4,1),
+        diagnosis TEXT NOT NULL,
+        prescribed_medicine TEXT,
+        treatment_given TEXT,
+        consulting_physician_nurse VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
     )";
     
     $conn->exec($sql);
@@ -395,5 +415,4 @@ try {
 } catch (PDOException $e) {
     die("Connection failed: " . $e->getMessage());
 }
-
 ?>

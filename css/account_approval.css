@@ -218,6 +218,10 @@ table th, table td {
     border-bottom: 1px solid #ddd;
 }
 
+table td div{
+    display: flex;
+}
+
 table th {
     background-color: #800000;
     color: #fff;
@@ -355,7 +359,7 @@ table th {
 }
 
 .id-preview img {
-    width: 200px;
+    width: 100%;
     height: auto;
     border: 1px solid #ddd;
     border-radius: 5px;

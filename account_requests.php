@@ -15,8 +15,14 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     $action = $_GET['action'];
     $pendingUserId = intval($_GET['id']);
     
-    // Fetch user data first to get contact information and family number
-    $fetchUserStmt = $conn->prepare("SELECT * FROM pending_users WHERE id = :id");
+    // Fetch user data first to get contact information, family number, and primary user info
+    $fetchUserStmt = $conn->prepare("
+        SELECT pu.*, pdr.relationship 
+        FROM pending_users pu 
+        LEFT JOIN pending_dependent_relationships pdr 
+        ON pu.id = pdr.dependent_user_id AND pu.primary_user_id = pdr.primary_user_id 
+        WHERE pu.id = :id
+    ");
     $fetchUserStmt->execute([':id' => $pendingUserId]);
     $userData = $fetchUserStmt->fetch(PDO::FETCH_ASSOC);
     
@@ -25,6 +31,8 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $userEmail = $userData['email'];
         $userName = $userData['first_name'] . ' ' . $userData['last_name'];
         $familyNumber = $userData['family_number'];
+        $primaryUserId = $userData['primary_user_id'];
+        $relationship = $userData['relationship'];
         
         if ($action === 'approve') {
             try {
@@ -33,8 +41,8 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
 
                 // Transfer user from pending_users to users
                 $approveStmt = $conn->prepare("
-                    INSERT INTO users (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role, family_number)
-                    SELECT first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role, family_number
+                    INSERT INTO users (first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role, family_number, primary_user_id)
+                    SELECT first_name, last_name, middle_name, gender, birthday, address, email, phone_number, valid_id_front, password, role, family_number, primary_user_id
                     FROM pending_users
                     WHERE id = :id
                 ");
@@ -42,6 +50,29 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
 
                 // Get the newly inserted user ID
                 $userId = $conn->lastInsertId();
+
+                // If this is a dependent, move relationship from pending_dependent_relationships to dependent_relationships
+                if ($primaryUserId && $relationship) {
+                    $relationshipStmt = $conn->prepare("
+                        INSERT INTO dependent_relationships (primary_user_id, dependent_user_id, relationship)
+                        VALUES (:primary_user_id, :dependent_user_id, :relationship)
+                    ");
+                    $relationshipStmt->execute([
+                        ':primary_user_id' => $primaryUserId,
+                        ':dependent_user_id' => $userId,
+                        ':relationship' => $relationship ?: 'Other'
+                    ]);
+
+                    // Remove from pending_dependent_relationships
+                    $deletePendingRelationshipStmt = $conn->prepare("
+                        DELETE FROM pending_dependent_relationships 
+                        WHERE primary_user_id = :primary_user_id AND dependent_user_id = :dependent_user_id
+                    ");
+                    $deletePendingRelationshipStmt->execute([
+                        ':primary_user_id' => $primaryUserId,
+                        ':dependent_user_id' => $pendingUserId
+                    ]);
+                }
 
                 // Check if patient already exists in patients table
                 $checkPatientStmt = $conn->prepare("
@@ -71,7 +102,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                         ':middle_name' => $userData['middle_name'],
                         ':last_name' => $userData['last_name'],
                         ':birthdate' => $userData['birthday'],
-                        ':sex' => $userData['gender'], // Mapping gender to sex
+                        ':sex' => $userData['gender'],
                         ':contact_number' => $userData['phone_number'],
                         ':address' => $userData['address']
                     ]);
@@ -116,6 +147,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 // Commit transaction
                 $conn->commit();
                 
+                $_SESSION['approval_message'] = "Account approved successfully.";
                 header("Location: account_requests.php");
                 exit();
             } catch (PDOException $e) {
@@ -145,6 +177,18 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 }
             }
             
+            // Delete from pending_dependent_relationships if exists
+            if ($primaryUserId) {
+                $deletePendingRelationshipStmt = $conn->prepare("
+                    DELETE FROM pending_dependent_relationships 
+                    WHERE primary_user_id = :primary_user_id AND dependent_user_id = :dependent_user_id
+                ");
+                $deletePendingRelationshipStmt->execute([
+                    ':primary_user_id' => $primaryUserId,
+                    ':dependent_user_id' => $pendingUserId
+                ]);
+            }
+            
             // Compose rejection email
             $subject = "Maru-Health Account Registration Update";
             $message = "
@@ -162,6 +206,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             $rejectStmt = $conn->prepare("DELETE FROM pending_users WHERE id = :id");
             $rejectStmt->execute([':id' => $pendingUserId]);
             
+            $_SESSION['approval_message'] = "Account rejected successfully.";
             header("Location: account_requests.php");
             exit();
         }
@@ -172,24 +217,29 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
-// Fetch all pending users
+// Fetch all pending users with relationship info
 $pendingUsersStmt = $conn->prepare("
-    SELECT id, 
-        CONCAT(first_name, ' ', last_name) AS full_name, 
-        first_name,
-        last_name,
-        middle_name, 
-        gender, 
-        birthday, 
-        address, 
-        email, 
-        phone_number, 
-        valid_id_front, 
-        role, 
-        family_number,
-        date_registered 
-    FROM pending_users 
-    ORDER BY date_registered DESC
+    SELECT pu.id, 
+        CONCAT(pu.first_name, ' ', pu.last_name) AS full_name, 
+        pu.first_name,
+        pu.last_name,
+        pu.middle_name, 
+        pu.gender, 
+        pu.birthday, 
+        pu.address, 
+        pu.email, 
+        pu.phone_number, 
+        pu.valid_id_front, 
+        pu.role, 
+        pu.family_number,
+        pu.primary_user_id,
+        pu.date_registered,
+        pdr.relationship,
+        CONCAT(u.first_name, ' ', u.last_name) AS primary_user_name
+    FROM pending_users pu
+    LEFT JOIN pending_dependent_relationships pdr ON pu.id = pdr.dependent_user_id AND pu.primary_user_id = pdr.primary_user_id
+    LEFT JOIN users u ON pu.primary_user_id = u.id
+    ORDER BY pu.date_registered DESC
 ");
 $pendingUsersStmt->execute();
 $pendingUsers = $pendingUsersStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -220,6 +270,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <style>
+        .dependent-info {
+            font-style: italic;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
     <nav>
@@ -269,7 +325,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'account_requests.php') ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_requests.php" class="<?= ($current_page == 'account_requests.php') ? 'active' : '' ?>">Account Approval</a>
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
@@ -310,7 +366,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div class="approval-container">
         <div class="title-con">
             <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
-            <h2>Requests</h2>
+            <h2>Account Requests</h2>
         </div>
         
         <div class="table-con">
@@ -321,6 +377,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <th>Email</th>
                         <th>Phone Number</th>
                         <th>Family Number</th>
+                        <th>Account Type</th>
                         <th>Date Registered</th>
                         <th>Action</th>
                     </tr>
@@ -328,18 +385,28 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <tbody>
                 <?php if (empty($pendingUsers)): ?>
                     <tr>
-                        <td colspan="6" style="text-align: center;">No pending requests found.</td>
+                        <td colspan="7" style="text-align: center;">No pending requests found.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($pendingUsers as $user): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($user['full_name']); ?></td>
+                            <td>
+                                <?php echo htmlspecialchars($user['full_name']); ?>
+                                <?php if ($user['primary_user_id']): ?>
+                                    <div class="dependent-info">
+                                        Dependent of: <?= htmlspecialchars($user['primary_user_name'] ?? 'Unknown') ?><br>
+                                        Relationship: <?= htmlspecialchars($user['relationship'] ?? 'Not specified') ?>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                             <td><?php echo htmlspecialchars($user['phone_number']); ?></td>
                             <td><?php echo htmlspecialchars($user['family_number'] ?? 'Not provided'); ?></td>
+                            <td><?php echo $user['primary_user_id'] ? 'Dependent' : 'Primary'; ?></td>
                             <td><?php echo $user['date_registered']; ?></td>
                             <td>
-                                <a href="#" 
+                                <div>
+                                    <a href="#" 
                                     class="view-btn" 
                                     data-id="<?php echo $user['id']; ?>"
                                     data-firstname="<?php echo htmlspecialchars($user['first_name']); ?>"
@@ -352,9 +419,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                     data-birthday="<?php echo htmlspecialchars($user['birthday']); ?>"
                                     data-idfront="<?php echo htmlspecialchars($user['valid_id_front']); ?>"
                                     data-familynumber="<?php echo htmlspecialchars($user['family_number'] ?? 'Not provided'); ?>"
+                                    data-primaryname="<?php echo htmlspecialchars($user['primary_user_name'] ?? 'N/A'); ?>"
+                                    data-relationship="<?php echo htmlspecialchars($user['relationship'] ?? 'N/A'); ?>"
                                     >View</a>
-                                <a href="account_requests.php?action=approve&id=<?php echo $user['id']; ?>" class="approve-btn" onclick="return confirm('Are you sure you want to approve this account? An email notification will be sent to the user.')">Approve</a>
-                                <a href="account_requests.php?action=reject&id=<?php echo $user['id']; ?>" class="reject-btn" onclick="return confirm('Are you sure you want to reject this account? An email notification will be sent to the user.')">Reject</a>
+                                    <a href="account_requests.php?action=approve&id=<?php echo $user['id']; ?>" class="approve-btn" onclick="return confirm('Are you sure you want to approve this account? An email notification will be sent to the user.')">Approve</a>
+                                    <a href="account_requests.php?action=reject&id=<?php echo $user['id']; ?>" class="reject-btn" onclick="return confirm('Are you sure you want to reject this account? An email notification will be sent to the user.')">Reject</a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -407,9 +477,21 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     <label>Phone Number</label>
                     <span id="phone"></span>
                 </div>
+                <div class="info-group">
+                    <label>Account Type</label>
+                    <span id="accountType"></span>
+                </div>
+                <div class="info-group" id="dependentInfo" style="display: none;">
+                    <label>Primary User</label>
+                    <span id="primaryName"></span>
+                </div>
+                <div class="info-group" id="relationshipInfo" style="display: none;">
+                    <label>Relationship</label>
+                    <span id="relationship"></span>
+                </div>
             </div>
             <div class="id-preview">
-                <label>Upload Valid ID</label>
+                <label>Uploaded Valid ID</label>
                 <img id="idFront" src="" alt="Valid ID Front">
             </div>
             <button type="button" class="close-btn" onclick="closeModal()">Close</button>
@@ -436,6 +518,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     document.getElementById("phone").textContent = this.dataset.phone;
                     document.getElementById("familyNumber").textContent = this.dataset.familynumber;
                     document.getElementById("idFront").src = this.dataset.idfront;
+                    document.getElementById("accountType").textContent = this.dataset.primaryname !== 'N/A' ? 'Dependent' : 'Primary';
+                    document.getElementById("primaryName").textContent = this.dataset.primaryname;
+                    document.getElementById("relationship").textContent = this.dataset.relationship;
+                    document.getElementById("dependentInfo").style.display = this.dataset.primaryname !== 'N/A' ? 'flex' : 'none';
+                    document.getElementById("relationshipInfo").style.display = this.dataset.relationship !== 'N/A' ? 'flex' : 'none';
                     // Show modal
                     modal.style.display = "flex";
                 });

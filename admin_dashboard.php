@@ -275,7 +275,9 @@ $totalUsers = $totalUsersStmt->fetchColumn();
     </div>
 
     <div class="dashboard-content">
-        <h1>Admin Dashboard</h1>
+        <div class="title-con">
+            <h2>Admin Dashboard</h2>
+        </div>
         
         <!-- Stats Cards -->
         <div class="stats-cards">

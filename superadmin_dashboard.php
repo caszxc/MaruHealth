@@ -20,74 +20,47 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
 // Count pending accounts
-$pendingAccountsStmt = $conn->query("SELECT COUNT(*) FROM pending_users WHERE role = 'user'");
-$pendingAccounts = $pendingAccountsStmt->fetchColumn();
-
-// Count pending medicine requests
-$pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status = 'pending'");
-$pendingReqCount = $pendingReqCountStmt->fetchColumn();
-
-// Count expired medicines
-$expiredMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiration_date < CURDATE() AND expiry_status = 'Expired'");
-$expiredMedicines = $expiredMedicinesStmt->fetchColumn();
-
-// Count out of stock medicines
-$outOfStockMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE stocks = 0 AND stock_status = 'Out of Stock' AND expiry_status != 'Expired'");
-$outOfStockMedicines = $outOfStockMedicinesStmt->fetchColumn();
-
-// Count to be claimed medicines
-$toBeClaimedMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status = 'to be claimed' AND claimed_date IS NULL AND claim_until_date >= CURDATE()");
-$toBeClaimedMedicines = $toBeClaimedMedicinesStmt->fetchColumn();
+$totalPendingAccountsStmt = $conn->query("SELECT COUNT(*) FROM pending_users WHERE role = 'user'");
+$totalPendingAccounts = $totalPendingAccountsStmt->fetchColumn();
 
 // Count active announcements
 $totalAnnouncementsStmt = $conn->query("SELECT COUNT(*) FROM announcements WHERE status = 'active'");
 $totalAnnouncements = $totalAnnouncementsStmt->fetchColumn();
 
+// Get pending account approvals
+$pendingAccountsStmt = $conn->prepare("SELECT id, first_name, last_name, email, date_registered 
+                                      FROM pending_users 
+                                      WHERE role = 'user' 
+                                      ORDER BY date_registered ASC 
+                                      LIMIT 5");
+$pendingAccountsStmt->execute();
+$pendingAccounts = $pendingAccountsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get recent announcements
+$announcementsStmt = $conn->prepare("SELECT id, title, created_at 
+                                    FROM announcements 
+                                    WHERE status = 'active' 
+                                    ORDER BY created_at DESC 
+                                    LIMIT 5");
+$announcementsStmt->execute();
+$announcements = $announcementsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get upcoming events
+$eventsStmt = $conn->prepare("SELECT id, title, event_date, start, venue 
+                             FROM events 
+                             WHERE event_date >= CURDATE() 
+                             ORDER BY event_date ASC 
+                             LIMIT 5");
+$eventsStmt->execute();
+$events = $eventsStmt->fetchAll(PDO::FETCH_ASSOC);
+
 // Count upcoming events
 $upcomingEventsStmt = $conn->query("SELECT COUNT(*) FROM events WHERE event_date >= CURDATE()");
 $upcomingEvents = $upcomingEventsStmt->fetchColumn();
 
-// Fetch expiring medicines
-$expiringMedicinesStmt = $conn->query("
-    SELECT mc.generic_name, mc.brand_name, mb.expiration_date, mb.expiry_status 
-    FROM medicines_catalog mc
-    JOIN medicine_batches mb ON mc.id = mb.catalog_id
-    WHERE mb.expiry_status IN ('Expiring within a month', 'Expiring within a week')
-    ORDER BY mb.expiration_date ASC
-    LIMIT 5
-");
-$expiringMedicines = $expiringMedicinesStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch low stock medicines
-$lowStockMedicinesStmt = $conn->query("
-    SELECT mc.generic_name, mc.brand_name, mb.stocks, mc.min_stock, mb.stock_status 
-    FROM medicines_catalog mc
-    JOIN medicine_batches mb ON mc.id = mb.catalog_id
-    WHERE mb.stock_status IN ('Low Stock', 'Out of Stock')
-    AND mb.expiry_status != 'Expired'
-    ORDER BY mb.stocks ASC
-    LIMIT 5
-");
-$lowStockMedicines = $lowStockMedicinesStmt->fetchAll(PDO::FETCH_ASSOC);
-
 // Count total users
 $totalUsersStmt = $conn->query("SELECT COUNT(*) FROM users");
 $totalUsers = $totalUsersStmt->fetchColumn();
-
-// Count total medicines (count distinct medicines in medicines_catalog)
-$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog");
-$totalMedicines = $totalMedicinesStmt->fetchColumn();
-
-// Count total patients
-$totalPatientsStmt = $conn->query("SELECT COUNT(*) FROM patients");
-$totalPatients = $totalPatientsStmt->fetchColumn();
-
-// Count consultations this month
-$currentMonth = date('Y-m');
-$consultationsThisMonthStmt = $conn->prepare("SELECT COUNT(*) FROM consultations WHERE DATE_FORMAT(consultation_date, '%Y-%m') = :currentMonth");
-$consultationsThisMonthStmt->bindParam(':currentMonth', $currentMonth);
-$consultationsThisMonthStmt->execute();
-$consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
 
 // Count total admin and staff (excluding super admin)
 $totalAdminStaffStmt = $conn->query("SELECT COUNT(*) FROM admin_staff WHERE role IN ('admin', 'health_staff')");
@@ -306,13 +279,15 @@ $totalAdminStaff = $totalAdminStaffStmt->fetchColumn();
     </div>
 
     <div class="dashboard-content">
-        <h1>Dashboard Overview</h1>
+        <div class="title-con">
+            <h2>Dashboard Overview</h2>
+        </div>
         
         <!-- Stats Cards -->
         <div class="stats-cards">
             <div class="stat-card">
                 <h3>Pending Accounts</h3>
-                <div class="count"><?= $pendingAccounts ?></div>
+                <div class="count"><?= $totalPendingAccounts ?></div>
                 <a href="account_requests.php" class="view-all">View Details</a>
             </div>
 
@@ -320,30 +295,6 @@ $totalAdminStaff = $totalAdminStaffStmt->fetchColumn();
                 <h3>Total Admin & Staff</h3>
                 <div class="count"><?= $totalAdminStaff ?></div>
                 <a href="manage_staff.php" class="view-all">View Details</a>
-            </div>
-
-            <div class="stat-card">
-                <h3>Pending Medicine Requests</h3>
-                <div class="count"><?= $pendingReqCount ?></div>
-                <a href="requests.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Expired Medicines</h3>
-                <div class="count"><?= $expiredMedicines ?></div>
-                <a href="medicine_management.php?expiry_status=Expired" class="view-all">View Details</a>
-            </div>
-
-            <div class="stat-card">
-                <h3>Out of Stock Medicines</h3>
-                <div class="count"><?= $outOfStockMedicines ?></div>
-                <a href="medicine_management.php?stock_status=Out of Stock" class="view-all">View Details</a>
-            </div>
-
-            <div class="stat-card">
-                <h3>To Be Claimed Medicines</h3>
-                <div class="count"><?= $toBeClaimedMedicines ?></div>
-                <a href="pending_requests.php" class="view-all">View Details</a>
             </div>
             
             <div class="stat-card">
@@ -360,52 +311,70 @@ $totalAdminStaff = $totalAdminStaffStmt->fetchColumn();
 
         <!-- Alert Sections -->
         <div class="alert-section">
-            <h2>Critical Alerts</h2>
+            <h2>Recent Activity</h2>
             
             <div class="alert-cards">
-                <!-- Expiring Medicines -->
+                <!-- Pending Account Approvals -->
                 <div class="alert-card">
-                    <h3>Expiring Medicines</h3>
-                    <ul class="alert-list">
-                        <?php if (empty($expiringMedicines)): ?>
-                            <li>No expiring medicines at the moment.</li>
-                        <?php else: ?>
-                            <?php foreach ($expiringMedicines as $medicine): ?>
-                                <li class="<?= $medicine['expiry_status'] == 'Expired' ? 'critical' : 'warning' ?>">
-                                    <?= htmlspecialchars($medicine['generic_name']) ?>
-                                    <?php if (!empty($medicine['brand_name'])): ?>
-                                        (<?= htmlspecialchars($medicine['brand_name']) ?>)
-                                    <?php endif; ?>
-                                    - Expiry: <span class="expiry-date"><?= htmlspecialchars($medicine['expiration_date']) ?></span>
-                                    (<?= htmlspecialchars($medicine['expiry_status']) ?>)
+                    <h3>Pending Account Approvals</h3>
+                    <?php if (count($pendingAccounts) > 0): ?>
+                        <ul class="alert-list">
+                            <?php foreach ($pendingAccounts as $account): ?>
+                                <li>
+                                    <strong><?= htmlspecialchars($account['first_name'] . ' ' . $account['last_name']) ?></strong>
+                                    <br>
+                                    <span class="request-date">Email: <?= htmlspecialchars($account['email']) ?></span>
+                                    <br>
+                                    <span class="request-date">Registered: <?= date('M d, Y', strtotime($account['date_registered'])) ?></span>
                                 </li>
                             <?php endforeach; ?>
-                        <?php endif; ?>
-                    </ul>
-                    <a href="medicine_management.php?expiry_status=Expiring within a month" class="view-all">View All Expiring Medicines</a>
+                        </ul>
+                        <a href="account_approval.php" class="view-all">View All Pending Accounts</a>
+                    <?php else: ?>
+                        <p>No pending account approvals.</p>
+                    <?php endif; ?>
                 </div>
                 
-                <!-- Low Stock Medicines -->
+                <!-- Recent Announcements -->
                 <div class="alert-card">
-                    <h3>Low Stock Medicines</h3>
-                    <ul class="alert-list">
-                        <?php if (empty($lowStockMedicines)): ?>
-                            <li>No low stock medicines at the moment.</li>
-                        <?php else: ?>
-                            <?php foreach ($lowStockMedicines as $medicine): ?>
-                                <li class="<?= $medicine['stock_status'] == 'Out of Stock' ? 'critical' : 'warning' ?>">
-                                    <?= htmlspecialchars($medicine['generic_name']) ?>
-                                    <?php if (!empty($medicine['brand_name'])): ?>
-                                        (<?= htmlspecialchars($medicine['brand_name']) ?>)
-                                    <?php endif; ?>
-                                    - Stock: <span class="stock-level <?= $medicine['stock_status'] == 'Out of Stock' ? 'critical-stock' : 'low-stock' ?>">
-                                        <?= htmlspecialchars($medicine['stocks']) ?> / Min: <?= htmlspecialchars($medicine['min_stock']) ?>
-                                    </span>
+                    <h3>Recent Announcements</h3>
+                    <?php if (count($announcements) > 0): ?>
+                        <ul class="alert-list">
+                            <?php foreach ($announcements as $announcement): ?>
+                                <li>
+                                    <strong><?= htmlspecialchars($announcement['title']) ?></strong>
+                                    <br>
+                                    <span class="request-date">Posted: <?= date('M d, Y', strtotime($announcement['created_at'])) ?></span>
                                 </li>
                             <?php endforeach; ?>
-                        <?php endif; ?>
-                    </ul>
-                    <a href="medicine_management.php?stock_status=Low Stock" class="view-all">View All Low Stock Medicines</a>
+                        </ul>
+                        <a href="announcements.php" class="view-all">View All Announcements</a>
+                    <?php else: ?>
+                        <p>No recent announcements.</p>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Upcoming Events -->
+                <div class="alert-card">
+                    <h3>Upcoming Events</h3>
+                    <?php if (count($events) > 0): ?>
+                        <ul class="alert-list">
+                            <?php foreach ($events as $event): ?>
+                                <li>
+                                    <strong><?= htmlspecialchars($event['title']) ?></strong>
+                                    <br>
+                                    <span class="event-date">Date: <?= date('M d, Y', strtotime($event['event_date'])) ?></span>
+                                    <br>
+                                    <span class="request-date">Time: <?= date('g:i A', strtotime($event['start'])) ?></span>
+                                    <br>
+                                    <span class="request-date">Venue: <?= htmlspecialchars($event['venue'] ?? 'Not specified') ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <a href="edit_calendar.php" class="view-all">View All Events</a>
+                    <?php else: ?>
+                        <p>No upcoming events.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -417,24 +386,6 @@ $totalAdminStaff = $totalAdminStaffStmt->fetchColumn();
                 <h3>Total Users</h3>
                 <div class="count"><?= $totalUsers ?></div>
                 <a href="users_stats.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Total Medicines</h3>
-                <div class="count"><?= $totalMedicines ?></div>
-                <a href="medicine_stats.php" class="view-all">View Details</a>
-            </div>
-
-            <div class="stat-card">
-                <h3>Total Patients</h3>
-                <div class="count"><?= $totalPatients ?></div>
-                <a href="patient_stats.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Consultations This Month</h3>
-                <div class="count"><?= $consultationsThisMonth ?></div>
-                <a href="consultation_stats.php" class="view-all">View Details</a>
             </div>
         </div>
 

@@ -330,7 +330,9 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
     </div>
 
     <div class="dashboard-content">
-        <h1>Staff Dashboard</h1>
+        <div class="title-con">
+            <h2>Health Staff Dashboard</h2>
+        </div>
         
         <!-- Stats Cards -->
         <div class="stats-cards">

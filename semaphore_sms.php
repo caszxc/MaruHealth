@@ -5,7 +5,7 @@
 function sendSMS($phone, $message) {
     // Semaphore API Configuration
     $apiKey = "b7e3447e45e5c215e87ae547c027de14"; // Replace with your actual Semaphore API key
-    $senderId = "SEMAPHORE"; // Optional: Your registered sender ID
+    $senderId = "MaruHealth"; // Optional: Your registered sender ID
     
     // Format the phone number (ensure it has the Philippines country code +63)
     $phone = formatPhoneNumber($phone);

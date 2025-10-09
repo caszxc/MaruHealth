@@ -1,4 +1,5 @@
 <?php
+// get_batch_history.php
 session_start();
 require_once "config.php";
 
@@ -17,13 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Fetch history for batch-related actions
+        // Fetch history for batch-related actions, including distribute and return
         $stmt = $conn->prepare("
             SELECT mh.id, mh.action_type, mh.details, mh.created_at, a.full_name
             FROM medicine_history mh
             LEFT JOIN admin_staff a ON mh.performed_by = a.id
             WHERE mh.batch_id = :batch_id
-            AND mh.action_type IN ('add_batch', 'update_batch', 'delete_batch')
+            AND mh.action_type IN ('add_batch', 'update_batch', 'delete_batch', 'distribute', 'return')
             ORDER BY mh.created_at DESC
         ");
         $stmt->execute([':batch_id' => $batch_id]);

@@ -1,4 +1,5 @@
 <?php
+//process_request.php
 session_start();
 require_once "config.php";
 require_once "email_function.php"; // Include email function

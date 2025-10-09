@@ -721,27 +721,27 @@ try {
                 <div class="row">
                     <div>
                         <label>Patient's Full Name</label>
-                        <span id="fullName"></span>
+                        <span id="req_fullName"></span>
                     </div>
                 </div>
                 <div class="row">
                     <div>
                         <label>Sex</label>
-                        <span id="sex"></span>
+                        <span id="req_sex"></span>
                     </div>
                     <div>
                         <label>Birthdate</label>
-                        <span id="birthdate"></span>
+                        <span id="req_birthdate"></span>
                     </div>
                 </div>
                 <div class="row">
                     <div>
                         <label>Address</label>
-                        <span id="address"></span>
+                        <span id="req_address"></span>
                     </div>
                     <div>
                         <label>Contact Number</label>
-                        <span id="phone"></span>
+                        <span id="req_phone"></span>
                     </div>
                 </div>
                 <div id="medicine-group">
@@ -750,7 +750,7 @@ try {
                 <div class="row">
                     <div>
                         <label>Reason for Request</label>
-                        <span id="reason"></span>
+                        <span id="req_reason"></span>
                     </div>
                 </div>
                 <div class="prescription-preview">
@@ -775,7 +775,7 @@ try {
                     <div class="row">
                         <div>
                             <label>Note</label>
-                            <span id="note"></span>
+                            <span id="req_note"></span>
                         </div>
                     </div>
                 </div>
@@ -1016,12 +1016,12 @@ try {
                     // Fill modal fields
                     document.getElementById('requestId').textContent = data.request_id || 'N/A';
                     document.getElementById('requestStatus').textContent = data.request_status ? data.request_status.charAt(0).toUpperCase() + data.request_status.slice(1) : 'N/A';
-                    document.getElementById('fullName').textContent = data.full_name;
-                    document.getElementById('sex').textContent = data.sex;
-                    document.getElementById('birthdate').textContent = data.birthdate;
-                    document.getElementById('address').textContent = data.address;
-                    document.getElementById('phone').textContent = data.phone;
-                    document.getElementById('reason').textContent = data.reason || 'No reason provided';
+                    document.getElementById('req_fullName').textContent = data.full_name;
+                    document.getElementById('req_sex').textContent = data.sex;
+                    document.getElementById('req_birthdate').textContent = data.birthdate;
+                    document.getElementById('req_address').textContent = data.address;
+                    document.getElementById('req_phone').textContent = data.phone;
+                    document.getElementById('req_reason').textContent = data.reason || 'No reason provided';
                     document.getElementById('prescriptionImg').src = data.prescription;
 
                     // Medicine entries with status
@@ -1055,7 +1055,7 @@ try {
 
                     // Note
                     const noteInfo = document.getElementById('note-info');
-                    const note = document.getElementById('note');
+                    const note = document.getElementById('req_note');
                     if ((data.request_status === 'to be claimed' || data.request_status === 'claimed') && data.note && data.note.trim() !== '') {
                         note.textContent = data.note;
                         noteInfo.style.display = 'block';

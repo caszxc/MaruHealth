@@ -1,4 +1,6 @@
 <?php
+// process_return.php
+ob_start(); // Start output buffering
 session_start();
 require_once "config.php";
 require_once "email_function.php";
@@ -8,6 +10,11 @@ date_default_timezone_set('Asia/Manila');
 
 // Ensure only logged-in health staff can access
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        ob_end_clean(); // Clear buffer
+        echo json_encode(['error' => 'Unauthorized access']);
+        exit();
+    }
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -16,30 +23,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $requestId = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
     $action = isset($_POST['action']) ? $_POST['action'] : '';
     $adminId = $_SESSION['admin_id'];
-    
+
     if ($requestId <= 0) {
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['error' => 'Invalid request ID']);
-            exit();
-        }
-        $_SESSION['error'] = "Invalid request ID";
-        header("Location: pending_requests.php");
+        ob_end_clean();
+        echo json_encode(['error' => 'Invalid request ID']);
         exit();
     }
-    
+
     if ($action !== 'return') {
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['error' => 'Invalid action']);
-            exit();
-        }
-        $_SESSION['error'] = "Invalid action";
-        header("Location: pending_requests.php");
+        ob_end_clean();
+        echo json_encode(['error' => 'Invalid action']);
         exit();
     }
-    
+
     try {
         $conn->beginTransaction();
-        
+
         // Check if the request exists, is 'to be claimed', and is past due
         $checkQuery = "SELECT mr.id, mr.request_id, mr.full_name, mr.claim_until_date, u.email 
                        FROM medicine_requests mr 
@@ -49,18 +48,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $checkStmt->bindParam(':id', $requestId);
         $checkStmt->execute();
         $request = $checkStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$request) {
             throw new Exception("Request not found or not in 'to be claimed' status");
         }
-        
+
         // Verify the request is past due
         $today = new DateTime();
         $claimUntilDate = new DateTime($request['claim_until_date']);
         if ($claimUntilDate >= $today) {
             throw new Exception("Request has not yet reached its claim until date");
         }
-        
+
         // Update request status to 'cancelled'
         $updateQuery = "UPDATE medicine_requests 
                        SET request_status = 'cancelled' 
@@ -68,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bindParam(':id', $requestId);
         $updateStmt->execute();
-        
+
         // Get distributions to return medicines to inventory
         $distributionsQuery = "SELECT md.requested_medicine_id, md.batch_id, md.quantity, mb.catalog_id 
                               FROM medicine_distributions md 
@@ -78,7 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $distributionsStmt->bindParam(':request_id', $requestId);
         $distributionsStmt->execute();
         $distributions = $distributionsStmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Update distributions to 'returned' and restore stock
         $updateDistributionsQuery = "UPDATE medicine_distributions 
                                    SET status = 'returned' 
@@ -87,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $updateDistributionsStmt = $conn->prepare($updateDistributionsQuery);
         $updateDistributionsStmt->bindParam(':request_id', $requestId);
         $updateDistributionsStmt->execute();
-        
+
         $updateStockQuery = "UPDATE medicine_batches 
                             SET stocks = stocks + :quantity,
                                 stock_status = CASE 
@@ -97,17 +96,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 END
                             WHERE id = :batch_id";
         $updateStockStmt = $conn->prepare($updateStockQuery);
-        
+
         $historyQuery = "INSERT INTO medicine_history (catalog_id, batch_id, action_type, details, performed_by, created_at)
                         VALUES (:catalog_id, :batch_id, 'return', :details, :admin_id, CURRENT_TIMESTAMP)";
         $historyStmt = $conn->prepare($historyQuery);
-        
+
         foreach ($distributions as $distribution) {
             // Restore stock
             $updateStockStmt->bindParam(':quantity', $distribution['quantity']);
             $updateStockStmt->bindParam(':batch_id', $distribution['batch_id']);
             $updateStockStmt->execute();
-            
+
             // Log return action
             $historyDetails = json_encode([
                 'request_id' => $request['request_id'],
@@ -123,14 +122,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $historyStmt->bindParam(':admin_id', $adminId);
             $historyStmt->execute();
         }
-        
+
         $conn->commit();
-        
+
         // Send cancellation email
         $recipientName = $request['full_name'];
         $recipientEmail = $request['email'];
         $requestIdValue = $request['request_id'];
-        
+
         $subject = "Medicine Request Cancelled - Request ID #$requestIdValue";
         $message = "
             <h2>Medicine Request Cancelled</h2>
@@ -144,33 +143,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <p>Best regards,<br>Maru-Health Team</p>
         ";
         $emailResult = sendEmail($recipientEmail, $recipientName, $subject, $message);
-        
+
         if (!$emailResult['success']) {
             error_log("Failed to send cancellation email for request #$requestIdValue: " . $emailResult['message']);
+            // Do not treat email failure as a critical error
         }
-        
-        $_SESSION['success'] = "Unclaimed medicines have been returned to inventory successfully";
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['success' => 'Unclaimed medicines returned successfully']);
-            exit();
-        }
-        header("Location: pending_requests.php");
+
+        ob_end_clean(); // Clear buffer before sending JSON
+        echo json_encode(['success' => 'Unclaimed medicines returned successfully']);
         exit();
     } catch (Exception $e) {
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }
-        $_SESSION['error'] = "Error processing return: " . $e->getMessage();
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['error' => 'Error processing return: ' . $e->getMessage()]);
-            exit();
-        }
-        header("Location: pending_requests.php");
+        ob_end_clean();
+        echo json_encode(['error' => 'Error processing return: ' . $e->getMessage()]);
         exit();
     }
 }
 
 // Redirect if accessed directly
+ob_end_clean();
 header("Location: pending_requests.php");
 exit();
 ?>

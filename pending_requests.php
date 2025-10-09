@@ -412,18 +412,24 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.error) {
-                        alert(data.error);
+                        console.error('Server Error:', data.error); // Log the exact error
+                        alert('Error: ' + data.error); // Show detailed error
                     } else {
                         closeModal();
                         window.location.reload();
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while processing your request.');
+                    console.error('Fetch Error:', error); // Log fetch errors
+                    alert('An error occurred while processing your request: ' + error.message);
                 });
             }
         }

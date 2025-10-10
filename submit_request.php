@@ -135,10 +135,9 @@ try {
     // Log for debugging
     error_log("Medicine request submitted: request_id=$request_id, user_id=$active_user_id, address=$address");
 
-    echo "<script>
-        alert('Medicine request submitted successfully! Your Request ID is: $request_id');
-        window.location.href = 'request_medicine.php';
-    </script>";
+    // Redirect with request_id as query parameter
+    header("Location: request_medicine.php?request_id=" . urlencode($request_id));
+    exit;
 } catch (PDOException $e) {
     $conn->rollBack();
     error_log("Error in submit_request.php: " . $e->getMessage());

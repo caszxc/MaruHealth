@@ -106,6 +106,15 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                 </script>
             <?php endif; ?>
 
+            <!-- Success Modal -->
+            <div id="successModal" class="modal">
+                <div class="modal-content">
+                    <h2>Success</h2>
+                    <p id="successMessage"></p>
+                    <button id="closeSuccessModal">OK</button>
+                </div>
+            </div>
+
             <form action="submit_request.php" method="POST" enctype="multipart/form-data">
                 <div class="form-container">
                     <div class="row">
@@ -204,7 +213,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
             container.appendChild(clone);
         });
 
-        // Remove entry when clicking 🗑
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('remove-medicine-btn')) {
                 const allEntries = document.querySelectorAll('.medicine-entry');
@@ -225,6 +233,35 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                 fileNameSpan.textContent = 'No file chosen';
             }
         }
+
+        // Handle login modal
+        document.addEventListener("DOMContentLoaded", function () {
+            <?php if (!isset($_SESSION['user_id'])): ?>
+                document.getElementById("popupModal").style.display = "flex";
+            <?php endif; ?>
+
+            // Check for success query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestId = urlParams.get('request_id');
+            if (requestId) {
+                const successModal = document.getElementById('successModal');
+                const successMessage = document.getElementById('successMessage');
+                successMessage.textContent = `Medicine request submitted successfully! Your Request ID is: ${requestId}`;
+                successModal.style.display = 'flex';
+                // Clear the query parameter from the URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
+        function redirectToLogin() {
+            window.location.href = "login.php";
+        }
+
+        // Close success modal
+        document.getElementById('closeSuccessModal').addEventListener('click', function () {
+            document.getElementById('successModal').style.display = 'none';
+            window.location.href = 'request_medicine.php'; // Refresh the page
+        });
     </script>
 </body>
 

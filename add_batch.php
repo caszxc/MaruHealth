@@ -115,6 +115,6 @@ try {
     $conn->rollBack();
     echo json_encode(['success' => false, 'message' => 'Error adding batch: ' . $e->getMessage()]);
     exit();
-}
+} 
 
 ?>

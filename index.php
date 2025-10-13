@@ -78,6 +78,7 @@ try {
     <link rel="stylesheet" href="css/index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -92,7 +93,8 @@ try {
                 <p>Barangay Marulas 3S Health Station</p>
             </div>
         </div>
-
+        
+      
         <div class="nav-links">
             <ul>
                 <li><a href="index.php" class="links">HOME</a></li>
@@ -316,5 +318,7 @@ try {
         });
     </script>
     
+ 
+
 </body>
 </html>

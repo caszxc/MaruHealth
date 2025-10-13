@@ -6,6 +6,7 @@ nav {
 
 .register-container {
     position: relative;
+      min-height: 100vh;
     background: linear-gradient(
       rgba(220, 0, 0, 0.8),  /* top: strong red with opacity */
       rgba(220, 0, 0, 0.6)   /* bottom: lighter red with opacity */
@@ -14,6 +15,8 @@ nav {
     justify-content: center;
     align-items: center;
     padding: 80px;
+    background-size: cover;
+    background-position: center;
 }
 
 .register-content{
@@ -33,6 +36,8 @@ nav {
     z-index: 2;
     width: 50%;
 }
+  
+
 
 .register-box h2 {
     color: #8B0000;
@@ -382,6 +387,7 @@ input[type="file"] {
     overflow-y: auto; /* Enable vertical scrolling */
     scrollbar-width: none; /* Hides scrollbar in Firefox */
     -ms-overflow-style: none;
+        
 }
 
 .modal-content .close {
@@ -488,3 +494,241 @@ input[type="file"] {
 .error-summary li {
     margin-bottom: 5px;
 }
+
+.logo_container{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo_container img {
+    height: 70px; 
+}
+
+.logo_container div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo_container div h1{
+    color: white;
+}
+
+.logo_container div p {
+    color: white;
+    font-size: 11px;
+}
+
+/*RESPONSIVE DESIGN*/ 
+
+
+/* --- Medium screens (tablets) --- */
+@media (max-width: 1024px) { 
+    .register-box {
+        width: 100%;
+        padding: 35px;
+    }
+
+    .register-box p {
+        font-size: 13px;
+    }
+
+    .stepper-item .step-name {
+        font-size: 12px;
+    }
+
+    .register-form .group-row {
+        flex-direction: column;
+    }
+
+    .file-upload {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+  .logo_container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-direction: row !important;
+        text-align: left;
+        margin-top: 20px;
+    }
+
+    .logo_container img {
+        width: 190px;
+        height: auto;
+        margin-top: 190px;
+    }
+
+    .logo_container h1 {
+        font-size: 4.5rem !important;
+        margin-top: 155px;
+        line-height: 1.2;
+    }
+
+    .logo_container p {
+        font-size: 1.5rem !important;
+        margin: 0;
+    }
+
+}
+
+
+
+/* --- Small screens (mobile) --- */
+@media (max-width: 768px) {
+    
+    .register-container {
+        padding: 40px 20px;
+        background-position: center;
+    }
+
+    .register-content {
+        padding: 10px;
+    }
+
+    .register-box {
+        width: 100%;
+        padding:90px;
+        border-radius: 10px;
+    }
+
+    .register-box h2 {
+        font-size: 20px;
+    }
+
+    .register-box p {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .stepper-wrapper {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stepper-item::before,
+    .stepper-item::after {
+        content: none;
+    }
+
+    .stepper-item .step-name {
+        font-size: 13px;
+    }
+
+    .register-form .group-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .register-form .group-col label {
+        font-size: 12px;
+    }
+
+    .register-form input,
+    .register-form select {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .button-container {
+        flex-direction: column;
+    }
+
+    .prev-step,
+    .next-step,
+    .submit-button {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .file-upload {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    #file-name {
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .custom-file-upload {
+        width: 100%;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .id-preview img {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+    }
+
+    .policy_terms {
+        font-size: 12px;
+        text-align: left;
+    }
+
+    .checkbox-label {
+        align-items: flex-start;
+        flex-direction: row;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        transform: scale(1);
+        margin-top: 4px;
+    }
+  
+
+}
+
+/* --- Extra small screens (below 480px) --- */
+@media (max-width: 480px) {
+    .register-container {
+        padding: 20px 10px;
+    }
+
+    .register-box {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .register-box h2 {
+        font-size: 18px;
+    }
+
+    .register-box p {
+        font-size: 11px;
+    }
+
+    .stepper-wrapper {
+        gap: 10px;
+    }
+
+    .stepper-item .step-counter {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+    }
+
+    .stepper-item .step-name {
+        font-size: 12px;
+    }
+
+    .button-container {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .submit-button,
+    .next-step,
+    .prev-step {
+        font-size: 13px;
+        padding: 8px;
+    }
+}
+

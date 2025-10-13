@@ -142,3 +142,115 @@
     font-size: 14px;
     margin-bottom: 10px;
 }
+
+
+/* === MOBILE VIEW (≤768px) === */
+@media (max-width: 768px) {
+  .main-login {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    
+  }
+
+  .left-panel {
+    flex-direction: row; /* logo + text side by side */
+    align-items: center;
+    justify-content: center;
+    margin-top: -10px;
+    gap: 12px;
+  }
+
+  .left-panel img {
+    width: 100px;
+    height: auto;
+    margin-top: 180px;
+  }
+
+  .left-panel div h1 {
+    font-size: 34px;
+    margin-top: 73%;
+  }
+
+  .left-panel div p {
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 350px;
+    padding: 25px 20px;
+    margin-top: 30px;
+  }
+
+  .login-form h3 {
+    text-align: center;
+  }
+
+  .forgot-link {
+    text-align: center;
+  }
+
+  .login-form p {
+    font-size: 13px;
+  }
+}
+
+/*ipad*/ 
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-login {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 40px 0;
+  }
+
+  .left-panel {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: -40px; /* moves logo + text slightly up */
+  }
+
+  .left-panel img {
+    width: 160px;
+    height: auto;
+    margin: 0; /* remove the large top margin */
+  }
+
+  .left-panel div h1 {
+    font-size: 48px;
+    margin: 0;
+  }
+
+  .left-panel div p {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .login-box {
+    width: 300%;
+    max-width: 400px;
+    padding: 70px 55px;
+    margin-top: 10px; 
+  }
+
+  .login-form h3 {
+    text-align: center;
+    font-size: 22px;
+  }
+
+  .login-form p {
+    font-size: 14px;
+  }
+
+  .forgot-link {
+    text-align: center;
+    font-size: 14px;
+  }
+}
+

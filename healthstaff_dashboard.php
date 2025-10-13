@@ -385,12 +385,12 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                                 </li>
                             <?php endforeach; ?>
                         </ul>
-                        <a href="medicine_management.php?filter=expiring" class="view-all">View All Expiring</a>
+                        <a href="expiring_low_stock.php" class="view-all">View All Expiring & Low Stock</a>
                     <?php else: ?>
                         <p>No medicines expiring soon.</p>
                     <?php endif; ?>
                 </div>
-                
+
                 <!-- Low Stock Medicines -->
                 <div class="alert-card">
                     <h3>Low Stock Medicines</h3>
@@ -411,7 +411,7 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
                                 </li>
                             <?php endforeach; ?>
                         </ul>
-                        <a href="medicine_management.php?filter=low_stock" class="view-all">View All Low Stock</a>
+                        <a href="expiring_low_stock.php" class="view-all">View All Expiring & Low Stock</a>
                     <?php else: ?>
                         <p>No medicines with low stock.</p>
                     <?php endif; ?>

@@ -222,12 +222,13 @@ tr:nth-child(even) {
 }
 
 /* Action Buttons */
-.view-btn, .approve-btn, .decline-btn, .claim-btn{
+.view-btn, .approve-btn, .decline-btn, .claim-btn, .btn-return{
     padding: 6px 10px;
     border-radius: 4px;
     text-decoration: none;
     color: #fff;
     margin-right: 5px;
+    border: none;
 }
 
 .view-btn {

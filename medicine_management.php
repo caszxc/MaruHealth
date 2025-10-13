@@ -22,12 +22,28 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 
 // Format role for display (convert super_admin to Super Admin)
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
+// Handle search query
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+$searchQuery = "%" . $searchTerm . "%";
 
-$catalogStmt = $conn->prepare("
+$catalogQuery = "
     SELECT id, therapeutic_category, generic_name, brand_name, 
            dosage, dosage_form, unit, min_stock
     FROM medicines_catalog
-");
+";
+
+if (!empty($searchTerm)) {
+    $catalogQuery .= " WHERE generic_name LIKE :search 
+                     OR brand_name LIKE :search 
+                     OR therapeutic_category LIKE :search";
+}
+
+$catalogStmt = $conn->prepare($catalogQuery);
+
+if (!empty($searchTerm)) {
+    $catalogStmt->bindParam(':search', $searchQuery);
+}
+
 $catalogStmt->execute();
 $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -131,9 +147,15 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="content">
         <div class="med-container">
             <div class="sort-controls">
-                <div></div>
                 <div class="search-con">
+                    <form method="GET" action="medicine_management.php">
+                        <input type="text" name="search" placeholder="Search medicines..." value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+                <div class="button-con">
                     <button class="add-med-btn" onclick="openModal()">ADD MEDICINE</button>
+                    <a href="expiring_low_stock.php" class="expired-low-btn">View Expiring & Low Stock</a>
                 </div>
             </div>
             <div class="table-details">

@@ -184,6 +184,27 @@ body::-webkit-scrollbar{
     gap: 15px;
 }
 
+.search-con form {
+    display: flex;
+    gap: 10px;
+}
+.search-con input[type="text"] {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 200px;
+}
+.search-con button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #337ab7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
 .filter-row {
     display: flex;
     flex-wrap: wrap;
@@ -250,6 +271,16 @@ body::-webkit-scrollbar{
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.expired-low-btn{
+    text-decoration: none;
+    border: 1px solid #800000;
+    color: #800000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .add-med-btn:hover, .add-batch-btn:hover {
@@ -448,6 +479,7 @@ table th {
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
+    text-decoration: none;
 }
 
 .viewBatch-btn{

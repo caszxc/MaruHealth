@@ -93,14 +93,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right-panel">
             <div class="login-box">
                 <form method="POST" class="login-form">
-                    <h3>Forgot Password</h3>
-                    <p>Enter your email or phone number to receive a password reset code.</p>
-                    
-                    <?php if ($success) { echo "<p class='success'>$success</p>"; } ?>
-                    <input type="text" name="identifier" placeholder="E-mail/Phone Number" required>
-                    <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
-                    <button type="submit">Send Reset Code</button>
-                    <p><a href="login.php">Back to Login</a></p>
+                    <div>
+                        <h3>Forgot Password</h3>
+                        <p>Enter your email or phone number to receive a password reset code.</p>
+                        
+                        <div class="field-container">
+                            <?php if ($success) { echo "<p class='success'>$success</p>"; } ?>
+                            <input type="text" name="identifier" placeholder="E-mail/Phone Number" required>
+                            <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
+                        </div>
+                        
+                        <button type="submit">Send Reset Code</button>
+
+                        <p id="link"><a href="login.php">Back to Login</a></p>
+                    </div>
                 </form>
             </div>
         </div>

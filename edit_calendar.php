@@ -211,37 +211,51 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
         }
 
         function addEvent(event) {
-            event.preventDefault(); // Prevent default form submission
+    event.preventDefault(); // Prevent default form submission
 
-            let formData = new FormData(document.getElementById("eventForm"));
+    // Get form inputs
+    const startTime = document.getElementById("startTime").value;
+    const endTime = document.getElementById("endTime").value;
 
-            fetch("add_event.php", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                if (data.success) {
-                    closeModal();
+    // Validate that end time is after start time
+    if (startTime && endTime && startTime >= endTime) {
+        alert("End time must be after start time.");
+        return;
+    }
 
-                    let eventDate = new Date(formData.get("date"));
-                    let year = eventDate.getFullYear();
-                    let month = eventDate.getMonth() + 1;
-                    let day = eventDate.getDate();
+    let formData = new FormData(document.getElementById("eventForm"));
 
-                    // Refresh event list
-                    showEvents(year, month, day);
+    fetch("add_event.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) {
+            closeModal();
 
-                    // Refresh the calendar
-                    loadCalendar(month, year);
+            let eventDate = new Date(formData.get("date"));
+            let year = eventDate.getFullYear();
+            let month = eventDate.getMonth() + 1;
+            let day = eventDate.getDate();
 
-                    // Clear form fields after successful submission
-                    document.getElementById("eventForm").reset();
-                }
-            })
-            .catch(error => console.error("Error:", error));
+            // Refresh event list
+            showEvents(year, month, day);
+
+            // Refresh the calendar
+            loadCalendar(month, year);
+
+            // Clear form fields after successful submission
+            document.getElementById("eventForm").reset();
+            document.getElementById("file-name").textContent = "No file chosen"; // Reset file name display
         }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("An error occurred while adding the event.");
+    });
+}
 
         window.onload = function () {
             let date = new Date();
@@ -378,46 +392,46 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
             <div class="modal-content">
                 <h2 class="modal-title">Add Event</h2>
 
-                <form id="eventForm" enctype="multipart/form-data">
-                    <div class="form-container">
+                <form id="eventForm" enctype="multipart/form-data" onsubmit="addEvent(event)">
+                <div class="form-container">
+                    <div class="row">
+                        <label for="eventName">Name of event</label>
+                        <input type="text" id="eventName" name="title" required>
+                    </div>
+                    <div class="row">
+                        <label for="eventDate">Date</label>
+                        <input type="date" id="eventDate" name="date" required>
+                    </div>
+                    <div class="group-row">
                         <div class="row">
-                            <label for="eventName">Name of event</label>
-                            <input type="text" id="eventName" name="title" required>
+                            <label for="startTime">Start Time</label>
+                            <input type="time" id="startTime" name="start" required>
                         </div>
                         <div class="row">
-                            <label for="eventDate">Date</label>
-                            <input type="date" id="eventDate" name="date" required>
-                        </div>
-                        <div class="group-row">
-                            <div class="row">
-                                <label for="startTime">Start Time</label>
-                                <input type="time" id="startTime" name="start" required>
-                            </div>
-                            <div class="row">
-                                <label for="endTime">End Time</label>
-                                <input type="time" id="endTime" name="end" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <label for="venue">Venue</label>
-                            <input type="text" id="venue" name="venue" required>
-                        </div>
-                        <div class="row">
-                            <div class="file-upload">
-                                <label for="eventImage" class="custom-file-upload">
-                                    <i class="fas fa-cloud-upload-alt"></i> Add Image
-                                </label>
-                                <input type="file" id="eventImage" name="image" onchange="updateFileName()" accept="image/*">
-                                <span id="file-name">No file chosen</span>
-                            </div>
+                            <label for="endTime">End Time</label>
+                            <input type="time" id="endTime" name="end" required>
                         </div>
                     </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-                        <button type="button" class="btn-post" onclick="addEvent(event)">Post</button>
+                    <div class="row">
+                        <label for="venue">Venue</label>
+                        <input type="text" id="venue" name="venue" required>
                     </div>
-                </form>
+                    <div class="row">
+                        <div class="file-upload">
+                            <label for="eventImage" class="custom-file-upload">
+                                <i class="fas fa-cloud-upload-alt"></i> Add Image
+                            </label>
+                            <input type="file" id="eventImage" name="image" onchange="updateFileName()" accept="image/*">
+                            <span id="file-name">No file chosen</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-post">Post</button>
+                </div>
+            </form>
 
             </div>
         </div>

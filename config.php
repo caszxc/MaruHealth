@@ -30,7 +30,7 @@ try {
         image VARCHAR(255) NULL,
         start TIME NOT NULL,
         end TIME NOT NULL,
-        venue VARCHAR(255) NULL
+        venue VARCHAR(255) NOT NULL
     )";
     
     $conn->exec($sql);

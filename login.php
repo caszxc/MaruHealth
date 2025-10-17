@@ -97,16 +97,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right-panel">
             <div class="login-box">
                 <form method="POST" class="login-form">
-                    <h3 id="login-title">Login</h3>
-                    <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
-                    <input type="text" name="identifier" placeholder="Email/Phone/Username" autocomplete="off" required>
-                    <input type="password" name="password" placeholder="Password" required>
-                    <a href="forgot_password.php" class="forgot-link" id="forgot-link">Forgot password?</a>
-                    <button type="submit">Log In</button>
-                    <div id="signup-link">
-                        <p id="link">Don't have an account? <a href="register.php">Sign Up</a></p>
-                        <p id="link">or <br><a href="index.php">Stay signed out</a></p>
-                    </div>     
+                    <div class="login-container">
+                        <h3 id="login-title">Login</h3>
+                        <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
+                        <div class="field-container">
+                            <input type="text" name="identifier" placeholder="Email/Phone/Username" autocomplete="off" required>
+                            <input type="password" name="password" placeholder="Password" required>
+                            <a href="forgot_password.php" class="forgot-link" id="forgot-link">Forgot password?</a>
+                        </div>
+                        
+                        <button type="submit">Log In</button>
+                        <div id="signup-link">
+                            <p id="link">Don't have an account? <a href="register.php">Sign Up</a></p>
+                            <p id="link">or <br><a href="index.php">Stay signed out</a></p>
+                        </div>     
+                    </div>
                 </form>
             </div>
         </div>

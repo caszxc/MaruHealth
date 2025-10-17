@@ -54,12 +54,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right-panel">
             <div class="login-box">
                 <form method="POST" class="login-form">
-                    <h3>Verify Reset Code</h3>
-                    <p>Enter the 6-digit code sent to your email.</p>
-                    <input type="text" name="code" placeholder="Enter Code" required maxlength="6">
-                    <?php if ($error) echo "<p class='error'>$error</p>"; ?>
-                    <button type="submit">Verify Code</button>
-                    <p><a href="forgot_password.php">Back</a></p>
+                    <div>
+                        <h3>Verify Reset Code</h3>
+                        <p>Enter the 6-digit code sent to your email.</p>
+
+                        <div class="field-container">
+                            <input type="text" name="code" placeholder="Enter Code" required maxlength="6">
+                            <?php if ($error) echo "<p class='error'>$error</p>"; ?>
+                        </div>
+                        
+                        <button type="submit">Verify Code</button>
+                        
+                        <p id="link"><a href="forgot_password.php">Back</a></p>
+                    </div>
                 </form>
             </div>
         </div>

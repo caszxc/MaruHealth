@@ -32,7 +32,7 @@ h1 {
 .row {
     display: flex;
     gap: 20px;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .row > div {
@@ -214,4 +214,24 @@ input[type="file"]::file-selector-button:hover {
     max-width: 1900px;
     width: 30%;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+}
+
+.error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 4px;
+    display: flex;
+}
+
+.required::after {
+    content: " *";
+    color: red;
+}
+
+.field-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    font-style: italic;
+    display: block;
 }

@@ -4,12 +4,12 @@ session_start();
 require 'config.php'; // DB connection
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    echo "Invalid request method.";
+    header("Location: request_medicine.php?error=invalid_method");
     exit;
 }
 
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
-    echo "<script>alert('You must be logged in to make a request.'); window.location.href = 'login.php';</script>";
+    header("Location: request_medicine.php?error=login_required");
     exit;
 }
 
@@ -23,7 +23,7 @@ $stmt->execute();
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user || ($active_user_id != $primary_user_id && $user['primary_user_id'] != $primary_user_id)) {
-    echo "<script>alert('Invalid user account.'); window.location.href = 'login.php';</script>";
+    header("Location: request_medicine.php?error=invalid_user");
     exit;
 }
 
@@ -40,25 +40,30 @@ $quantities = $_POST['quantity'] ?? [];
 
 // Validate form data
 if (empty($full_name) || empty($gender) || empty($birthdate) || empty($address) || empty($phone)) {
-    echo "<script>alert('All required fields must be filled.'); window.history.back();</script>";
+    header("Location: request_medicine.php?error=required_fields");
     exit;
 }
 
 if (!is_array($medicine_names) || count($medicine_names) === 0) {
-    echo "<script>alert('Please add at least one medicine.'); window.history.back();</script>";
+    header("Location: request_medicine.php?error=no_medicines");
     exit;
 }
 
 // Handle prescription upload
+if (!isset($_FILES['prescription']) || $_FILES['prescription']['error'] === UPLOAD_ERR_NO_FILE) {
+    header("Location: request_medicine.php?error=no_prescription");
+    exit;
+}
+
 $prescriptionPath = null;
-if (isset($_FILES['prescription']) && $_FILES['prescription']['error'] === UPLOAD_ERR_OK) {
+if ($_FILES['prescription']['error'] === UPLOAD_ERR_OK) {
     $fileTmpPath = $_FILES['prescription']['tmp_name'];
     $fileName = $_FILES['prescription']['name'];
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
     $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
 
     if (!in_array($fileExtension, $allowedExtensions)) {
-        echo "<script>alert('Invalid file type. Only JPG, PNG, and PDF are allowed.'); window.history.back();</script>";
+        header("Location: request_medicine.php?error=invalid_file_type");
         exit;
     }
 
@@ -71,10 +76,14 @@ if (isset($_FILES['prescription']) && $_FILES['prescription']['error'] === UPLOA
     $destPath = $uploadDir . $newFileName;
 
     if (!move_uploaded_file($fileTmpPath, $destPath)) {
-        echo "<script>alert('Error uploading prescription.'); window.history.back();</script>";
+        header("Location: request_medicine.php?error=upload_failed");
         exit;
     }
+
     $prescriptionPath = $destPath;
+} else {
+    header("Location: request_medicine.php?error=file_error");
+    exit;
 }
 
 // Generate a random request ID
@@ -141,6 +150,7 @@ try {
 } catch (PDOException $e) {
     $conn->rollBack();
     error_log("Error in submit_request.php: " . $e->getMessage());
-    echo "<script>alert('Error submitting request: " . htmlspecialchars($e->getMessage()) . "'); window.history.back();</script>";
+    header("Location: request_medicine.php?error=database_error");
+    exit;
 }
 ?>

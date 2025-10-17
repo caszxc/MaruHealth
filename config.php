@@ -5,6 +5,8 @@ $dbname = "maruhealthdb";
 $username = "root";
 $password = "";
 
+date_default_timezone_set('Asia/Manila');
+
 try {
     // Connect to MySQL without specifying a database
     $conn = new PDO("mysql:host=$host", $username, $password);
@@ -404,7 +406,7 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NULL,
         email VARCHAR(255) NOT NULL,
-        token VARCHAR(255) NOT NULL,
+        code VARCHAR(10) NOT NULL,
         expires_at DATETIME NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

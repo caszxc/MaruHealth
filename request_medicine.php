@@ -115,7 +115,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                 </div>
             </div>
 
-            <form action="submit_request.php" method="POST" enctype="multipart/form-data">
+            <form id="requestForm" action="submit_request.php" method="POST" enctype="multipart/form-data">
                 <div class="form-container">
                     <div class="row">
                         <div>
@@ -149,15 +149,18 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                     <div id="medicine-group">
                         <div class="row medicine-entry">
                             <div>
-                                <label>Medicine Name</label>
+                                <label>Medicine Name <span class="required"></span></label>
                                 <input type="text" name="medicine_name[]" required autocomplete="off">
+                                <small class="field-hint">Enter the generic or brand name (e.g. Paracetamol, Biogesic)</small>
+
                             </div>
                             <div>
-                                <label>Dosage</label>
-                                <input type="text" name="dosage[]" autocomplete="off">
+                                <label>Dosage <span class="required"></span></label>
+                                <input type="text" name="dosage[]" required autocomplete="off">
+                                <small class="field-hint">Separate the number and unit (e.g. 500 mg, 10 mL)</small>
                             </div>
                             <div>
-                                <label>Quantity</label>
+                                <label>Quantity <span class="required"></span></label>
                                 <input type="number" name="quantity[]" min="1" required>
                             </div>
                             <button type="button" class="remove-medicine-btn" style="margin-top: 24px;"><i class="fa fa-trash"></i></button>
@@ -177,14 +180,16 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                     
                     <div class="row">
                         <div>
-                            <label>Upload Prescription</label>
+                            <label>Upload Prescription <span class="required"></span></label>
                             <div class="file-upload">
                                 <label for="file-upload" class="custom-file-upload">
                                     <i class="fas fa-cloud-upload-alt"></i> Add File
                                 </label>
-                                <input id="file-upload" type="file" name="prescription" onchange="updateFileName()" accept="image/*,application/pdf" required>
+                                <input id="file-upload" type="file" name="prescription" onchange="updateFileName()" accept="image/*,application/pdf">
                                 <span id="file-name">No file chosen</span>
                             </div>
+                            <small class="field-hint">Upload a clear photo or PDF of your prescription (JPG, PNG, or PDF only)</small>
+                            <span id="prescription-error" class="error-message"></span>
                         </div>
                     </div>
                     
@@ -227,12 +232,16 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         function updateFileName() {
             const fileInput = document.getElementById('file-upload');
             const fileNameSpan = document.getElementById('file-name');
+            const errorSpan = document.getElementById('prescription-error');
+
             if (fileInput.files.length > 0) {
                 fileNameSpan.textContent = fileInput.files[0].name;
+                errorSpan.textContent = ''; // clear error
             } else {
                 fileNameSpan.textContent = 'No file chosen';
             }
         }
+
 
         // Handle login modal
         document.addEventListener("DOMContentLoaded", function () {
@@ -262,6 +271,22 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
             document.getElementById('successModal').style.display = 'none';
             window.location.href = 'request_medicine.php'; // Refresh the page
         });
+        
+        document.getElementById('requestForm').addEventListener('submit', function (e) {
+            const fileInput = document.getElementById('file-upload');
+            const errorSpan = document.getElementById('prescription-error');
+
+            // Clear old error
+            errorSpan.textContent = '';
+
+            // If no file uploaded
+            if (fileInput.files.length === 0) {
+                e.preventDefault(); // stop form from submitting
+                errorSpan.textContent = 'Please upload a prescription before submitting.';
+                fileInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+
     </script>
 </body>
 

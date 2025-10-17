@@ -5,46 +5,41 @@ include 'config.php';
 
 $error = '';
 $success = '';
-$token = isset($_GET['token']) ? trim($_GET['token']) : '';
 
-if (empty($token)) {
-    $error = "Invalid or missing token.";
-} else {
-    // Check if token is valid, not expired, and belongs to a resident
-    $stmt = $conn->prepare("SELECT * FROM password_reset_tokens WHERE token = :token AND user_id IS NOT NULL AND expires_at > NOW()");
-    $stmt->bindParam(':token', $token);
-    $stmt->execute();
-    $token_data = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!isset($_SESSION['verified_email'])) {
+    header("Location: forgot_password.php");
+    exit;
+}
 
-    if (!$token_data) {
-        $error = "Invalid or expired token, or not associated with a resident account.";
-    } elseif ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $new_password = $_POST['new_password'];
-        $confirm_password = $_POST['confirm_password'];
+$email = $_SESSION['verified_email'];
 
-        // Validate passwords
-        if (empty($new_password) || empty($confirm_password)) {
-            $error = "Please fill in both password fields.";
-        } elseif ($new_password !== $confirm_password) {
-            $error = "Passwords do not match.";
-        } elseif (strlen($new_password) < 8) {
-            $error = "Password must be at least 8 characters long.";
-        } else {
-            // Update resident password
-            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE users SET password = :password WHERE id = :user_id");
-            $stmt->execute([':password' => $hashed_password, ':user_id' => $token_data['user_id']]);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
 
-            // Delete used token
-            $stmt = $conn->prepare("DELETE FROM password_reset_tokens WHERE token = :token");
-            $stmt->bindParam(':token', $token);
-            $stmt->execute();
+    if (empty($new_password) || empty($confirm_password)) {
+        $error = "Please fill in both password fields.";
+    } elseif ($new_password !== $confirm_password) {
+        $error = "Passwords do not match.";
+    } elseif (strlen($new_password) < 8) {
+        $error = "Password must be at least 8 characters long.";
+    } else {
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("UPDATE users SET password = :password WHERE email = :email");
+        $stmt->execute([':password' => $hashed_password, ':email' => $email]);
 
-            $success = "Your password has been reset successfully. <a href='login.php'>Log in</a> now.";
-        }
+        // Delete used code
+        $conn->prepare("DELETE FROM password_reset_tokens WHERE email = :email")->execute([':email' => $email]);
+
+        // Clear session
+        unset($_SESSION['verified_email']);
+        unset($_SESSION['reset_email']);
+
+        $success = "Your password has been reset successfully. <a href='login.php'>Log in</a> now.";
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +68,9 @@ if (empty($token)) {
                     <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
                     <?php if ($success) { echo "<p class='success'>$success</p>"; } ?>
                     <?php if (!$error && !$success) { ?>
+                        <div></div>
                         <input type="password" name="new_password" placeholder="New Password" required>
+                        <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
                         <input type="password" name="confirm_password" placeholder="Confirm Password" required>
                         <button type="submit">Reset Password</button>
                     <?php } ?>

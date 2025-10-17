@@ -10,49 +10,55 @@ $error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $identifier = trim($_POST['identifier']);
 
-    // Validate input
     if (empty($identifier)) {
         $error = "Please enter your email or phone number.";
     } else {
-        // Check the users table for residents only
-        $stmt = $conn->prepare("SELECT id, email, CONCAT(first_name, ' ', last_name) AS full_name FROM users WHERE (email = :identifier OR phone_number = :identifier) AND role = 'user'");
+        $stmt = $conn->prepare("SELECT id, email, CONCAT(first_name, ' ', last_name) AS full_name 
+                                FROM users 
+                                WHERE (email = :identifier OR phone_number = :identifier) 
+                                AND role = 'user'");
         $stmt->bindParam(':identifier', $identifier);
         $stmt->execute();
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
-            // Generate unique token
-            $token = bin2hex(random_bytes(32));
-            $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
+            // Generate 6-digit code
+            $reset_code = random_int(100000, 999999);
+            $expires_at = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-            // Store token in password_reset_tokens table
-            $stmt = $conn->prepare("INSERT INTO password_reset_tokens (user_id, email, token, expires_at) VALUES (:user_id, :email, :token, :expires_at)");
+            // Delete any existing codes for this user
+            $conn->prepare("DELETE FROM password_reset_tokens WHERE email = :email")->execute([':email' => $user['email']]);
+
+            // Store new reset code
+            $stmt = $conn->prepare("INSERT INTO password_reset_tokens (user_id, email, code, expires_at)
+                                    VALUES (:user_id, :email, :code, :expires_at)");
             $stmt->execute([
                 ':user_id' => $user['id'],
                 ':email' => $user['email'],
-                ':token' => $token,
+                ':code' => $reset_code,
                 ':expires_at' => $expires_at
             ]);
 
-            // Send reset email
-            $reset_link = "http://maruhealth.site/reset_password.php?token=$token";
-            $subject = "Password Reset Request";
+            // Send email
+            $subject = "Your Password Reset Code";
             $recipient_name = $user['full_name'];
             $message = "
-                <h2>Password Reset Request</h2>
+                <h2>Password Reset Code</h2>
                 <p>Dear $recipient_name,</p>
-                <p>We received a request to reset your password. Click the link below to reset it:</p>
-                <p><a href='$reset_link'>Reset Password</a></p>
-                <p>This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p>
+                <p>Your password reset code is: <strong>$reset_code</strong></p>
+                <p>This code will expire in 10 minutes.</p>
+                <p>If you did not request a password reset, please ignore this message.</p>
                 <p>Best regards,<br>Maru-Health Team</p>
             ";
 
             $email_result = sendEmail($user['email'], $recipient_name, $subject, $message);
 
             if ($email_result['success']) {
-                $success = "A password reset link has been sent to your email.";
+                $_SESSION['reset_email'] = $user['email'];
+                header("Location: verify_code.php");
+                exit;
             } else {
-                $error = "Failed to send reset link. Please try again later.";
+                $error = "Failed to send reset code. Please try again later.";
             }
         } else {
             $error = "No resident account found with that email or phone number.";
@@ -60,6 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -87,11 +94,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="login-box">
                 <form method="POST" class="login-form">
                     <h3>Forgot Password</h3>
-                    <p>Enter your email or phone number to receive a password reset link.</p>
-                    <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
+                    <p>Enter your email or phone number to receive a password reset code.</p>
+                    
                     <?php if ($success) { echo "<p class='success'>$success</p>"; } ?>
                     <input type="text" name="identifier" placeholder="E-mail/Phone Number" required>
-                    <button type="submit">Send Reset Link</button>
+                    <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
+                    <button type="submit">Send Reset Code</button>
                     <p><a href="login.php">Back to Login</a></p>
                 </form>
             </div>

@@ -1,17 +1,21 @@
 <?php
-//process_claim.php
+ob_start(); // Start output buffering
 session_start();
 require_once "config.php";
-require_once "email_function.php"; // Include email function
+require_once "email_function.php";
 
 // Set timezone to Philippine Standard Time
 date_default_timezone_set('Asia/Manila');
 
 // Ensure only logged-in health staff can access
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
+    ob_end_clean(); // Clear buffer
     header("Location: admin_dashboard.php");
     exit();
 }
+
+// Set JSON content type
+header('Content-Type: application/json');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $requestId = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
@@ -19,22 +23,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $adminId = $_SESSION['admin_id'];
     
     if ($requestId <= 0) {
-        $_SESSION['error'] = "Invalid request ID";
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['error' => 'Invalid request ID']);
-            exit();
-        }
-        header("Location: pending_requests.php");
+        ob_end_clean();
+        echo json_encode(['error' => 'Invalid request ID']);
         exit();
     }
     
     if ($action !== 'claim') {
-        $_SESSION['error'] = "Invalid action";
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['error' => 'Invalid action']);
-            exit();
-        }
-        header("Location: pending_requests.php");
+        ob_end_clean();
+        echo json_encode(['error' => 'Invalid action']);
         exit();
     }
     
@@ -86,7 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         // Log claim action in medicine history for each distribution
         $historyQuery = "INSERT INTO medicine_history (catalog_id, batch_id, action_type, details, performed_by, created_at)
-                        VALUES (:catalog_id, :batch_id, 'claim', :details, :admin_id, CURRENT_TIMESTAMP)";
+                        VALUES (:catalog_id, :batch_id, 'distribute', :details, :admin_id, CURRENT_TIMESTAMP)";
         $historyStmt = $conn->prepare($historyQuery);
         
         foreach ($distributions as $distribution) {
@@ -128,28 +124,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             error_log("Failed to send claim confirmation email for request #$requestIdValue: " . $emailResult['message']);
         }
         
-        $_SESSION['success'] = "Request has been marked as claimed successfully";
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['success' => 'Request claimed successfully']);
-            exit();
-        }
-        header("Location: pending_requests.php");
+        ob_end_clean(); // Clear buffer
+        echo json_encode(['success' => 'Request claimed successfully']);
         exit();
     } catch (Exception $e) {
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }
-        $_SESSION['error'] = "Error processing claim: " . $e->getMessage();
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            echo json_encode(['error' => 'Error processing claim: ' . $e->getMessage()]);
-            exit();
-        }
-        header("Location: pending_requests.php");
+        error_log("Error in process_claim.php: " . $e->getMessage());
+        ob_end_clean();
+        echo json_encode(['error' => 'Error processing claim: ' . $e->getMessage()]);
         exit();
     }
 }
 
 // Redirect if accessed directly
+ob_end_clean();
 header("Location: pending_requests.php");
 exit();
 ?>

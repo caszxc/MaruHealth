@@ -7,8 +7,8 @@ body::-webkit-scrollbar {
 }
 
 .profile-container {
-    padding: 30px 0;
     margin-top: 80px;
+    min-height: calc(100vh - 80px);
     background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
     display: flex;
     flex-direction: column;
@@ -19,15 +19,16 @@ body::-webkit-scrollbar {
 .page-title {
     color: white;
     font-size: 3rem;
-    margin: 20px;
+    padding: 20px;
 }
 
 .profile-box {
     background-color: #800000;
     display: flex;
     width: 90%;
-    height: 80vh;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 10px;
+    height: 70vh;
 }
 
 .profile-img {
@@ -43,8 +44,8 @@ body::-webkit-scrollbar {
 
 .profile-pic-wrapper {
     position: relative;
-    width: 270px;
-    height: 270px;
+    width: 200px;
+    height: 200px;
     cursor: pointer;
 }
 
@@ -56,26 +57,23 @@ body::-webkit-scrollbar {
     border: 3px solid #800000;
 }
 
-.icon-button {
+.profile-pic-wrapper .icon-button {
     position: absolute;
     top: 10px;
     right: 10px;
     background-color: #ffffff;
     border: none;
-    border-radius: 50%;
+    border-radius: 100%;
     padding: 8px;
     font-size: 14px;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     transition: background-color 0.2s ease-in-out;
-}
-
-.icon-button:hover {
-    background-color: #f0f0f0;
-}
-
-.icon-button i {
     color: #800000;
+}
+
+.profile-pic-wrapper .icon-button:hover {
+    background-color: #f0f0f0;
 }
 
 .profile-img .full-name {
@@ -83,12 +81,8 @@ body::-webkit-scrollbar {
     font-size: 20px;
 }
 
-.profile-img .logout-button {
-    background-color: #800000;
-    color: white;
-    border: none;
+.profile-img .edit-profile-btn, .profile-img .change-password-btn, .profile-img .switch-acc-btn, .profile-img .logout-button{
     border-radius: 5px;
-    width: 100px;
     height: 30px;
 }
 
@@ -98,20 +92,25 @@ body::-webkit-scrollbar {
     border: 2px solid #8B0000;
     border-radius: 5px;
     width: 40%;
-    height: 30px;
 }
 
-.switch-acc-btn{
+.profile-img .switch-acc-btn{
     text-decoration: none;
     font-size: 14px;
     display: flex;
     justify-content: center;
     align-items: center;
-
 }
 
-.profile-info {
-    width: 70%;
+.profile-img .logout-button {
+    background-color: #800000;
+    color: white;
+    border: none;
+    width: 100px;
+}
+
+.profile-box .profile-info {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -119,13 +118,13 @@ body::-webkit-scrollbar {
     background-color: #f7f7f7;
 }
 
-.tab-buttons {
+ .profile-info .tab-buttons {
     background-color: #800000;
     width: 100%;
     height: 15%;
 }
 
-.tab-button {
+ .tab-buttons .tab-button {
     background-color: #800000;
     color: white;
     border: none;
@@ -142,24 +141,26 @@ body::-webkit-scrollbar {
 }
 
 /* Tab Content */
-.tab-content {
+.profile-info .content-wrapper {
     background-color: #f7f7f7;
-    border-radius: 5px;
+    padding: 20px;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
 }
 
 #details, #request-history, #patient-record, #dependents {
-    padding: 20px;
     width: 100%;
-    height: 85%;
     gap: 20px;
     flex-direction: column;
     justify-content: flex-start;
     overflow-y: auto;
-    /* Enable scrollbar for WebKit browsers */
-    scrollbar-width: none; /* For Firefox */
-    -ms-overflow-style: none; /* For IE/Edge */
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
 }
 
+/* Details Tab */
 #details .title {
     color: #800000;
 }
@@ -180,74 +181,196 @@ body::-webkit-scrollbar {
     font-weight: bold;
 }
 
-/* Table Styles */
-.table-container {
-    padding: 10px 0;
-    max-height: 400px; /* Adjusted to accommodate pagination */
-    height: 80%;
+/* Request History Tab */
+#request-history .table-container{
+    display: flex;
+    height: 100%;
+}
+
+#request-history .table-container .table-wrapper{
+    flex: 1;
     overflow-y: auto;
-    width: 100%;
+    scrollbar-width: none;
     background-color: #fff;
-    border-radius: 5px;
-    position: relative;
 }
 
-table {
-    width: 100%;
+#request-history .table-wrapper table{
     border-collapse: collapse;
-    background-color: #fff;
+    width: 100%;
 }
 
-table th, table td {
+#request-history .table-wrapper table th{
     padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-table th {
-    background-color: #800000;
-    color: #fff;
     position: sticky;
     top: 0;
-    z-index: 10;
-}
-
-.table-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.table-container::-webkit-scrollbar-thumb {
     background-color: #800000;
-    border-radius: 4px;
+    color: #fff;
+    font-size: 15px;
+    z-index: 10;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.table-container::-webkit-scrollbar-track {
-    background-color: #f1f1f1;
+#request-history .table-wrapper table td{
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
 }
 
-.status-badge {
+#request-history .status-badge{
     padding: 6px 12px;
     border-radius: 5px;
     font-weight: bold;
     font-size: 0.9rem;
-    display: inline-block;
+    display: flex;
+    justify-content: center;
 }
 
-.view-btn {
-    background-color: #4b66c1;
+#request-history .button-container{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#request-history .button-container .view-btn,#request-history .button-container .cancel-request-btn{
     color: white;
     padding: 6px 12px;
     border-radius: 6px;
     font-weight: bold;
     text-decoration: none;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
+    border: none
+}
+
+#request-history .button-container .view-btn{
+    background-color: #4b66c1;
+}
+
+#request-history .button-container .cancel-request-btn{
+    background-color: #dc3545;
+}
+
+/* Patient Record Tab */
+#patient-record .patient-con{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 10px;
+    overflow: hidden;
+}
+
+#patient-record .title{
+    color: #800000;
+}
+
+#patient-record .anthro-con .metrics-grid{
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+}
+
+#patient-record .metric-card {
+    display: flex;
+    flex-direction: column;
+}
+
+#patient-record .metric-value {
+    background-color: #D9D9D9;
+    padding: 10px 20px;
+}
+
+#patient-record .consultation-con {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+#patient-record .table-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: auto;
+    scrollbar-width: none;
+    background-color: #fff;
+}
+
+#patient-record .table-container table{
+    border-collapse: collapse;
+    background-color: #fff;
+    width: 100%;
+}
+
+#patient-record .table-container table th{
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    background-color: #800000;
+    color: #fff;
+    font-size: 15px;
+    z-index: 10;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#patient-record .table-container table td{
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+#patient-record .table-container .view-btn{
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
     border: none;
+    background-color: #4b66c1;
 }
 
-.view-btn:hover {
-    background-color: #3a4fa2;
+/* Dependents Tab */
+#dependents .dependents-con{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 10px;
+    overflow: hidden;
 }
 
-/* Modal Styles */
+#dependents .table-container{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+#dependents .table-container table{
+    border-collapse: collapse;
+    background-color: #fff;
+    width: 100%;
+}
+
+#dependents .table-container table th{
+    padding: 10px;
+    position: sticky;
+    top: 0;
+    background-color: #800000;
+    color: #fff;
+    font-size: 15px;
+    z-index: 10;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#dependents .table-container table td{
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+
+
+/* MODALS */
 .modal {
     display: none;
     position: fixed;
@@ -270,29 +393,14 @@ table th {
     opacity: 1;
 }
 
-#changeProfileModal .modal-content, #editProfileModal .modal-content, #changePasswordModal .modal-content, #addDependentModal .modal-content{
+.modal .modal-content{
     background-color: #fff;
-    max-width: 1900px;
-    max-height: 90vh;
-    width: 50%;
     padding: 20px;
-    border-radius: 8px;
-    position: relative;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-#viewRequestModal .modal-content, #viewConsultationModal .modal-content {
-    background-color: #fff;
-    max-width: 1900px;
-    width: 80%;
     max-height: 90vh;
-    padding: 20px;
+    min-width: 50%;
     border-radius: 8px;
-    position: relative;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
     overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -308,13 +416,70 @@ table th {
     padding-bottom: 10px;
 }
 
-.image-preview {
+/* Edit Profile Modal, Add Dependent Modal and Change Password Modal Forms */
+ .modal-content form {
     display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
 }
 
-.image-preview img {
+ .modal-content form .group-row {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-content form .group-col {
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+.modal-content form .required{
+    color: #FF0000;
+}
+
+.modal-content form input, .modal-content form select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+.modal-content form .field-hint {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    display: block;
+}
+
+.modal-content .file-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+}
+.modal-content .file-upload label {
+    background-color: #8B0000;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.modal-content .file-upload input[type="file"] {
+    display: none;
+}
+
+/* Change Profile Modal Specific CSS */
+#changeProfileModal .image-preview{
+    display: flex;
+    justify-content: center;
+}
+
+#changeProfileModal .image-preview img {
     width: 150px;
     height: 150px;
     object-fit: cover;
@@ -323,16 +488,88 @@ table th {
     background-color: #f0f0f0;
 }
 
-#profile-photo {
-    display: block;
-    margin: 0 auto 20px auto;
-    font-size: 16px;
+/* Request Medicine Details Modal */
+#viewRequestModal .modal-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
 }
 
+#viewRequestModal .modal-container .group-row {
+    display: flex;
+    gap: 10px;
+}
+
+#viewRequestModal .modal-container .group-col{
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+#viewRequestModal .modal-container #medicine-group{
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+#viewRequestModal .modal-container .medicine-container{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#viewRequestModal .modal-container .medicine-entry{
+    display: flex;
+    justify-content: space-between;
+}
+
+
+#viewRequestModal .modal-container .medicine-entry > div{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#viewRequestModal .modal-container .group-col span{
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+/* Consultation Details Modal */
+#viewConsultationModal .consultation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+}
+
+#viewConsultationModal .consultation-container .group-row{
+    display: flex;
+    gap: 10px;
+}
+
+#viewConsultationModal .consultation-container .group-col{
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    flex-direction: column;
+}
+
+#viewConsultationModal .group-col input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+/* Modal Footer */
 .modal-footer {
     display: flex;
-    justify-content: center;
-    gap: 20px;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .modal-footer .cancel-btn,
@@ -350,220 +587,8 @@ table th {
     color: #333;
 }
 
-.modal-footer .cancel-btn:hover {
-    background-color: #bbb;
-}
-
 .modal-footer .save-btn {
     background-color: #800000;
     color: white;
 }
 
-.modal-footer .save-btn:hover {
-    background-color: #a00000;
-}
-
-.modal-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    font-family: 'Istok Web', sans-serif;
-}
-
-.modal-container .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: flex-start;
-    padding: 12px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    transition: background-color 0.2s;
-}
-
-.modal-container .row:hover {
-    background-color: #f4f4f4;
-}
-
-.modal-container .row > div {
-    flex: 1;
-    min-width: 200px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.modal-container .row > div > label {
-    font-weight: bold;
-    color: #333;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.modal-container .row > div > span {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background-color: #fff;
-    font-size: 16px;
-    color: #444;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-}
-
-.modal-container .group-col {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    flex: 1;
-}
-
-#medicine-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-}
-
-.medicine-entry {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 15px;
-    padding: 10px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-}
-
-.medicine-entry > div {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.medicine-entry > div > label {
-    font-weight: bold;
-    color: #333;
-    font-size: 14px;
-}
-
-.medicine-entry > div > span {
-    font-size: 16px;
-    color: #444;
-}
-
-.prescription-preview {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    align-items: flex-start;
-    padding: 12px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-}
-
-.prescription-preview label {
-    font-weight: bold;
-    color: #333;
-    font-size: 14px;
-    margin-bottom: 10px;
-}
-
-.prescription-preview img {
-    max-width: 100%;
-    max-height: 300px;
-    object-fit: contain;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-#claim-info .row {
-    background-color: #ffe8e8;
-    border-color: #800000;
-}
-
-#claim-info .claim-details {
-    padding: 10px;
-    background-color: #fff;
-    border: 1px solid #800000;
-    border-radius: 6px;
-}
-
-#claim-info .claim-details p {
-    margin: 8px 0;
-    font-size: 16px;
-    color: #333;
-}
-
-#claim-info .claim-details p strong {
-    color: #800000;
-}
-
-#note-info .row {
-    background-color: #fff8e8;
-    border-color: #800000;
-}
-
-#note-info span {
-    background-color: #fff;
-    border: 1px solid #800000 !important;
-}
-
-.patient-con {
-    display: flex;
-    flex-direction: column;
-}
-
-.metrics-grid {
-    display: flex;
-    width: 100%;
-    padding: 10px 0;
-    justify-content: space-around;
-}
-
-.metric-card {
-    display: flex;
-    flex-direction: column;
-}
-
-.metric-value {
-    background-color: #D9D9D9;
-    padding: 20px;
-}
-
-.form-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 20px;
-}
-.form-grid .form-group {
-    display: flex;
-    align-items: center ;
-    gap: 10px;
-    width: 100%;
-}
-
-.form-group .form-row{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.form-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-.form-group input, .form-group select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}

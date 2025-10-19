@@ -8,15 +8,26 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
     exit();
 }
 
-// Fetch medicine requests with 'claimed', 'declined', or 'cancelled' status
+// Get search term from GET request and sanitize it
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Fetch medicine requests with 'claimed', 'declined', or 'cancelled' status and optional search filter
 $requestsQuery = "SELECT mr.id, mr.request_id, mr.full_name, 
                  DATE_FORMAT(mr.request_date, '%m/%d/%Y %h:%i%p') as formatted_request_date,
                  DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date,
                  mr.request_status 
                  FROM medicine_requests mr 
-                 WHERE mr.request_status IN ('claimed', 'declined', 'cancelled')
-                 ORDER BY mr.claimed_date DESC, mr.request_date DESC";
+                 WHERE mr.request_status IN ('claimed', 'declined', 'cancelled')";
+if (!empty($searchTerm)) {
+    $requestsQuery .= " AND (mr.request_id LIKE :search OR mr.full_name LIKE :search)";
+}
+$requestsQuery .= " ORDER BY mr.claimed_date DESC, mr.request_date DESC";
+
 $requestsStmt = $conn->prepare($requestsQuery);
+if (!empty($searchTerm)) {
+    $searchParam = "%$searchTerm%";
+    $requestsStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+}
 $requestsStmt->execute();
 $requests = $requestsStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -199,46 +210,60 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
     <div class="med-req-content">
         <div class="title-con">
-            <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+            <a href="medicine_requests.php" class="back-button">← Back</a>
             <h2>Archived Requests</h2>
         </div>
-        <div class="table-con">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Request ID</th>
-                        <th>Name</th>
-                        <th>Date/Time Requested</th>
-                        <th>Date/Time Claimed/Declined/Cancelled</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($requests)): ?>
-                        <tr>
-                            <td colspan="6" class="no-requests" style="text-align: center;">No archived medicine requests found.</td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($requests as $request): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($request['request_id']) ?></td>
-                                <td><?= htmlspecialchars($request['full_name']) ?></td>
-                                <td><?= htmlspecialchars($request['formatted_request_date']) ?></td>
-                                <td><?= htmlspecialchars($request['formatted_claimed_date'] ?? 'N/A') ?></td>
-                                <td>
-                                    <div class="status-badge status-<?= strtolower($request['request_status']) ?>">
-                                        <?= ucfirst($request['request_status']) ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button class="view-btn" onclick="openModal(<?= $request['id'] ?>)">View</button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+        <div class="req-container">
+            <div class="sort-controls">
+                <div class="search-con">
+                    <form method="GET" action="archived_requests.php">
+                        <input type="text" name="search" placeholder="Search by Request ID or Name" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+            <div class="request-table">
+                <div class="table-con">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Name</th>
+                                    <th>Date/Time Requested</th>
+                                    <th>Date/Time Claimed/Declined/Cancelled</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($requests)): ?>
+                                    <tr>
+                                        <td colspan="6" class="no-requests" style="text-align: center;">No archived medicine requests found.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($requests as $request): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($request['request_id']) ?></td>
+                                            <td><?= htmlspecialchars($request['full_name']) ?></td>
+                                            <td><?= htmlspecialchars($request['formatted_request_date']) ?></td>
+                                            <td><?= htmlspecialchars($request['formatted_claimed_date'] ?? 'N/A') ?></td>
+                                            <td>
+                                                <div class="status-badge status-<?= strtolower($request['request_status']) ?>">
+                                                    <?= ucfirst($request['request_status']) ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <button class="view-btn" onclick="openModal(<?= $request['id'] ?>)">View</button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     

@@ -259,6 +259,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Commit transaction
         $conn->commit();
 
+        // Log the service update
+        $logStmt = $conn->prepare("
+            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+            VALUES (:admin_id, 'service_update', :details, :target_id)
+        ");
+        $details = "Updated service titled '{$title}'";
+        $logStmt->execute([
+            ':admin_id' => $_SESSION['admin_id'],
+            ':details' => $details,
+            ':target_id' => $serviceId
+        ]);
+
         $_SESSION['success'] = "Service updated successfully!";
         header("Location: service_management.php");
         exit();

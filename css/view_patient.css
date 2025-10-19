@@ -167,16 +167,23 @@
     display: flex;
     justify-content: space-between;
     gap: 10px;
+    align-items: flex-start;
 }
 
-.patient-box, .consultation-history{
-    width: 50%;
+.patient-box,
+.consultation-history {
+    flex: 1; /* Equal width */
+    background: #fff;
+    border-radius: 10px;
     padding: 20px;
-
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
 }
 
 .patient-box{
     background-color: #FFFFFF;
+    height: 100%;
 }
 
 .info-grid {
@@ -260,11 +267,37 @@
 }
 
 /* Table Styles */
+.consultation-history{
+    gap: 10px;
+}
+
+.consultation-content{
+    overflow: hidden;
+    max-height: 310px;
+    display: flex;
+}
+
+.consultation-table{
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.table-container{
+    display: flex;
+    flex: 1;
+    height: 100%;
+}
+
+.table-wrapper{
+    flex: 1;
+    overflow-y: auto; /* Enable vertical scrolling for table body */
+    scrollbar-width: none;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #fff;
-    margin-top: 10px;
 }
 
 table th, table td {
@@ -273,9 +306,13 @@ table th, table td {
     border-bottom: 1px solid #ddd;
 }
 
-table th {
+.table-wrapper table th {
+    position: sticky;
+    top: 0;
     background-color: #800000;
     color: #fff;
+    font-size: 15px;
+    z-index: 10;
 }
 
 tr:nth-child(even) {

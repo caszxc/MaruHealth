@@ -41,7 +41,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Approval</title>
+    <title>User Account Management</title>
     <link rel="stylesheet" href="css/account_approval.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,15 +94,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
             
             <div class="menu-link">
@@ -116,7 +116,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
 
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
@@ -153,14 +153,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <a href="account_requests.php">
                 <div class="tile">
                     <img src="images/icons/reqmd_icon_active.png" alt="">
-                    <h3>Requests</h3>
+                    <h3>Pending Accounts</h3>
                     <p><?= $requestsCount ?></p>
                 </div>
             </a>
             <a href="approvedAcc_requests.php">
                 <div class="tile">
                     <img src="images/icons/pendings_icon_active.png" alt="">
-                    <h3>Approved</h3>
+                    <h3>Approved Accounts</h3>
                     <p><?= $approvedCount ?></p>
                 </div>
             </a>

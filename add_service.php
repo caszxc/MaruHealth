@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $conn->beginTransaction();
 
         // Handle service icon upload
-        $iconPath = 'images/placeholder.png'; // Default icon path
+        $iconPath = 'images/uploads/service_images/icons/icon-placeholder.png'; // Default icon path
         if ($serviceIcon && $serviceIcon['error'] === UPLOAD_ERR_OK) {
             $uploadDir = "images/uploads/service_images/icons/";
             if (!is_dir($uploadDir)) {
@@ -145,6 +145,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         // Commit transaction
         $conn->commit();
+
+        // Log the service creation
+        $logStmt = $conn->prepare("
+            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+            VALUES (:admin_id, 'service_create', :details, :target_id)
+        ");
+        $details = "Created service titled '{$serviceTitle}'";
+        $logStmt->execute([
+            ':admin_id' => $_SESSION['admin_id'],
+            ':details' => $details,
+            ':target_id' => $serviceId
+        ]);
+
         $_SESSION['success'] = "Service added successfully.";
         header("Location: service_management.php");
         exit();

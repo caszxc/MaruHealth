@@ -50,10 +50,7 @@ if ($batchStmt->rowCount() > 0) {
 }
 
 // Determine stock status
-$catalogStmt = $conn->prepare("SELECT min_stock FROM medicines_catalog WHERE id = :catalog_id");
-$catalogStmt->execute([':catalog_id' => $catalog_id]);
-$min_stock = $catalogStmt->fetchColumn();
-$stock_status = ($stocks <= 0) ? 'Out of Stock' : (($stocks <= $min_stock) ? 'Low Stock' : 'In Stock');
+$stock_status = ($stocks <= 0) ? 'Out of Stock' : 'In Stock';
 
 // Determine expiry status
 $current_date = new DateTime();

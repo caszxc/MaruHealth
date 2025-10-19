@@ -30,7 +30,8 @@ try {
         image VARCHAR(255) NULL,
         start TIME NOT NULL,
         end TIME NOT NULL,
-        venue VARCHAR(255) NOT NULL
+        venue VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )";
     
     $conn->exec($sql);
@@ -238,6 +239,7 @@ try {
         dosage_form VARCHAR(100),
         unit VARCHAR(50),
         min_stock INT NOT NULL DEFAULT 0,
+        stock_status ENUM('In Stock', 'Low Stock', 'Out of Stock') DEFAULT 'Out of Stock',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY unique_medicine (generic_name, brand_name, dosage, dosage_form)
     )";
@@ -252,7 +254,7 @@ try {
         manufacturing_date DATE,
         expiration_date DATE,
         stocks INT DEFAULT 0,
-        stock_status ENUM('In Stock', 'Low Stock', 'Out of Stock') DEFAULT 'In Stock',
+        stock_status ENUM('In Stock', 'Out of Stock') DEFAULT 'In Stock',
         expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
         source VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -410,6 +412,18 @@ try {
         expires_at DATETIME NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )";
+    $conn->exec($sql);
+
+    // Create Activity Log Table
+    $sql = "CREATE TABLE IF NOT EXISTS activity_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        admin_id INT NOT NULL,
+        action_type ENUM('user_approval', 'user_rejection', 'announcement_create', 'announcement_update', 'announcement_toggle', 'event_create', 'event_delete', 'service_create', 'service_update') NOT NULL,
+        action_details TEXT NOT NULL,
+        target_id INT NULL, -- ID of the affected record (e.g., user ID, announcement ID, etc.)
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (admin_id) REFERENCES admin_staff(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);
 

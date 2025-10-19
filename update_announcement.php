@@ -1,4 +1,5 @@
 <?php
+//update_announcement.php
 session_start();
 require 'config.php';
 
@@ -35,6 +36,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt = $conn->prepare("UPDATE announcements SET title = ?, content = ? WHERE id = ?");
             $stmt->execute([$title, $content, $announcementId]);
         }
+
+        // Log the announcement update
+        $logStmt = $conn->prepare("
+            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+            VALUES (:admin_id, 'announcement_update', :details, :target_id)
+        ");
+        $details = "Updated announcement titled '{$title}'";
+        $logStmt->execute([
+            ':admin_id' => $_SESSION['admin_id'],
+            ':details' => $details,
+            ':target_id' => $announcementId
+        ]);
 
         header("Location: announcements.php");
         exit();

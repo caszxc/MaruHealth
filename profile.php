@@ -84,93 +84,7 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        /* Scoped styles for the resident consultation details modal */
-        .modal-content form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px;
-        }
-        .modal-content form .group-row {
-            display: flex;
-            gap: 10px;
-        }
-        .modal-content form .group-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .modal-content form label {
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-        .modal-content form input, .modal-content form select {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        .modal-content form input[type="password"] {
-            width: 100%;
-        }
-        .error-message {
-            color: #FF0000;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        .dependents-con {
-            width: 100%;
-            padding: 20px;
-        }
-        .add-dependent-btn {
-            background-color: #8B0000;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        .dependents-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .dependents-table th, .dependents-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .dependents-table th {
-            background-color: #8b0000;
-        }
-        .switch-account-btn {
-            background-color: #28a745;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .modal-content .file-upload {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .modal-content .file-upload label {
-            background-color: #8B0000;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .modal-content .file-upload input[type="file"] {
-            display: none;
-        }
-        .modal-content .file-name {
-            font-size: 14px;
-        }
-    </style>
+
 </head>
 <body>
     <nav>
@@ -216,10 +130,10 @@ try {
                 <p class="full-name"><?php echo htmlspecialchars($user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']); ?></p>
                 <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
                 <?php if ($is_dependent): ?>
-                <a href="switch_account.php" class="switch-acc-btn">Switch Account</a>
+                    <a href="switch_account.php" class="switch-acc-btn">Switch Account</a>
                 <?php endif; ?>
                 <?php if (!$is_dependent): ?>
-                <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
+                    <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
                 <?php endif; ?>
                 <form action="logout.php" method="POST">
                     <button type="submit" class="logout-button">Log Out</button>
@@ -233,164 +147,180 @@ try {
                     <button class="tab-button" onclick="openTab(event, 'request-history')">Request History</button>
                     <button class="tab-button" onclick="openTab(event, 'patient-record')">Patient Record</button>
                     <?php if (!$is_dependent): ?>
-                    <button class="tab-button" onclick="openTab(event, 'dependents')">Dependents</button>
+                        <button class="tab-button" onclick="openTab(event, 'dependents')">Dependents</button>
                     <?php endif; ?>
                 </div>
                 
-                <!-- Details Tab -->
-                <div id="details" class="tab-content" style="display: flex;">
-                    <div class="content-con">
-                        <h3 class="title">General Information</h3>
-                        <div class="group-row">
-                            <?php if (!empty($user['family_number'])): ?>
-                            <div class="row">
-                                <p class="label">Family Number</p>
-                                <p class="value"><?php echo htmlspecialchars($user['family_number']); ?></p>
-                            </div>
-                            <?php endif; ?>
-                            <div class="row">
-                                <p class="label">Last Name</p>
-                                <p class="value"><?php echo htmlspecialchars($user['last_name']); ?></p>
-                            </div>
-                            <div class="row">
-                                <p class="label">First Name</p>
-                                <p class="value"><?php echo htmlspecialchars($user['first_name']); ?></p>
-                            </div>
-                            <div class="row">
-                                <p class="label">Middle Name</p>
-                                <p class="value"><?php echo htmlspecialchars($user['middle_name']); ?></p>
-                            </div>
-                            <div class="row">
-                                <p class="label">Gender</p>
-                                <p class="value"><?php echo htmlspecialchars($user['gender']); ?></p>
-                            </div>
-                            <div class="row">
-                                <p class="label">Date of Birth</p>
-                                <p class="value"> <?php 
-                                    $birthdate = date("F j, Y", strtotime($user['birthday'])); 
-                                    echo htmlspecialchars($birthdate);
-                                ?></p>
-                            </div>
-                            <div class="row">
-                                <p class="label">Address</p>
-                                <p class="value"><?php echo htmlspecialchars($user['address']); ?></p>
-                            </div>
-                            <?php if ($is_dependent): ?>
-                            <div class="row">
-                                <p class="label">Relationship</p>
-                                <p class="value"><?php 
-                                    $stmt = $conn->prepare("SELECT relationship FROM dependent_relationships WHERE dependent_user_id = :active_user_id AND primary_user_id = :primary_user_id");
-                                    $stmt->execute([':active_user_id' => $active_user_id, ':primary_user_id' => $primary_user_id]);
-                                    $relationship = $stmt->fetchColumn();
-                                    echo htmlspecialchars($relationship ?: 'N/A');
-                                ?></p>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <div class="content-con">
-                        <h3 class="title">Contact Information</h3>
-                        <div class="group-row">
-                            <div class="row">
-                                <p class="label">Phone Number</p>
-                                <p class="value"><?php echo htmlspecialchars($user['phone_number']); ?></p>
-                            </div>
-                            <div class="row">
-                                <p class="label">Email Address</p>
-                                <p class="value"><?php echo htmlspecialchars($user['email']); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Request History Tab -->
-                <div id="request-history" class="tab-content" style="display: none;">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Request ID</th>
-                                    <th>Date & Time Requested</th>
-                                    <th>Status</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($requests)): ?>
-                                    <tr>
-                                        <td colspan="4" style="text-align: center;">No requests found</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php
-                                        $statusColors = [
-                                            'claimed' => 'style="background-color: #28a745; color: white;"',
-                                            'pending' => 'style="background-color: #bbb; color: white;"',
-                                            'declined' => 'style="background-color: #dc3545; color: white;"',
-                                            'to be claimed' => 'style="background-color: #ffc107; color: black;"'
-                                        ];
-                                    ?>
-                                    <?php foreach ($requests as $request): ?>
-                                        <?php 
-                                            $status = strtolower($request['request_status']);
-                                            $formattedDate = date("n/j/Y g:iA", strtotime($request['request_date']));
-                                            $colorStyle = $statusColors[$status] ?? 'style="background-color: #ccc; color: black;"';
-                                        ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($request['request_id']) ?></td>
-                                            <td><?= htmlspecialchars($formattedDate) ?></td>
-                                            <td><span class="status-badge" <?= $colorStyle ?>><?= ucfirst($status) ?></span></td>
-                                            <td><button class="view-btn" data-id="<?= $request['id'] ?>" onclick="viewRequest(this)">View Request</button></td>
-                                        </tr>
-                                    <?php endforeach; ?>
+                <div class="content-wrapper">
+                    <!-- Details Tab -->
+                    <div id="details" class="tab-content" style="display: flex;">
+                        <div class="content-con">
+                            <h3 class="title">General Information</h3>
+                            <div class="group-row">
+                                <?php if (!empty($user['family_number'])): ?>
+                                <div class="row">
+                                    <p class="label">Family Number</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['family_number']); ?></p>
+                                </div>
                                 <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Patient Record Tab -->
-                <div id="patient-record" class="tab-content" style="display: none;">
-                    <div class="patient-con">
-                        <div class="content-con">
-                            <h3 class="title">Anthropometric Measurement</h3>
-                            <?php if ($patient): ?>
-                            <div class="metrics-grid">
-                                <div class="metric-card">
-                                    <div class="metric-label">Height:</div>
-                                    <div class="metric-value"><?= htmlspecialchars($patient['height'] ?? 'N/A') ?></div>
+                                <div class="row">
+                                    <p class="label">Last Name</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['last_name']); ?></p>
                                 </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Weight:</div>
-                                    <div class="metric-value"><?= htmlspecialchars($patient['weight'] ?? 'N/A') ?></div>
+                                <div class="row">
+                                    <p class="label">First Name</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['first_name']); ?></p>
                                 </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">BMI:</div>
-                                    <div class="metric-value"><?= htmlspecialchars($patient['bmi'] ?? 'N/A') ?></div>
+                                <div class="row">
+                                    <p class="label">Middle Name</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['middle_name']); ?></p>
                                 </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Status:</div>
-                                    <div class="metric-value"><?= htmlspecialchars($patient['bmi_status'] ?? 'N/A') ?></div>
+                                <div class="row">
+                                    <p class="label">Gender</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['gender']); ?></p>
                                 </div>
+                                <div class="row">
+                                    <p class="label">Date of Birth</p>
+                                    <p class="value"> <?php 
+                                        $birthdate = date("F j, Y", strtotime($user['birthday'])); 
+                                        echo htmlspecialchars($birthdate);
+                                    ?></p>
+                                </div>
+                                <div class="row">
+                                    <p class="label">Address</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['address']); ?></p>
+                                </div>
+                                <?php if ($is_dependent): ?>
+                                <div class="row">
+                                    <p class="label">Relationship</p>
+                                    <p class="value"><?php 
+                                        $stmt = $conn->prepare("SELECT relationship FROM dependent_relationships WHERE dependent_user_id = :active_user_id AND primary_user_id = :primary_user_id");
+                                        $stmt->execute([':active_user_id' => $active_user_id, ':primary_user_id' => $primary_user_id]);
+                                        $relationship = $stmt->fetchColumn();
+                                        echo htmlspecialchars($relationship ?: 'N/A');
+                                    ?></p>
+                                </div>
+                                <?php endif; ?>
                             </div>
-                            <?php else: ?>
-                                <p>No patient record found yet.</p>
-                            <?php endif; ?>
                         </div>
 
                         <div class="content-con">
-                            <h3 class="title">Consultation History</h3>
-                            <?php if ($patient && !empty($consultations)): ?>
+                            <h3 class="title">Contact Information</h3>
+                            <div class="group-row">
+                                <div class="row">
+                                    <p class="label">Phone Number</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['phone_number']); ?></p>
+                                </div>
+                                <div class="row">
+                                    <p class="label">Email Address</p>
+                                    <p class="value"><?php echo htmlspecialchars($user['email']); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Request History Tab -->
+                    <div id="request-history" class="tab-content" style="display: none;">
+                        <div class="table-container">
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Request ID</th>
+                                            <th>Date & Time Requested</th>
+                                            <th >Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (empty($requests)): ?>
+                                            <tr>
+                                                <td colspan="4" style="text-align: center;">No requests found</td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php
+                                                $statusColors = [
+                                                    'claimed' => 'style="background-color: #28a745; color: white;"',
+                                                    'pending' => 'style="background-color: #bbb; color: white;"',
+                                                    'declined' => 'style="background-color: #dc3545; color: white;"',
+                                                    'to be claimed' => 'style="background-color: #ffc107; color: white;"',
+                                                    'cancelled' => 'style="background-color: #6c757d; color: white;"'
+                                                ];
+                                            ?>
+                                            <?php foreach ($requests as $request): ?>
+                                                <?php 
+                                                    $status = strtolower($request['request_status']);
+                                                    $formattedDate = date("n/j/Y g:iA", strtotime($request['request_date']));
+                                                    $colorStyle = $statusColors[$status] ?? 'style="background-color: #ccc; color: black;"';
+                                                ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($request['request_id']) ?></td>
+                                                    <td><?= htmlspecialchars($formattedDate) ?></td>
+                                                    <td><span class="status-badge" <?= $colorStyle ?>><?= ucfirst($status) ?></span></td>
+                                                    <td>
+                                                        <div class="button-container">
+                                                            <button class="view-btn" data-id="<?= $request['id'] ?>" onclick="viewRequest(this)">View Request</button>
+                                                            <?php if (in_array($status, ['pending', 'to be claimed'])): ?>
+                                                            <button class="cancel-request-btn" data-id="<?= $request['id'] ?>" onclick="openCancelRequestModal(this)">Cancel Request</button>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Patient Record Tab -->
+                    <div id="patient-record" class="tab-content" style="display: none;">
+                        <div class="patient-con">
+                            <div class="anthro-con">
+                                <h3 class="title">Anthropometric Measurement</h3>
+                                <?php if ($patient): ?>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-label">Height:</div>
+                                        <div class="metric-value"><?= htmlspecialchars($patient['height'] ?? 'N/A') ?></div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Weight:</div>
+                                        <div class="metric-value"><?= htmlspecialchars($patient['weight'] ?? 'N/A') ?></div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">BMI:</div>
+                                        <div class="metric-value"><?= htmlspecialchars($patient['bmi'] ?? 'N/A') ?></div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Status:</div>
+                                        <div class="metric-value"><?= htmlspecialchars($patient['bmi_status'] ?? 'N/A') ?></div>
+                                    </div>
+                                </div>
+                                <?php else: ?>
+                                    <p>No patient record found yet.</p>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="consultation-con">
+                                <h3 class="title">Consultation History</h3>
                                 <div class="table-container">
-                                    <table class="record-table">
+                                    <table>
                                         <thead>
                                             <tr>
-                                                <th>Date & Time Requested</th>
+                                                <th>Date & Time</th>
                                                 <th>Type</th>
-                                                <th></th>
+                                                <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            <?php if (empty($consultations)): ?>
+                                                <tr>
+                                                    <td colspan="4" style="text-align: center;">No Consultations yet</td>
+                                                </tr>
+                                            <?php else: ?>
                                             <?php foreach ($consultations as $c): ?>
                                                 <tr>
                                                     <td><?= htmlspecialchars(date('n/j/Y g:ia', strtotime($c['consultation_date']))) ?></td>
@@ -398,50 +328,47 @@ try {
                                                     <td><button class="view-btn" data-cid="<?= $c['id'] ?>" onclick="viewConsultation(this)">View</button></td>
                                                 </tr>
                                             <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
-                            <?php elseif ($patient): ?>
-                                <p>No consultations yet.</p>
-                            <?php else: ?>
-                                <p>Consultations will appear once a patient record is created.</p>
-                            <?php endif; ?>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Dependents Tab -->
-                <?php if (!$is_dependent): ?>
-                <div id="dependents" class="tab-content" style="display: none;">
-                    <div class="dependents-con">
-                        <button class="add-dependent-btn" onclick="openAddDependentModal()">Add Dependent</button>
-                        <?php if (empty($dependents)): ?>
-                            <p>No dependents added yet.</p>
-                        <?php else: ?>
-                            <table class="dependents-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Relationship</th>
-                                        <th>Date of Birth</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($dependents as $dependent): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
-                                            <td><?= htmlspecialchars($dependent['relationship']) ?></td>
-                                            <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
-                                            <td><button class="switch-account-btn" onclick="switchAccount(<?= $dependent['id'] ?>)">Switch to Account</button></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        <?php endif; ?>
-                    </div>
+                    <!-- Dependents Tab -->
+                    <?php if (!$is_dependent): ?>
+                        <div id="dependents" class="tab-content" style="display: none;">
+                            <div class="dependents-con">
+                                <div class="dependents-header">
+                                    <button class="add-dependent-btn" onclick="openAddDependentModal()">Add Dependent</button>
+                                </div>
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Relationship</th>
+                                                <th>Date of Birth</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($dependents as $dependent): ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
+                                                    <td><?= htmlspecialchars($dependent['relationship']) ?></td>
+                                                    <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
+                                                    <td><button class="switch-account-btn" onclick="switchAccount(<?= $dependent['id'] ?>)">Switch to Account</button></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -639,64 +566,62 @@ try {
     <div id="viewConsultationModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Consultation Details</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <div class="form-row">
+            <div class="consultation-container">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Type of Consultation</label>
                         <input type="text" id="view_consultation_type" readonly>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-row">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Date of Consultation</label>
                         <input type="text" id="view_consultation_date" readonly>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-row">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Reason for Consultation</label>
                         <input type="text" id="view_reason_for_consultation" readonly>
                     </div>
                 </div>
-                <div class="two-col">
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Blood Pressure</label>
-                            <input type="text" id="view_blood_pressure" readonly>
-                        </div>
-                        <div class="form-row">
-                            <label>Temperature</label>
-                            <input type="text" id="view_temperature" readonly>
-                        </div>
+                <div class="group-row">
+                    <div class="group-col">
+                        <label>Blood Pressure</label>
+                        <input type="text" id="view_blood_pressure" readonly>
+                    </div>
+                    <div class="group-col">
+                        <label>Temperature</label>
+                        <input type="text" id="view_temperature" readonly>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-row">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Diagnosis</label>
                         <input type="text" id="view_diagnosis" readonly>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-row">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Prescribed Medicine</label>
                         <input type="text" id="view_prescribed_medicine" readonly>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-row">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Treatment Given</label>
                         <input type="text" id="view_treatment_given" readonly>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-row">
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Consulting Physician/Nurse</label>
                         <input type="text" id="view_consulting_physician_nurse" readonly>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="document.getElementById('viewConsultationModal').classList.remove('show')">Close</button>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-btn" onclick="document.getElementById('viewConsultationModal').classList.remove('show')">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -706,49 +631,49 @@ try {
         <div class="modal-content">
             <h2>Request Medicine Details</h2>
             <div class="modal-container">
-                <div class="row">
-                    <div>
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Request ID</label>
                         <span id="requestId"></span>
                     </div>
                 </div>
-                <div class="row">
-                    <div>
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Request Status</label>
                         <span id="requestStatus"></span>
                     </div>
                 </div>
-                <div class="row">
-                    <div>
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Patient's Full Name</label>
                         <span id="req_fullName"></span>
                     </div>
                 </div>
-                <div class="row">
-                    <div>
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Sex</label>
                         <span id="req_sex"></span>
                     </div>
-                    <div>
+                    <div class="group-col">
                         <label>Birthdate</label>
                         <span id="req_birthdate"></span>
                     </div>
-                </div>
-                <div class="row">
-                    <div>
-                        <label>Address</label>
-                        <span id="req_address"></span>
-                    </div>
-                    <div>
+                    <div class="group-col">
                         <label>Contact Number</label>
                         <span id="req_phone"></span>
+                    </div>
+                </div>
+                <div class="group-row">
+                    <div class="group-col">
+                        <label>Address</label>
+                        <span id="req_address"></span>
                     </div>
                 </div>
                 <div id="medicine-group">
                     <label>Requested Medicines</label>
                 </div>
-                <div class="row">
-                    <div>
+                <div class="group-row">
+                    <div class="group-col">
                         <label>Reason for Request</label>
                         <span id="req_reason"></span>
                     </div>
@@ -760,7 +685,7 @@ try {
                     </div>
                 </div>
                 <div id="claim-info" style="display: none;">
-                    <div class="row">
+                    <div class="claim-container">
                         <div>
                             <label>Claim Information</label>
                             <div class="claim-details">
@@ -772,8 +697,8 @@ try {
                     </div>
                 </div>
                 <div id="note-info" style="display: none;">
-                    <div class="row">
-                        <div>
+                    <div class="group-row">
+                        <div class="group-col">
                             <label>Note</label>
                             <span id="req_note"></span>
                         </div>
@@ -782,6 +707,18 @@ try {
                 <div class="modal-footer">
                     <button type="button" class="cancel-btn" onclick="closeViewModal()">Close</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Request Confirmation Modal -->
+    <div id="cancelRequestModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Cancellation</h2>
+            <p>Are you sure you want to cancel this medicine request?</p>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeCancelRequestModal()">Cancel</button>
+                <button type="button" class="confirm-btn" id="confirmCancelBtn">Confirm</button>
             </div>
         </div>
     </div>
@@ -1027,6 +964,12 @@ try {
                     // Medicine entries with status
                     const medicineGroup = document.getElementById('medicine-group');
                     medicineGroup.innerHTML = '<label>Requested Medicines</label>';
+
+                    // create the container div for all medicine rows
+                    const container = document.createElement('div');
+                    container.classList.add('medicine-container');
+
+                    // loop through medicines and append rows into the container
                     data.medicines.forEach(med => {
                         const row = document.createElement('div');
                         row.classList.add('row', 'medicine-entry');
@@ -1034,10 +977,15 @@ try {
                             <div><label>Medicine Name</label><span>${med.medicine_name}</span></div>
                             <div><label>Dosage</label><span>${med.dosage || 'N/A'}</span></div>
                             <div><label>Quantity</label><span>${med.quantity}</span></div>
-                            <div><label>Status</label><span class="status-badge status-${med.status}">${med.status.charAt(0).toUpperCase() + med.status.slice(1)}</span></div>
+                            <div><label>Status</label><span class="status-badge status-${med.status}">
+                                ${med.status.charAt(0).toUpperCase() + med.status.slice(1)}
+                            </span></div>
                         `;
-                        medicineGroup.appendChild(row);
+                        container.appendChild(row);
                     });
+
+                    medicineGroup.appendChild(container);
+
 
                     // Claim information
                     const claimInfo = document.getElementById('claim-info');
@@ -1070,6 +1018,47 @@ try {
                     console.error(error);
                 });
         }
+
+        function openCancelRequestModal(button) {
+            const requestId = button.getAttribute('data-id');
+            const modal = document.getElementById("cancelRequestModal");
+            const confirmBtn = document.getElementById("confirmCancelBtn");
+            confirmBtn.setAttribute('data-id', requestId);
+            modal.classList.add("show");
+        }
+
+        function closeCancelRequestModal() {
+            document.getElementById("cancelRequestModal").classList.remove("show");
+            const confirmBtn = document.getElementById("confirmCancelBtn");
+            confirmBtn.removeAttribute('data-id');
+        }
+
+        function cancelRequest(requestId) {
+            fetch(`cancel_request.php?id=${requestId}`, {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Request cancelled successfully.");
+                    location.reload(); // Reload to reflect updated request status
+                } else {
+                    alert("Failed to cancel request: " + data.message);
+                }
+            })
+            .catch(error => {
+                alert("An error occurred while cancelling the request.");
+                console.error(error);
+            });
+        }
+
+        document.getElementById("confirmCancelBtn")?.addEventListener("click", function() {
+            const requestId = this.getAttribute('data-id');
+            if (requestId) {
+                cancelRequest(requestId);
+                closeCancelRequestModal();
+            }
+        });
 
         document.querySelector("#viewRequestModal .close")?.addEventListener("click", function () {
             closeViewModal();

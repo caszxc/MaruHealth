@@ -17,6 +17,9 @@ if (!isset($_GET['catalog_id']) || empty($_GET['catalog_id'])) {
 
 $catalog_id = trim($_GET['catalog_id']);
 
+// Get search term from GET request and sanitize it
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
 // Fetch Admin's Name
 $adminId = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
@@ -45,17 +48,27 @@ if (!$medicine) {
     exit();
 }
 
-// Fetch batches for the given catalog_id
-$batchStmt = $conn->prepare("
+// Fetch batches for the given catalog_id with optional search filter
+$batchQuery = "
     SELECT id, batch_lot_number, pono, manufacturing_date, expiration_date, stocks, 
            stock_status, expiry_status, source
     FROM medicine_batches
-    WHERE catalog_id = :catalog_id
-    ORDER BY expiration_date ASC
-");
-$batchStmt->execute([':catalog_id' => $catalog_id]);
+    WHERE catalog_id = :catalog_id";
+if (!empty($searchTerm)) {
+    $batchQuery .= " AND (batch_lot_number LIKE :search OR pono LIKE :search OR source LIKE :search)";
+}
+$batchQuery .= " ORDER BY expiration_date ASC";
+
+$batchStmt = $conn->prepare($batchQuery);
+$batchStmt->bindParam(':catalog_id', $catalog_id, PDO::PARAM_INT);
+if (!empty($searchTerm)) {
+    $searchParam = "%$searchTerm%";
+    $batchStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+}
+$batchStmt->execute();
 $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -153,13 +166,22 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <div class="content">
+        <div class="title-con">
+            <div class="title">
+                <a href="medicine_management.php" class="back-button">← Back</a>
+                <h2>Batches for <?php echo htmlspecialchars($medicine['generic_name'] . ($medicine['brand_name'] ? ' (' . $medicine['brand_name'] . ' ' . $medicine['dosage'] .')' : '')); ?></h2>
+            </div>
+        </div>
         <div class="med-container">
             <div class="sort-controls">
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
-                    <h2>Batches for <?php echo htmlspecialchars($medicine['generic_name'] . ($medicine['brand_name'] ? ' (' . $medicine['brand_name'] . ' ' . $medicine['dosage'] .')' : '')); ?></h2></h2>
-                </div>
                 <div class="search-con">
+                    <form method="GET" action="view_batches.php">
+                        <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
+                        <input type="text" name="search" placeholder="Search by Batch Lot, PONO, or Source" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+                <div class="button-con">
                     <button class="add-batch-btn" onclick="openBatchModal()">ADD BATCH</button>
                 </div>
             </div>
@@ -205,7 +227,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="details-panel" id="detailsPanel">
                     <div id="detailsContent">
                         <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                            <p style="margin: 30px;">Select a medicine to view details.</p>
+                            <p style="margin: 30px;">Select a batch to view details.</p>
                         </div>
                     </div>
                 </div>
@@ -424,78 +446,78 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         function switchTab(tabName) {
-        cancelEditing();
-        const tabs = document.querySelectorAll('.tab');
-        const tabPages = document.querySelectorAll('.tab-page');
+            cancelEditing();
+            const tabs = document.querySelectorAll('.tab');
+            const tabPages = document.querySelectorAll('.tab-page');
 
-        tabs.forEach(tab => tab.classList.remove('active'));
-        tabPages.forEach(page => page.style.display = 'none');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabPages.forEach(page => page.style.display = 'none');
 
-        if (tabName === 'details') {
-            document.getElementById('detailsTab').style.display = 'block';
-            tabs[0].classList.add('active');
-        } else if (tabName === 'addStock') {
-            document.getElementById('addStockTab').style.display = 'block';
-            tabs[1].classList.add('active');
-            // fetchBatchSummary(selectedMedicineId); // Uncomment if needed
-        } else if (tabName === 'history') {
-            document.getElementById('historyTab').style.display = 'block';
-            tabs[2].classList.add('active');
-            fetchBatchHistory(selectedBatchId);
-        }
-    }
-
-    function fetchBatchHistory(batchId) {
-        const historyTab = document.getElementById('historyTab');
-        historyTab.innerHTML = '<p>Loading history...</p>';
-
-        fetch('get_batch_history.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `batch_id=${encodeURIComponent(batchId)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.data.length === 0) {
-                    historyTab.innerHTML = '<p>No history available for this batch.</p>';
-                } else {
-                    let tableHTML = `
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Action</th>
-                                    <th>Details</th>
-                                    <th>Performed by</th>
-                                    <th>When</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    data.data.forEach(entry => {
-                        tableHTML += `
-                            <tr>
-                                <td>${entry.action_type}</td>
-                                <td>${entry.details}</td>
-                                <td>${entry.performed_by}</td>
-                                <td>${entry.created_at}</td>
-                            </tr>
-                        `;
-                    });
-                    tableHTML += '</tbody></table>';
-                    historyTab.innerHTML = tableHTML;
-                }
-            } else {
-                historyTab.innerHTML = `<p style="color: red;">Error: ${data.message}</p>`;
+            if (tabName === 'details') {
+                document.getElementById('detailsTab').style.display = 'block';
+                tabs[0].classList.add('active');
+            } else if (tabName === 'addStock') {
+                document.getElementById('addStockTab').style.display = 'block';
+                tabs[1].classList.add('active');
+                // fetchBatchSummary(selectedMedicineId); // Uncomment if needed
+            } else if (tabName === 'history') {
+                document.getElementById('historyTab').style.display = 'block';
+                tabs[2].classList.add('active');
+                fetchBatchHistory(selectedBatchId);
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            historyTab.innerHTML = '<p style="color: red;">Failed to load history.</p>';
-        });
-    }
+        }
+
+        function fetchBatchHistory(batchId) {
+            const historyTab = document.getElementById('historyTab');
+            historyTab.innerHTML = '<p>Loading history...</p>';
+
+            fetch('get_batch_history.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `batch_id=${encodeURIComponent(batchId)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.data.length === 0) {
+                        historyTab.innerHTML = '<p>No history available for this batch.</p>';
+                    } else {
+                        let tableHTML = `
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Action</th>
+                                        <th>Details</th>
+                                        <th>Performed by</th>
+                                        <th>When</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        data.data.forEach(entry => {
+                            tableHTML += `
+                                <tr>
+                                    <td>${entry.action_type}</td>
+                                    <td>${entry.details}</td>
+                                    <td>${entry.performed_by}</td>
+                                    <td>${entry.created_at}</td>
+                                </tr>
+                            `;
+                        });
+                        tableHTML += '</tbody></table>';
+                        historyTab.innerHTML = tableHTML;
+                    }
+                } else {
+                    historyTab.innerHTML = `<p style="color: red;">Error: ${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                historyTab.innerHTML = '<p style="color: red;">Failed to load history.</p>';
+            });
+        }
 
         function deleteBatch() {
             if (!selectedBatchId) {
@@ -548,8 +570,6 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         function closeBatchModal() {
             document.getElementById("batchModal").style.display = "none";
         }
-
-        
     </script>
 </body>
 </html>

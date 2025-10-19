@@ -1,5 +1,5 @@
 <?php
-//patient_management.php
+// patient_management.php
 session_start();
 require 'config.php';
 
@@ -9,50 +9,26 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
     exit();
 }
 
-// Pagination settings
-$itemsPerPage = 10; // Number of patients per page
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Current page, default is 1
-$offset = ($page - 1) * $itemsPerPage; // Offset for SQL query
-
 // Search functionality
-$search = isset($_GET['search']) ? trim($_GET['search']) : '';
-
-$conditions = [];
-$params = [];
-
-if (!empty($search)) {
-    $conditions[] = "(family_number LIKE :search OR first_name LIKE :search OR last_name LIKE :search OR middle_name LIKE :search)";
-    $params[':search'] = "%$search%";
-}
-
-$conditions[] = "status = 'active'";
+$rawSearch = isset($_GET['search']) ? trim($_GET['search']) : ''; // Store raw search term
 $searchCondition = '';
-if (!empty($conditions)) {
-    $searchCondition = "WHERE " . implode(" AND ", $conditions);
+$searchParams = [];
+
+// Build search condition if search term is provided
+if (!empty($rawSearch)) {
+    $search = "%{$rawSearch}%"; // Add wildcards for SQL query
+    $searchCondition = "WHERE status = 'active' AND (family_number LIKE :search OR last_name LIKE :search OR first_name LIKE :search OR middle_name LIKE :search)";
+    $searchParams[':search'] = $search;
+} else {
+    $searchCondition = "WHERE status = 'active'";
 }
 
-// Count total patients (for pagination)
-$countQuery = "SELECT COUNT(*) FROM patients $searchCondition";
-$countStmt = $conn->prepare($countQuery);
-foreach ($params as $key => $value) {
-    $countStmt->bindValue($key, $value);
-}
-$countStmt->execute();
-$totalItems = $countStmt->fetchColumn();
-$totalPages = ceil($totalItems / $itemsPerPage);
-
-// Ensure the page is within valid range
-if ($page < 1) $page = 1;
-if ($page > $totalPages && $totalPages > 0) $page = $totalPages;
-
-// Fetch patients with pagination
-$query = "SELECT * FROM patients $searchCondition ORDER BY id DESC LIMIT :offset, :limit";
+// Fetch patients with search
+$query = "SELECT * FROM patients $searchCondition ORDER BY id DESC";
 $stmt = $conn->prepare($query);
-foreach ($params as $key => $value) {
-    $stmt->bindValue($key, $value);
+if (!empty($rawSearch)) {
+    $stmt->bindParam(':search', $search);
 }
-$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-$stmt->bindParam(':limit', $itemsPerPage, PDO::PARAM_INT);
 $stmt->execute();
 $patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -181,86 +157,65 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <div class="patient-content">
-        <!-- Search and Add Patient -->
-        <div class="search-container">
-            <form method="GET" action="" id="searchForm">
-                <div class="search-row">
-                    <input type="text" name="search" id="searchInput" placeholder="Search for ID No./Name" value="<?= htmlspecialchars($search) ?>" autocomplete="off">
-                    <a href="patient_management.php" class="clear-btn">Clear</a>
+        <div class="patient-container">
+            <div class="sort-controls">
+                <div class="search-con">
+                    <form method="GET" action="patient_management.php">
+                        <input type="text" name="search" placeholder="Search Patient..." value="<?= htmlspecialchars($rawSearch) ?>">
+                        <button type="submit">Search</button>
+                    </form>
                 </div>
-            </form>
-            <div class="button-group">
-                <button class="add-button" onclick="openModal()">Add Patient</button>
-                <a href="archived_patients.php" class="archive-button">View Archived Patients</a>
-            </div>
-        </div>
-
-        <!-- Patient List Table -->
-        <div class="table-wrapper">
-            <table class="patient-table">
-                <thead>
-                    <tr>
-                        <th>Family No.</th>
-                        <th>Last Name</th>
-                        <th>First Name</th>
-                        <th>Middle Name</th>
-                        <th>Sex</th>
-                        <th>Birthdate</th>
-                        <th>Contact Number</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($patients)): ?>
-                        <tr>
-                            <td colspan="10" class="no-patients" style="text-align: center;">No patients found.</td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($patients as $patient): ?>
-                        <tr>
-                            <td><?= !empty($patient['family_number']) ? htmlspecialchars($patient['family_number']) : 'Not Provided' ?></td>
-                            <td><?= htmlspecialchars($patient['last_name']) ?></td>
-                            <td><?= htmlspecialchars($patient['first_name']) ?></td>
-                            <td><?= htmlspecialchars($patient['middle_name']) ?></td>
-                            <td><?= htmlspecialchars($patient['sex']) ?></td>
-                            <td><?= htmlspecialchars($patient['birthdate']) ?></td>
-                            <td><?= htmlspecialchars($patient['contact_number']) ?></td>
-                            <td class="action-buttons">
-                                <a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">VIEW</a>
-                                <a href="archive_patient.php?id=<?= $patient['id'] ?>" class="archive-btn" onclick="return confirm('Are you sure you want to archive this patient?')">ARCHIVE</a>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination Controls -->
-        <?php if ($totalPages > 1): ?>
-            <div class="pagination-container">
-                <div class="pagination-info">
-                    Showing <?= ($offset + 1) ?>-<?= min($offset + $itemsPerPage, $totalItems) ?> of <?= $totalItems ?> entries
-                </div>
-                <div class="pagination-controls">
-                    <?php
-                    // Build query string with search parameter
-                    $queryParams = [];
-                    if (!empty($search)) $queryParams['search'] = urlencode($search);
-                    $queryString = !empty($queryParams) ? '&' . http_build_query($queryParams) : '';
-                    ?>
-                    <a href="?page=<?= max(1, $page - 1) ?><?= $queryString ?>" 
-                       class="pagination-button <?= $page <= 1 ? 'disabled' : '' ?>">
-                        <
-                    </a>
-                    <a href="#" class="pagination-button active"><?= $page ?></a>
-                    <a href="?page=<?= min($totalPages, $page + 1) ?><?= $queryString ?>" 
-                       class="pagination-button <?= $page >= $totalPages ? 'disabled' : '' ?>">
-                        >
-                    </a>
+                <!-- Add Patient and View Archived Patients Buttons -->
+                <div class="button-group">
+                    <button class="add-button" onclick="openModal()">Add Patient</button>
+                    <a href="archived_patients.php" class="archive-button">View Archived Patients</a>
                 </div>
             </div>
-        <?php endif; ?>
+            <!-- Patient List Table -->
+            <div class="patient-table">
+                <div class="table-container">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Family No.</th>
+                                    <th>Last Name</th>
+                                    <th>First Name</th>
+                                    <th>Middle Name</th>
+                                    <th>Sex</th>
+                                    <th>Birthdate</th>
+                                    <th>Contact Number</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($patients)): ?>
+                                    <tr>
+                                        <td colspan="10" class="no-patients" style="text-align: center;">No patients found.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($patients as $patient): ?>
+                                    <tr>
+                                        <td><?= !empty($patient['family_number']) ? htmlspecialchars($patient['family_number']) : 'Not Provided' ?></td>
+                                        <td><?= htmlspecialchars($patient['last_name']) ?></td>
+                                        <td><?= htmlspecialchars($patient['first_name']) ?></td>
+                                        <td><?= htmlspecialchars($patient['middle_name']) ?></td>
+                                        <td><?= htmlspecialchars($patient['sex']) ?></td>
+                                        <td><?= htmlspecialchars($patient['birthdate']) ?></td>
+                                        <td><?= htmlspecialchars($patient['contact_number']) ?></td>
+                                        <td class="action-buttons">
+                                            <a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">VIEW</a>
+                                            <a href="archive_patient.php?id=<?= $patient['id'] ?>" class="archive-btn" onclick="return confirm('Are you sure you want to archive this patient?')">ARCHIVE</a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Add Patient Modal -->
@@ -389,11 +344,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 location.reload(); // Refresh page after submission
             })
             .catch(error => console.error("Error:", error));
-        });
-
-        // Auto-submit search form on input
-        document.getElementById("searchInput").addEventListener("input", function() {
-            document.getElementById("searchForm").submit();
         });
     </script>
 

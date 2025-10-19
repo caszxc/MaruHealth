@@ -1,5 +1,5 @@
 <?php
-//family_number.php
+// family_number.php
 session_start();
 require_once "config.php"; // include your database connection
 
@@ -9,11 +9,30 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
     exit();
 }
 
-$familyNumber = $_GET['family_number'];
+// Check if family_number is provided
+if (!isset($_GET['family_number']) || empty($_GET['family_number'])) {
+    header("Location: patient_management.php");
+    exit();
+}
 
-// Fetch all patients with the same family number
-$stmt = $conn->prepare("SELECT * FROM patients WHERE family_number = :family_number");
+$familyNumber = trim($_GET['family_number']);
+
+// Get search term from GET request and sanitize it
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Fetch all patients with the same family number and optional search filter
+$query = "SELECT * FROM patients WHERE family_number = :family_number";
+if (!empty($searchTerm)) {
+    $query .= " AND (last_name LIKE :search OR first_name LIKE :search OR middle_name LIKE :search)";
+}
+$query .= " ORDER BY last_name ASC, first_name ASC";
+
+$stmt = $conn->prepare($query);
 $stmt->bindParam(":family_number", $familyNumber);
+if (!empty($searchTerm)) {
+    $searchParam = "%$searchTerm%";
+    $stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+}
 $stmt->execute();
 $familyPatients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -37,8 +56,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Management</title>
-    <link rel="stylesheet" href="css/view_patient.css">
+    <title>Patients with Family Number: <?= htmlspecialchars($familyNumber) ?></title>
+    <link rel="stylesheet" href="css/patient_management.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,11 +85,19 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
+                $dashboard_url = '';
+                if ($adminRole === 'super_admin') {
+                    $dashboard_url = 'superadmin_dashboard.php';
+                } elseif ($adminRole === 'admin') {
+                    $dashboard_url = 'admin_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
+                }
             ?>
             <p class="menu-header">ANALYTICS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
-                <a href="admin_dashboard.php" class="<?= $current_page == 'admin_dashboard.php' ? 'active' : '' ?>">Dashboard</a>
+                <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
             <p class="menu-header">BASE</p>
             <?php if ($adminRole == 'super_admin'): ?>
@@ -100,7 +127,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/patient_icon_active.png" alt="">
-                <a href="patient_management.php" class="<?= ($current_page == 'patient_management.php' || $current_page == 'family_number.php')  ? 'active' : '' ?>">Patient Management</a>
+                <a href="patient_management.php" class="<?= ($current_page == 'patient_management.php' || $current_page == 'family_number.php') ? 'active' : '' ?>">Patient Management</a>
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/med_icon.png" alt="">
@@ -120,44 +147,63 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <!-- Main Content -->
-    <div class="family-container">
+    <div class="patient-content">
         <div class="title-con">
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+            <div class="title">
+                <a href="patient_management.php" class="back-button">← Back</a>
                 <h2>Patients with Family Number: <?= htmlspecialchars($familyNumber) ?></h2>
             </div>
-            <button class="add-btn" onclick="openFamilyMemberModal()">Add Family Member</button>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Last Name</th>
-                    <th>First Name</th>
-                    <th>Birthdate</th>
-                    <th>Sex</th>
-                    <th>Contact</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($familyPatients)): ?>
-                    <tr>
-                        <td colspan="7" style="text-align:center;">No patients found with this family number.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($familyPatients as $patient): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($patient['last_name']) ?></td>
-                        <td><?= htmlspecialchars($patient['first_name']) ?></td>
-                        <td><?= htmlspecialchars($patient['birthdate']) ?></td>
-                        <td><?= htmlspecialchars($patient['sex']) ?></td>
-                        <td><?= htmlspecialchars($patient['contact_number']) ?></td>
-                        <td><a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">View</a></td>
-                    </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
+        <div class="patient-container">
+            <div class="sort-controls">
+                <div class="search-con">
+                    <form method="GET" action="family_number.php">
+                        <input type="hidden" name="family_number" value="<?= htmlspecialchars($familyNumber) ?>">
+                        <input type="text" name="search" placeholder="Search by Name" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+                <div class="button-group">
+                    <button class="add-button" onclick="openFamilyMemberModal()">Add Family Member</button>
+                </div>
+            </div>
+            <div class="patient-table">
+                <div class="table-container">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Last Name</th>
+                                    <th>First Name</th>
+                                    <th>Birthdate</th>
+                                    <th>Sex</th>
+                                    <th>Contact</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($familyPatients)): ?>
+                                    <tr>
+                                        <td colspan="7" style="text-align:center;">No patients found with this family number.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($familyPatients as $patient): ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($patient['last_name']) ?></td>
+                                        <td><?= htmlspecialchars($patient['first_name']) ?></td>
+                                        <td><?= htmlspecialchars($patient['birthdate']) ?></td>
+                                        <td><?= htmlspecialchars($patient['sex']) ?></td>
+                                        <td><?= htmlspecialchars($patient['contact_number']) ?></td>
+                                        <td><a href="view_patient.php?id=<?= $patient['id'] ?>" class="view-btn">View</a></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Add Family Member Modal -->
@@ -200,25 +246,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                 <option value="Female">Female</option>
                             </select>
                         </div>
-                        <div class="form-row">
-                            <label>Civil Status</label>
-                            <select name="civil_status" id="family_civil_status" required>
-                                <option value="" disabled selected>Select</option>
-                                <option value="Single">Single</option>
-                                <option value="Married">Married</option>
-                                <option value="Divorced">Divorced</option>
-                                <option value="Widowed">Widowed</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Contact Number</label>
-                            <input type="tel" id="family_contact_number" name="contact_number">
-                        </div>
-                        <div class="form-row">
-                            <label>Occupation</label>
-                            <input type="text" id="family_occupation" name="occupation">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Contact Number</label>
+                                <input type="tel" id="family_contact_number" name="contact_number">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">

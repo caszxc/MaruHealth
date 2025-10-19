@@ -8,12 +8,23 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health
     exit();
 }
 
-// Fetch medicine requests with 'pending' status
+// Get search term from GET request and sanitize it
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Fetch medicine requests with 'pending' status and optional search filter
 $requestsQuery = "SELECT mr.id, mr.request_id, mr.full_name, DATE_FORMAT(mr.request_date, '%m/%d/%Y %h:%i%p') as formatted_date 
                  FROM medicine_requests mr 
-                 WHERE mr.request_status = 'pending'
-                 ORDER BY mr.request_date DESC";
+                 WHERE mr.request_status = 'pending'";
+if (!empty($searchTerm)) {
+    $requestsQuery .= " AND (mr.request_id LIKE :search OR mr.full_name LIKE :search)";
+}
+$requestsQuery .= " ORDER BY mr.request_date DESC";
+
 $requestsStmt = $conn->prepare($requestsQuery);
+if (!empty($searchTerm)) {
+    $searchParam = "%$searchTerm%";
+    $requestsStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+}
 $requestsStmt->execute();
 $requests = $requestsStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -45,6 +56,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Navigation and Sidebar (unchanged) -->
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
@@ -56,6 +68,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </nav>
 
     <div class="sidebar">
+        <!-- Sidebar content (unchanged) -->
         <div class="profile">
             <img src="images/profile-placeholder.png" alt="Admin">
             <div class="profile-details">
@@ -130,42 +143,56 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
     <div class="med-req-content">
         <div class="title-con">
-            <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+            <a href="medicine_requests.php" class="back-button">← Back</a>
             <h2>Pending Medicine Requests</h2>
         </div>
-        <div class="table-con">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Request ID</th>
-                        <th>Name</th>
-                        <th>Date/Time Requested</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($requests)): ?>
-                        <tr>
-                            <td colspan="4" class="no-requests" style="text-align: center;">No medicine requests found.</td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($requests as $request): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($request['request_id']) ?></td>
-                                <td><?= htmlspecialchars($request['full_name']) ?></td>
-                                <td><?= htmlspecialchars($request['formatted_date']) ?></td>
-                                <td>
-                                    <button class="view-btn" onclick="openModal(<?= $request['id'] ?>)">View</button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+        <div class="req-container">
+            <div class="sort-controls">
+                <div class="search-con">
+                    <form method="GET" action="requests.php">
+                        <input type="text" name="search" placeholder="Search by Request ID or Name" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+            <div class="request-table">
+                <div class="table-con">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Name</th>
+                                    <th>Date/Time Requested</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($requests)): ?>
+                                    <tr>
+                                        <td colspan="4" class="no-requests" style="text-align: center;">No medicine requests found.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($requests as $request): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($request['request_id']) ?></td>
+                                            <td><?= htmlspecialchars($request['full_name']) ?></td>
+                                            <td><?= htmlspecialchars($request['formatted_date']) ?></td>
+                                            <td>
+                                                <button class="view-btn" onclick="openModal(<?= $request['id'] ?>)">View</button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
-    <!-- Request Details Modal -->
+    <!-- Request Details Modal and JavaScript (unchanged) -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <!-- Content will be populated by JavaScript -->
@@ -173,6 +200,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <script>
+        // JavaScript remains unchanged
         function openModal(requestId) {
             fetch('get_request_details.php?id=' + requestId)
                 .then(response => response.json())

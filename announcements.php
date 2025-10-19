@@ -90,15 +90,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <p class="menu-header">BASE</p>
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
             
             <div class="menu-link-active">
@@ -112,7 +112,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
 
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
@@ -172,7 +172,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <div class="actions">
                             <button class="kebab-menu" onclick="toggleMenu(<?= $announcement['id']; ?>)">⋮</button>
                             <div class="dropdown-menu" id="menu-<?= $announcement['id']; ?>">
-                                <button onclick="openEditModal(<?= $announcement['id']; ?>, '<?= htmlspecialchars($announcement['title']); ?>', '<?= htmlspecialchars($announcement['content']); ?>', '<?= htmlspecialchars($announcement['image']); ?>')">Edit</button>
+                                <button onclick="openEditModal(<?= $announcement['id']; ?>, '<?= addslashes($announcement['title']); ?>', '<?= addslashes(str_replace(["\r\n", "\n", "\r"], '\n', $announcement['content'])); ?>', '<?= addslashes($announcement['image'] ?? ''); ?>')">Edit</button>
                                 <button onclick="toggleArchive(<?= $announcement['id']; ?>)">
                                     <?= $filter === 'archived' ? 'Unarchive' : 'Archive' ?>
                                 </button>
@@ -187,7 +187,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                 <div class="content-con">
                                     <h2><?= htmlspecialchars($announcement['title']); ?></h2>
                                     <div class="post-content">
-                                        <p><?= nl2br(htmlspecialchars($announcement['content'])); ?></p>
+                                        <p><?= htmlspecialchars($announcement['content']); ?></p>
                                     </div>
                                 </div>
                             </div>
@@ -316,16 +316,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         }
 
         function openEditModal(id, title, content, image) {
-            document.getElementById("editAnnouncementId").value = id;
-            document.getElementById("editTitle").value = title;
-            document.getElementById("editContent").value = content;
-            const previewImage = document.getElementById("editPreviewImage");
-            if (image) {
-                previewImage.src = "images/uploads/announcement_images/" + image;
-            } else {
-                previewImage.src = "images/uploads/announcement_images/default_announcement.png";
+            try {
+                document.getElementById("editAnnouncementId").value = id;
+                document.getElementById("editTitle").value = title;
+                document.getElementById("editContent").value = content.replace(/\\n/g, '\n');
+                const previewImage = document.getElementById("editPreviewImage");
+                previewImage.src = image && image !== 'null' 
+                    ? "images/uploads/announcement_images/" + image 
+                    : "images/uploads/announcement_images/default_announcement.png";
+                document.getElementById("editModal").style.display = "flex";
+            } catch (error) {
+                console.error('Error in openEditModal:', error);
             }
-            document.getElementById("editModal").style.display = "flex";
         }
 
         function closeEditModal() {

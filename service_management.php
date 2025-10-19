@@ -130,15 +130,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
             
             <div class="menu-link">
@@ -152,7 +152,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             </div>
 
             <div class="menu-link-active">
-                <img class="menu-icon" src="images/icons/calendar_icon_active.png" alt="">
+                <img class="menu-icon" src="images/icons/service_icon_active.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
@@ -206,7 +206,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <!-- Service Card -->
                     <div class="service-card-container">
                         <div class="service-card">
-                            <img src="<?= htmlspecialchars($service['icon_path'] ?? 'images/placeholder.png') ?>" alt="<?= htmlspecialchars($service['name']) ?>">
+                            <img src="<?= htmlspecialchars($service['icon_path'] ?? 'images/uploads/service_images/icons/icon-placeholder.png') ?>" alt="<?= htmlspecialchars($service['name']) ?>">
                             <h3><?= htmlspecialchars($service['name']) ?></h3>
                             <p><?= htmlspecialchars($service['intro'] ?? 'No introduction available.') ?></p>
                         </div>
@@ -268,7 +268,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div class="service-card-container">
                             <div class="service-card">
                                 <div class="icon-container">
-                                    <img id="newServiceIconPreview" src="images/placeholder.png" alt="Service Icon">
+                                    <img id="newServiceIconPreview" src="images/uploads/service_images/icons/icon-placeholder.png" alt="Service Icon">
                                     <i class="fas fa-pen edit-icon"></i>
                                     <input type="file" id="newServiceIcon" name="serviceIcon" accept="image/*" style="display: none;">
                                 </div>
@@ -329,7 +329,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <div class="service-card-container">
                             <div class="service-card">
                                 <div class="icon-container">
-                                    <img id="serviceIconPreview" src="images/placeholder.png" alt="Service Icon">
+                                    <img id="serviceIconPreview" src="images/uploads/service_images/icons/icon-placeholder.png" alt="Service Icon">
                                     <i class="fas fa-pen edit-icon"></i>
                                     <input type="file" id="serviceIcon" name="serviceIcon" accept="image/*" style="display: none;">
                                 </div>
@@ -1067,6 +1067,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
         // Click handler for icon preview
         document.getElementById('serviceIconPreview').addEventListener('click', function() {
             document.getElementById('serviceIcon').click();
+        });
+
+        // Add Service Form Validation
+        document.getElementById('addServiceForm').addEventListener('submit', function(event) {
+            const iconInput = document.getElementById('newServiceIcon');
+            if (!iconInput.files.length) {
+                event.preventDefault();
+                alert('Please upload a service icon.');
+                return false;
+            }
         });
     </script>
 </body>

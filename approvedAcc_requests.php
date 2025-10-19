@@ -49,7 +49,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Approval</title>
+    <title>Approved Accounts</title>
     <link rel="stylesheet" href="css/account_approval.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,15 +102,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'approvedAcc_requests.php')? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'approvedAcc_requests.php')? 'active' : '' ?>">User Account Management</a>
             </div>
             
             <div class="menu-link">
@@ -124,7 +124,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             </div>
 
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
@@ -159,7 +159,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div class="approval-container">
         <div class="title-con">
             <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
-            <h2>Approved</h2>
+            <h2>Approved Accounts</h2>
         </div>
         
         <div class="table-con">

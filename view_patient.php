@@ -236,36 +236,47 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     </div>
                 </div>
             </div>
-
             <div class="consultation-history">
-                <h3>Consultation History<button class="add-btn" onclick="openModal()">Add Consultation</button></h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Type of Consultation</th>
-                            <th>Date of Consultation</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($consultations)): ?>
-                            <tr>
-                                <td colspan="3" class="no-consultations" style="text-align: center;">No consultations found.</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($consultations as $consultation): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($consultation['consultation_type']) ?></td>
-                                <td><?= htmlspecialchars($consultation['consultation_date']) ?></td>
-                                <td class="action-buttons">
-                                    <button class="view-btn" onclick='viewConsultation(<?= json_encode($consultation) ?>)'>VIEW</button>
-                                    <a href="delete_consultation.php?id=<?= $consultation['id'] ?>" class="delete-btn" onclick="return confirm('Are you sure?')">DELETE</a>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                <h3>Consultation History</h3>
+                <div class="sort-control">
+                    <button class="add-btn" onclick="openModal()">Add Consultation</button>
+                </div>
+                
+                <div class="consultation-content">
+                    <div class="consultation-table">
+                        <div class="table-container">
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Type of Consultation</th>
+                                            <th>Date of Consultation</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (empty($consultations)): ?>
+                                            <tr>
+                                                <td colspan="3" class="no-consultations" style="text-align: center;">No consultations found.</td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php foreach ($consultations as $consultation): ?>
+                                            <tr>
+                                                <td><?= htmlspecialchars($consultation['consultation_type']) ?></td>
+                                                <td><?= htmlspecialchars($consultation['consultation_date']) ?></td>
+                                                <td class="action-buttons">
+                                                    <button class="view-btn" onclick='viewConsultation(<?= json_encode($consultation) ?>)'>VIEW</button>
+                                                    <a href="delete_consultation.php?id=<?= $consultation['id'] ?>" class="delete-btn" onclick="return confirm('Are you sure?')">DELETE</a>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

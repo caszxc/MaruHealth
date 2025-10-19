@@ -72,7 +72,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Staff</title>
+    <title>Admin Account Management</title>
     <link rel="stylesheet" href="css/manage_staff.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -124,15 +124,15 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link-active">
-                <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/admin_icon_active.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
             
             <div class="menu-link">
@@ -146,7 +146,7 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
             </div>
 
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
@@ -328,6 +328,27 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         document.getElementById("addAdminForm").addEventListener("submit", function(event) {
             event.preventDefault();
 
+            // Client-side password validation
+            let password = document.getElementById("password").value;
+            let confirmPassword = document.getElementById("confirm_password").value;
+            let passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+            if (password.length < 8) {
+                alert("Password must be at least 8 characters and include uppercase, lowercase, and numbers");
+                return;
+            }
+
+            if (!passwordRegex.test(password)) {
+                alert("Password must be at least 8 characters and include uppercase, lowercase, and numbers");
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert("Passwords do not match");
+                return;
+            }
+
+            // Proceed with AJAX submission if validation passes
             let formData = new FormData(this);
 
             fetch("add_admin_ajax.php", {

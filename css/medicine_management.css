@@ -128,6 +128,47 @@ body::-webkit-scrollbar{
     overflow: hidden;
 }
 
+/* Title Section */
+.title-con {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.title{
+    display: flex;
+    gap: 15px;
+}
+
+.title h2 {
+    font-size: 24px;
+    color: #800000;
+    margin: 0;
+    font-weight: bold;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    color: #fff;
+    background-color: #800000;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: #6b0000;
+}
+
 .med-container {
     flex: 1;
     display: flex;
@@ -149,7 +190,6 @@ body::-webkit-scrollbar{
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
 }
 
 .sort-controls h2 {
@@ -193,7 +233,7 @@ body::-webkit-scrollbar{
     font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    width: 200px;
+    width: 300px;
 }
 .search-con button {
     padding: 8px 12px;
@@ -372,6 +412,7 @@ body::-webkit-scrollbar{
 
 table tr.selected {
     font-weight: bold;
+    background-color: #f2f2f2;
 }
 
 table th,

@@ -126,7 +126,18 @@ input[type="number"]::-webkit-inner-spin-button {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 80px);
+    overflow: hidden;
+}
+
+.patient-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
 }
 
 /* Title Section */
@@ -171,41 +182,44 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* Search and Add Button */
-.search-container {
+.sort-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-con {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.search-row {
+.search-con form {
     display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 10px;
 }
-
-.search-row input[type="text"] {
+.search-con input[type="text"] {
     padding: 8px;
+    font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-size: 14px;
-    width: 250px; /* Adjust width as needed */
+    width: 300px;
 }
-
-.clear-btn {
-    padding: 8px 16px;
-    background-color: #f44336;
+.search-con button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #337ab7;
     color: white;
     border: none;
     border-radius: 4px;
-    text-decoration: none;
-    font-size: 14px;
-    display: inline-block;
-}
-
-.clear-btn:hover {
-    background-color: #d32f2f;
+    cursor: pointer;
 }
 
 .add-button {
@@ -219,29 +233,46 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* Patient num Table Styling */
-.table-wrapper{
+.patient-table{
+    display: flex;
     flex: 1;
+    overflow: hidden;
 }
 
-.patient-table {
+.table-container{
+    display: flex;
+    flex: 1;
+    height: 100%;
+}
+
+.table-wrapper{
+    flex: 1;
+    overflow-y: auto; /* Enable vertical scrolling for table body */
+    scrollbar-width: none;
+}
+
+.table-wrapper table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.patient-table th, .patient-table td {
+.table-wrapper table th, .table-wrapper table td {
     padding: 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
 }
 
-.patient-table th {
+.table-wrapper table th {
+    position: sticky;
+    top: 0;
     background-color: #800000;
-    color: white;
+    color: #fff;
+    font-size: 15px;
+    z-index: 10;
 }
 
-.patient-table tr:nth-child(even) {
+.table-wrapper table tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
@@ -345,7 +376,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .form-row{
     display: flex;
     flex-direction: column;
-    width: 50%;
+    width: 100%;
 }
 
 .form-row-address{

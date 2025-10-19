@@ -1,4 +1,5 @@
 <?php
+//save_announcement.php
 session_start();
 require 'config.php';
 
@@ -29,6 +30,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt = $conn->prepare("INSERT INTO announcements (title, content, image, admin_id, created_at, status) VALUES (?, ?, ?, ?, NOW(), 'active')");
         
         if ($stmt->execute([$title, $content, $imageName, $admin_id])) {
+            // Get the announcement ID
+            $announcementId = $conn->lastInsertId();
+            
+            // Log the announcement creation
+            $logStmt = $conn->prepare("
+                INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+                VALUES (:admin_id, 'announcement_create', :details, :target_id)
+            ");
+            $details = "Created announcement titled '{$title}'";
+            $logStmt->execute([
+                ':admin_id' => $admin_id,
+                ':details' => $details,
+                ':target_id' => $announcementId
+            ]);
+            
             header("Location: announcements.php");
             exit();
         } else {

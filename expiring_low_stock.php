@@ -9,6 +9,9 @@ if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'health_staff')
     exit();
 }
 
+// Get search term from GET request and sanitize it
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
 // Fetch Admin's Name
 $adminId = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
@@ -19,9 +22,9 @@ $adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
 $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
-// Fetch all expiring and low stock medicines
+// Fetch all expiring and low stock medicines with optional search filter
 $expiryDate = date('Y-m-d', strtotime('+60 days'));
-$stockQuery = $conn->prepare("
+$stockQuery = "
     SELECT 
         mc.id AS catalog_id, 
         mc.generic_name, 
@@ -41,12 +44,20 @@ $stockQuery = $conn->prepare("
     WHERE (mb.expiration_date <= :expiryDate 
            OR mb.expiry_status IN ('Expiring within a month', 'Expiring within a week', 'Expired')
            OR mb.stocks <= mc.min_stock)
-    AND mb.stocks >= 0
-    ORDER BY mb.expiration_date ASC, mb.stocks ASC
-");
-$stockQuery->bindParam(':expiryDate', $expiryDate);
-$stockQuery->execute();
-$medicines = $stockQuery->fetchAll(PDO::FETCH_ASSOC);
+    AND mb.stocks >= 0";
+if (!empty($searchTerm)) {
+    $stockQuery .= " AND (mc.generic_name LIKE :search OR mc.brand_name LIKE :search OR mb.batch_lot_number LIKE :search OR mc.dosage LIKE :search)";
+}
+$stockQuery .= " ORDER BY mb.expiration_date ASC, mb.stocks ASC";
+
+$stockQueryStmt = $conn->prepare($stockQuery);
+$stockQueryStmt->bindParam(':expiryDate', $expiryDate);
+if (!empty($searchTerm)) {
+    $searchParam = "%$searchTerm%";
+    $stockQueryStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+}
+$stockQueryStmt->execute();
+$medicines = $stockQueryStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -60,42 +71,6 @@ $medicines = $stockQuery->fetchAll(PDO::FETCH_ASSOC);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-    <style>
-        .med-container {
-            padding: 20px;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        .critical {
-            color: #d9534f;
-            font-weight: bold;
-        }
-        .warning {
-            color: #f0ad4e;
-            font-weight: bold;
-        }
-        .low-stock {
-            color: #f0ad4e;
-        }
-        .critical-stock {
-            color: #d9534f;
-        }
-        
-    </style>
 </head>
 <body>
     <nav>
@@ -119,26 +94,60 @@ $medicines = $stockQuery->fetchAll(PDO::FETCH_ASSOC);
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-                $dashboard_url = 'healthstaff_dashboard.php';
+                $dashboard_url = '';
+                if ($adminRole === 'super_admin') {
+                    $dashboard_url = 'superadmin_dashboard.php';
+                } elseif ($adminRole === 'admin') {
+                    $dashboard_url = 'admin_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
+                }
             ?>
             <p class="menu-header">ANALYTICS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
+            
             <p class="menu-header">BASE</p>
+            <?php if ($adminRole == 'super_admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+            </div>
+            <?php endif; ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
+                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
+                <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <a href="content_management.php" class="<?= $current_page == 'content_management.php' ? 'active' : '' ?>">Content Management</a>
+            </div>
+            <?php endif; ?>
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
             </div>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/med_icon_active.png" alt="">
-                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
+                <a href="medicine_management.php" class="<?= ($current_page == 'medicine_management.php' || $current_page == 'expiring_low_stock.php') ? 'active' : '' ?>">Medicine Management</a>
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
                 <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
             </div>
+            <?php endif; ?>
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
@@ -148,14 +157,19 @@ $medicines = $stockQuery->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <div class="content">
+        <div class="title-con">
+            <div class="title">
+                <a href="medicine_management.php" class="back-button">← Back</a>
+                <h2>Expiring and Low Stock Medicines</h2>
+            </div>
+        </div>
         <div class="med-container">
-            <div class="sort-controls">
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
-                    <h2>Expiring and Low Stock Medicines</h2>
-                </div>
+            <div class="sort-controls"> 
                 <div class="search-con">
-                    
+                    <form method="GET" action="expiring_low_stock.php">
+                        <input type="text" name="search" placeholder="Search by Generic Name, Brand Name, Batch Lot, or Dosage" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
                 </div>
             </div>
 

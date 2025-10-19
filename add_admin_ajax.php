@@ -37,10 +37,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Username is required";
     }
     
+    // Password validation
     if (empty($password)) {
         $errors[] = "Password is required";
     } elseif ($password !== $confirmPassword) {
         $errors[] = "Passwords do not match";
+    } elseif (strlen($password) < 8) {
+        $errors[] = "Password must be at least 8 characters long";
+    } elseif (!preg_match("/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/", $password)) {
+        $errors[] = "Password must include at least one uppercase letter, one lowercase letter, and one number";
     }
     
     // Check if email or username already exists

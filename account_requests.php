@@ -147,6 +147,18 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 // Commit transaction
                 $conn->commit();
                 
+                // Log the approval action
+                $logStmt = $conn->prepare("
+                    INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+                    VALUES (:admin_id, 'user_approval', :details, :target_id)
+                ");
+                $details = "Approved user {$userName} (Email: {$userEmail})" . ($primaryUserId ? " as dependent of user ID {$primaryUserId} with relationship {$relationship}" : "");
+                $logStmt->execute([
+                    ':admin_id' => $_SESSION['admin_id'],
+                    ':details' => $details,
+                    ':target_id' => $userId
+                ]);
+
                 $_SESSION['approval_message'] = "Account approved successfully.";
                 header("Location: account_requests.php");
                 exit();
@@ -206,6 +218,18 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             $rejectStmt = $conn->prepare("DELETE FROM pending_users WHERE id = :id");
             $rejectStmt->execute([':id' => $pendingUserId]);
             
+            // Log the rejection action
+            $logStmt = $conn->prepare("
+                INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+                VALUES (:admin_id, 'user_rejection', :details, :target_id)
+            ");
+            $details = "Rejected user {$userName} (Email: {$userEmail})" . ($primaryUserId ? " as dependent of user ID {$primaryUserId} with relationship {$relationship}" : "");
+            $logStmt->execute([
+                ':admin_id' => $_SESSION['admin_id'],
+                ':details' => $details,
+                ':target_id' => $pendingUserId
+            ]);
+
             $_SESSION['approval_message'] = "Account rejected successfully.";
             header("Location: account_requests.php");
             exit();
@@ -264,7 +288,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Approval</title>
+    <title>Pending Accounts</title>
     <link rel="stylesheet" href="css/account_approval.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -317,15 +341,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <p class="menu-header">BASE</p>
             <?php if ($adminRole == 'super_admin'): ?>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_requests.php" class="<?= ($current_page == 'account_requests.php') ? 'active' : '' ?>">Account Approval</a>
+                <a href="account_requests.php" class="<?= ($current_page == 'account_requests.php') ? 'active' : '' ?>">User Account Management</a>
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
@@ -336,7 +360,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
             <?php endif; ?>
@@ -366,7 +390,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div class="approval-container">
         <div class="title-con">
             <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
-            <h2>Account Requests</h2>
+            <h2>Pending Accounts</h2>
         </div>
         
         <div class="table-con">

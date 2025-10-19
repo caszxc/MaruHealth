@@ -2,6 +2,7 @@
 // medicine_management.php
 session_start();
 require_once "config.php"; // Include database connection
+require_once "update_inventory.php"; // Include database connection
 
 // Check if user is logged in as health staff
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {

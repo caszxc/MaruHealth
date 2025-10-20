@@ -54,7 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right-panel">
             <div class="login-box">
                 <form method="POST" class="login-form">
-                    <div>
+                    <div class="login-container">
                         <h3>Verify Reset Code</h3>
                         <p>Enter the 6-digit code sent to your email.</p>
 

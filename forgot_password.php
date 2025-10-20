@@ -93,7 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right-panel">
             <div class="login-box">
                 <form method="POST" class="login-form">
-                    <div>
+                    <div class="login-container">
                         <h3>Forgot Password</h3>
                         <p>Enter your email or phone number to receive a password reset code.</p>
                         

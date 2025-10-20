@@ -148,7 +148,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <!-- Main Content -->
-    <div class="approval-container">
+    <div class="approval-content">
         <div class="tiles-container">
             <a href="account_requests.php">
                 <div class="tile">

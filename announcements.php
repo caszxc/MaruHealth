@@ -151,50 +151,53 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 </select>
                 <button class="new-post-btn" onclick="openModal()">New Post</button>
             </div>
-
-            <?php if (empty($announcements)): ?>
-                <div class="no-announcements">
-                    <p>No announcements available at the moment.</p>
-                </div>
-            <?php else: ?>
-                <?php foreach ($announcements as $announcement): ?>
-                    <div class="announcement-box">
-                        <div class="post-details">
-                            <div class="post-details-text">
-                                <strong><?= htmlspecialchars($announcement['full_name']) ?></strong>
-                                <p><?= htmlspecialchars(ucwords(str_replace('_', ' ', $announcement['role']))) ?> - <?php 
-                                    date_default_timezone_set('Asia/Manila');
-                                    echo date("F j, Y, g:i A", strtotime($announcement['created_at']));  
-                                ?></p>
-                            </div>
-                        </div>
-
-                        <div class="actions">
-                            <button class="kebab-menu" onclick="toggleMenu(<?= $announcement['id']; ?>)">⋮</button>
-                            <div class="dropdown-menu" id="menu-<?= $announcement['id']; ?>">
-                                <button onclick="openEditModal(<?= $announcement['id']; ?>, '<?= addslashes($announcement['title']); ?>', '<?= addslashes(str_replace(["\r\n", "\n", "\r"], '\n', $announcement['content'])); ?>', '<?= addslashes($announcement['image'] ?? ''); ?>')">Edit</button>
-                                <button onclick="toggleArchive(<?= $announcement['id']; ?>)">
-                                    <?= $filter === 'archived' ? 'Unarchive' : 'Archive' ?>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="announcement-content">
-                            <div class="announcement-con">
-                                <div class="image-con">
-                                    <img src="images/uploads/announcement_images/<?= !empty($announcement['image']) ? htmlspecialchars($announcement['image']) : 'default_announcement.png' ?>" alt="Announcement Image" class="announcement-image">
+            <div class="box-container">
+                <div class="box-con">
+                    <?php if (empty($announcements)): ?>
+                    <div class="no-announcements">
+                        <p>No announcements available at the moment.</p>
+                    </div>
+                    <?php else: ?>
+                        <?php foreach ($announcements as $announcement): ?>
+                            <div class="announcement-box">
+                                <div class="post-details">
+                                    <div class="post-details-text">
+                                        <strong><?= htmlspecialchars($announcement['full_name']) ?></strong>
+                                        <p><?= htmlspecialchars(ucwords(str_replace('_', ' ', $announcement['role']))) ?> - <?php 
+                                            date_default_timezone_set('Asia/Manila');
+                                            echo date("F j, Y, g:i A", strtotime($announcement['created_at']));  
+                                        ?></p>
+                                    </div>
                                 </div>
-                                <div class="content-con">
-                                    <h2><?= htmlspecialchars($announcement['title']); ?></h2>
-                                    <div class="post-content">
-                                        <p><?= htmlspecialchars($announcement['content']); ?></p>
+
+                                <div class="actions">
+                                    <button class="kebab-menu" onclick="toggleMenu(<?= $announcement['id']; ?>)">⋮</button>
+                                    <div class="dropdown-menu" id="menu-<?= $announcement['id']; ?>">
+                                        <button onclick="openEditModal(<?= $announcement['id']; ?>, '<?= addslashes($announcement['title']); ?>', '<?= addslashes(str_replace(["\r\n", "\n", "\r"], '\n', $announcement['content'])); ?>', '<?= addslashes($announcement['image'] ?? ''); ?>')">Edit</button>
+                                        <button onclick="toggleArchive(<?= $announcement['id']; ?>)">
+                                            <?= $filter === 'archived' ? 'Unarchive' : 'Archive' ?>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="announcement-content">
+                                    <div class="image-con">
+                                        <img src="images/uploads/announcement_images/<?= !empty($announcement['image']) ? htmlspecialchars($announcement['image']) : 'default_announcement.png' ?>" alt="Announcement Image" class="announcement-image">
+                                    </div>
+                                    <div class="content-con">
+                                        <h2><?= htmlspecialchars($announcement['title']); ?></h2>
+                                        <div class="post-content">
+                                            <p><?= htmlspecialchars($announcement['content']); ?></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+                
+            </div>
+            
         </div>
     </div>
 

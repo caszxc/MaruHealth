@@ -5,7 +5,8 @@ require_once "config.php";
 
 // Check if the user is logged in and is a super admin
 if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'super_admin') {
-    echo "Unauthorized access";
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Unauthorized access']);
     exit();
 }
 
@@ -64,7 +65,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
     
-    // If no errors, add the admin
+    // Prepare JSON response
+    header('Content-Type: application/json');
+    
     if (empty($errors)) {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         
@@ -76,15 +79,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $insertStmt->bindParam(':password', $hashedPassword);
         
         if ($insertStmt->execute()) {
-            echo "Admin added successfully!";
+            $_SESSION['staff_message'] = "Admin Account created successfully";
+            echo json_encode(['success' => 'Admin added successfully']);
         } else {
-            echo "Failed to add admin. Please try again.";
+            echo json_encode(['error' => 'Failed to add admin. Please try again.']);
         }
     } else {
-        // Return the first error
-        echo $errors[0];
+        echo json_encode(['error' => $errors[0]]);
     }
 } else {
-    echo "Invalid request method";
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Invalid request method']);
 }
 ?>

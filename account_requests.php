@@ -14,6 +14,7 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $action = $_GET['action'];
     $pendingUserId = intval($_GET['id']);
+    $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
     
     // Fetch user data first to get contact information, family number, and primary user info
     $fetchUserStmt = $conn->prepare("
@@ -160,13 +161,13 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 ]);
 
                 $_SESSION['approval_message'] = "Account approved successfully.";
-                header("Location: account_requests.php");
+                header("Location: account_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
                 exit();
             } catch (PDOException $e) {
                 // Rollback transaction on error
                 $conn->rollBack();
                 $_SESSION['approval_message'] = "Error approving account: " . $e->getMessage();
-                header("Location: account_requests.php");
+                header("Location: account_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
                 exit();
             }
         
@@ -231,18 +232,19 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             ]);
 
             $_SESSION['approval_message'] = "Account rejected successfully.";
-            header("Location: account_requests.php");
+            header("Location: account_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
             exit();
         }
     } else {
         $_SESSION['approval_message'] = "Error: User not found.";
-        header("Location: account_requests.php");
+        header("Location: account_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
         exit();
     }
 }
 
-// Fetch all pending users with relationship info
-$pendingUsersStmt = $conn->prepare("
+// Fetch all pending users with relationship info and optional search filter
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+$query = "
     SELECT pu.id, 
         CONCAT(pu.first_name, ' ', pu.last_name) AS full_name, 
         pu.first_name,
@@ -263,8 +265,17 @@ $pendingUsersStmt = $conn->prepare("
     FROM pending_users pu
     LEFT JOIN pending_dependent_relationships pdr ON pu.id = pdr.dependent_user_id AND pu.primary_user_id = pdr.primary_user_id
     LEFT JOIN users u ON pu.primary_user_id = u.id
-    ORDER BY pu.date_registered DESC
-");
+";
+if (!empty($searchTerm)) {
+    $query .= " WHERE (pu.first_name LIKE :search OR pu.last_name LIKE :search OR pu.email LIKE :search OR pu.family_number LIKE :search)";
+}
+$query .= " ORDER BY pu.date_registered DESC";
+
+$pendingUsersStmt = $conn->prepare($query);
+if (!empty($searchTerm)) {
+    $searchParam = "%$searchTerm%";
+    $pendingUsersStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+}
 $pendingUsersStmt->execute();
 $pendingUsers = $pendingUsersStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -299,6 +310,21 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             font-style: italic;
             color: #555;
         }
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .message.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .message.error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
     </style>
 </head>
 <body>
@@ -328,7 +354,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
                     $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'health_taff') {
+                } elseif ($adminRole === 'health_staff') {
                     $dashboard_url = 'healthstaff_dashboard.php';
                 }
             ?>
@@ -387,74 +413,97 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <!-- Main Content -->
-    <div class="approval-container">
+    <div class="approval-content">
         <div class="title-con">
-            <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+            <a href="account_approval.php" class="back-button">← Back</a>
             <h2>Pending Accounts</h2>
         </div>
-        
-        <div class="table-con">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone Number</th>
-                        <th>Family Number</th>
-                        <th>Account Type</th>
-                        <th>Date Registered</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php if (empty($pendingUsers)): ?>
-                    <tr>
-                        <td colspan="7" style="text-align: center;">No pending requests found.</td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($pendingUsers as $user): ?>
-                        <tr>
-                            <td>
-                                <?php echo htmlspecialchars($user['full_name']); ?>
-                                <?php if ($user['primary_user_id']): ?>
-                                    <div class="dependent-info">
-                                        Dependent of: <?= htmlspecialchars($user['primary_user_name'] ?? 'Unknown') ?><br>
-                                        Relationship: <?= htmlspecialchars($user['relationship'] ?? 'Not specified') ?>
-                                    </div>
+        <?php if (isset($_SESSION['approval_message'])): ?>
+            <div class="message <?= strpos($_SESSION['approval_message'], 'Error') === false ? 'success' : 'error' ?>">
+                <?= htmlspecialchars($_SESSION['approval_message']) ?>
+            </div>
+            <?php unset($_SESSION['approval_message']); ?>
+        <?php endif; ?>
+        <div class="approval-container">
+            <div class="sort-control">
+                <div class="search-con">
+                    <form method="GET" action="account_requests.php">
+                        <input type="text" name="search" placeholder="Search by Name, Email, or Family Number" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <button type="submit">Search</button>
+                    </form>
+                </div> 
+            </div>
+            <div class="table-details">
+                <div class="table-con">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone Number</th>
+                                    <th>Family Number</th>
+                                    <th>Account Type</th>
+                                    <th>Date Registered</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($pendingUsers)): ?>
+                                    <tr>
+                                        <td colspan="7" style="text-align: center;">No pending requests found.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($pendingUsers as $user): ?>
+                                        <tr>
+                                            <td>
+                                                <?= htmlspecialchars($user['full_name']) ?>
+                                                <?php if ($user['primary_user_id']): ?>
+                                                    <div class="dependent-info">
+                                                        Dependent of: <?= htmlspecialchars($user['primary_user_name'] ?? 'Unknown') ?><br>
+                                                        Relationship: <?= htmlspecialchars($user['relationship'] ?? 'Not specified') ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?= htmlspecialchars($user['email']) ?></td>
+                                            <td><?= htmlspecialchars($user['phone_number']) ?></td>
+                                            <td><?= htmlspecialchars($user['family_number'] ?? 'Not provided') ?></td>
+                                            <td><?= $user['primary_user_id'] ? 'Dependent' : 'Primary' ?></td>
+                                            <td><?= htmlspecialchars($user['date_registered']) ?></td>
+                                            <td>
+                                                <div style="display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 10px;">
+                                                    <a href="#" 
+                                                       class="view-btn" 
+                                                       data-id="<?= $user['id'] ?>"
+                                                       data-firstname="<?= htmlspecialchars($user['first_name']) ?>"
+                                                       data-lastname="<?= htmlspecialchars($user['last_name']) ?>"
+                                                       data-middlename="<?= htmlspecialchars($user['middle_name']) ?>"
+                                                       data-email="<?= htmlspecialchars($user['email']) ?>"
+                                                       data-phone="<?= htmlspecialchars($user['phone_number']) ?>"
+                                                       data-address="<?= htmlspecialchars($user['address']) ?>"
+                                                       data-gender="<?= htmlspecialchars($user['gender']) ?>"
+                                                       data-birthday="<?= htmlspecialchars($user['birthday']) ?>"
+                                                       data-idfront="<?= htmlspecialchars($user['valid_id_front']) ?>"
+                                                       data-familynumber="<?= htmlspecialchars($user['family_number'] ?? 'Not provided') ?>"
+                                                       data-primaryname="<?= htmlspecialchars($user['primary_user_name'] ?? 'N/A') ?>"
+                                                       data-relationship="<?= htmlspecialchars($user['relationship'] ?? 'N/A') ?>"
+                                                    >View</a>
+                                                    <a href="account_requests.php?action=approve&id=<?= $user['id'] . (!empty($searchTerm) ? '&search=' . urlencode($searchTerm) : '') ?>" 
+                                                       class="approve-btn" 
+                                                       onclick="return confirm('Are you sure you want to approve this account? An email notification will be sent to the user.')">Approve</a>
+                                                    <a href="account_requests.php?action=reject&id=<?= $user['id'] . (!empty($searchTerm) ? '&search=' . urlencode($searchTerm) : '') ?>" 
+                                                       class="reject-btn" 
+                                                       onclick="return confirm('Are you sure you want to reject this account? An email notification will be sent to the user.')">Reject</a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
                                 <?php endif; ?>
-                            </td>
-                            <td><?php echo htmlspecialchars($user['email']); ?></td>
-                            <td><?php echo htmlspecialchars($user['phone_number']); ?></td>
-                            <td><?php echo htmlspecialchars($user['family_number'] ?? 'Not provided'); ?></td>
-                            <td><?php echo $user['primary_user_id'] ? 'Dependent' : 'Primary'; ?></td>
-                            <td><?php echo $user['date_registered']; ?></td>
-                            <td>
-                                <div>
-                                    <a href="#" 
-                                    class="view-btn" 
-                                    data-id="<?php echo $user['id']; ?>"
-                                    data-firstname="<?php echo htmlspecialchars($user['first_name']); ?>"
-                                    data-lastname="<?php echo htmlspecialchars($user['last_name']); ?>"
-                                    data-middlename="<?php echo htmlspecialchars($user['middle_name']); ?>"
-                                    data-email="<?php echo htmlspecialchars($user['email']); ?>"
-                                    data-phone="<?php echo htmlspecialchars($user['phone_number']); ?>"
-                                    data-address="<?php echo htmlspecialchars($user['address']); ?>"
-                                    data-gender="<?php echo htmlspecialchars($user['gender']); ?>"
-                                    data-birthday="<?php echo htmlspecialchars($user['birthday']); ?>"
-                                    data-idfront="<?php echo htmlspecialchars($user['valid_id_front']); ?>"
-                                    data-familynumber="<?php echo htmlspecialchars($user['family_number'] ?? 'Not provided'); ?>"
-                                    data-primaryname="<?php echo htmlspecialchars($user['primary_user_name'] ?? 'N/A'); ?>"
-                                    data-relationship="<?php echo htmlspecialchars($user['relationship'] ?? 'N/A'); ?>"
-                                    >View</a>
-                                    <a href="account_requests.php?action=approve&id=<?php echo $user['id']; ?>" class="approve-btn" onclick="return confirm('Are you sure you want to approve this account? An email notification will be sent to the user.')">Approve</a>
-                                    <a href="account_requests.php?action=reject&id=<?php echo $user['id']; ?>" class="reject-btn" onclick="return confirm('Are you sure you want to reject this account? An email notification will be sent to the user.')">Reject</a>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-                </tbody>
-            </table>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -518,11 +567,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 <label>Uploaded Valid ID</label>
                 <img id="idFront" src="" alt="Valid ID Front">
             </div>
-            <button type="button" class="close-btn" onclick="closeModal()">Close</button>
+            <div class="modal-footer">
+                <button type="button" class="close-btn" onclick="closeModal()">Close</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // Modal handling
         document.addEventListener("DOMContentLoaded", function () {
             const modal = document.getElementById("viewModal");
             const viewButtons = document.querySelectorAll(".view-btn");
@@ -570,6 +622,19 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     closeModal();
                 }
             });
+        });
+
+        // Auto-disappear message after 3 seconds
+        document.addEventListener("DOMContentLoaded", function () {
+            const message = document.querySelector(".message");
+            if (message) {
+                setTimeout(() => {
+                    message.style.opacity = "0";
+                    setTimeout(() => {
+                        message.style.display = "none";
+                    }, 500); // Wait for fade-out transition to complete
+                }, 3000); // 3 seconds
+            }
         });
     </script>
 </body>

@@ -112,60 +112,120 @@
 }
 
 /* Main container */
-.container {
+.staff-content {
     margin-top: 80px;
-    margin-left: 250px;
+    margin-left: 260px;
     padding: 20px;
-    width: calc(100% - 250px);
-    min-height: calc(100vh - 80px);
+    width: calc(100% - 260px);
     display: flex;
     flex-direction: column;
+    height: calc(100vh - 80px);
+    overflow: hidden;
 }
 
-/* Search and Add Button */
-.search-container {
+.staff-container {
+    flex: 1;
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 20px;
-    width: 100%;
-    gap: 10px;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
 }   
 
-.search-container input {
-    width: 300px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+/* Search and Add Button */
+.sort-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.add-button{
+.search-con {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.search-con form {
+    display: flex;
+    gap: 10px;
+}
+.search-con input[type="text"] {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 300px;
+}
+.search-con button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #337ab7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-button {
+    padding: 8px 16px;
     background-color: #800000;
     color: white;
-    width: 100px;
-    border-radius: 5px;
     border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 /* Accounts num Table Styling */
-.accounts-table {
+.table-details{
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.table-container{
+    display: flex;
+    flex: 1;
+    height: 100%;
+}
+
+.table-wrapper{
+    flex: 1;
+    overflow-y: auto; /* Enable vertical scrolling for table body */
+    scrollbar-width: none;
+}
+
+.table-wrapper table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.accounts-table th, .accounts-table td {
+.table-wrapper table th, .table-wrapper table td {
     padding: 10px;
     text-align: left;
     border-bottom: 1px solid #ddd;
 }
 
-.accounts-table th {
+.table-wrapper table th {
+    position: sticky;
+    top: 0;
     background-color: #800000;
-    color: white;
+    color: #fff;
+    font-size: 15px;
+    z-index: 10;
 }
 
-.accounts-table tr:nth-child(even) {
+.table-wrapper table tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 

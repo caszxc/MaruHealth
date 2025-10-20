@@ -56,7 +56,7 @@
     border-radius: 10px;
 }
 
-.login-form div{
+.login-form .login-container{
     display: flex;
     flex-direction: column;
     gap: 15px;

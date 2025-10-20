@@ -372,22 +372,31 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
         </div>
     </div>
 
-    <div class="calendar-container">
-    <div class="container">
-            <aside class="event-panel">
-                <h2 id="selectedDate" style="text-align: center;"></h2>
-                <hr>
-                <h3 class="title">Events</h3>
-                <div id="eventList"></div>
-                <div class="btn-con">
-                    <button class="addEvent-btn" onclick="showAddEventModal()"><img src="./images/icons/add-event-icon.png" alt="Add Event Icon" class="addEvent-icon">Add Event</button>
-                </div>
-                
-            </aside>
+    <div class="calendar-content">
+        <div class="container">
+            <div class="calendar-container">
+                <aside class="event-panel">
+                    <div class="event-header">
+                        <h2 id="selectedDate" style="text-align: center;"></h2>
+                        <hr>
+                        <h3 class="title">Events</h3>
+                    </div>
+                    
+                    <div class="event-container">
+                        <div class="event-wrapper">
+                            <div id="eventList"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-con">
+                        <button class="addEvent-btn" onclick="showAddEventModal()"><img src="./images/icons/add-event-icon.png" alt="Add Event Icon" class="addEvent-icon">Add Event</button>
+                    </div>
+                </aside>
 
-        <main id="calendar"></main>
+                <main id="calendar"></main>
+            </div>
         </div>
-
+        
         <div id="eventModal" class="modal">
             <div class="modal-content">
                 <h2 class="modal-title">Add Event</h2>

@@ -257,7 +257,6 @@
 .view-btn {
     background-color: #4CAF50; /* green */
     padding: 6px 10px;
-
 }
 
 .delete-btn {
@@ -320,6 +319,13 @@ tr:nth-child(even) {
 }
 
 /* Action Buttons */
+.action-buttons{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
 .view-btn, .delete-btn {
     text-decoration: none;
 }

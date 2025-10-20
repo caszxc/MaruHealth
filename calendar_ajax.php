@@ -29,12 +29,19 @@ echo "<h2>$monthName $year</h2>";
 echo '<button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>';
 echo '</div>';
 
-echo "<table><tr>";
+// Header table for days of the week
+echo '<table class="calendar-header">';
+echo '<tr>';
 $daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 foreach ($daysOfWeek as $day) {
     echo "<th>$day</th>";
 }
-echo "</tr><tr>";
+echo '</tr>';
+echo '</table>';
+
+// Body table for calendar days
+echo '<table class="calendar-body">';
+echo '<tr>';
 
 // Previous month details
 $prevMonth = $month == 1 ? 12 : $month - 1;
@@ -78,5 +85,6 @@ for ($i = 1; $i <= $remainingCells; $i++) {
     echo "<td class='faded-day'>$i</td>";
 }
 
-echo "</tr></table>";
+echo "</tr>";
+echo "</table>";
 ?>

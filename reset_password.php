@@ -72,7 +72,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right-panel">
             <div class="login-box">
                 <form method="POST" class="login-form" novalidate>
-                    <div>
+                    <div class="login-container">
                         <h3>Reset Password</h3>
                         <p>Enter a new password for your account.</p>
                         <div class="field-container">

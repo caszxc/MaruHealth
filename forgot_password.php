@@ -82,32 +82,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="main-login">
-        <div class="left-panel">
-            <img src="images/3s logo.png" alt="Logo">
-            <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+        <div class="login-con">
+            <div class="left-panel">
+                <img src="images/3s logo.png" alt="Logo">
+                <div>
+                    <h1>MaruHealth</h1>
+                    <p>Barangay Marulas 3S Health Station</p>
+                </div>
             </div>
-        </div>
 
-        <div class="right-panel">
-            <div class="login-box">
-                <form method="POST" class="login-form">
-                    <div class="login-container">
-                        <h3>Forgot Password</h3>
-                        <p>Enter your email or phone number to receive a password reset code.</p>
-                        
-                        <div class="field-container">
-                            <?php if ($success) { echo "<p class='success'>$success</p>"; } ?>
-                            <input type="text" name="identifier" placeholder="E-mail/Phone Number" required>
-                            <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
+            <div class="right-panel">
+                <div class="login-box">
+                    <form method="POST" class="login-form">
+                        <div class="login-container">
+                            <h3>Forgot Password</h3>
+                            <p>Enter your email or phone number to receive a password reset code.</p>
+                            
+                            <div class="field-container">
+                                <?php if ($success) { echo "<p class='success'>$success</p>"; } ?>
+                                <input type="text" name="identifier" placeholder="E-mail/Phone Number" required>
+                                <?php if ($error) { echo "<p class='error'>$error</p>"; } ?>
+                            </div>
+                            
+                            <button type="submit">Send Reset Code</button>
+
+                            <p id="link"><a href="login.php">Back to Login</a></p>
                         </div>
-                        
-                        <button type="submit">Send Reset Code</button>
-
-                        <p id="link"><a href="login.php">Back to Login</a></p>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

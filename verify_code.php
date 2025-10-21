@@ -44,30 +44,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="main-login">
-        <div class="left-panel">
-            <img src="images/3s logo.png" alt="Logo">
-            <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+        <div class="login-con">
+            <div class="left-panel">
+                <img src="images/3s logo.png" alt="Logo">
+                <div>
+                    <h1>MaruHealth</h1>
+                    <p>Barangay Marulas 3S Health Station</p>
+                </div>
             </div>
-        </div>
-        <div class="right-panel">
-            <div class="login-box">
-                <form method="POST" class="login-form">
-                    <div class="login-container">
-                        <h3>Verify Reset Code</h3>
-                        <p>Enter the 6-digit code sent to your email.</p>
+            <div class="right-panel">
+                <div class="login-box">
+                    <form method="POST" class="login-form">
+                        <div class="login-container">
+                            <h3>Verify Reset Code</h3>
+                            <p>Enter the 6-digit code sent to your email.</p>
 
-                        <div class="field-container">
-                            <input type="text" name="code" placeholder="Enter Code" required maxlength="6">
-                            <?php if ($error) echo "<p class='error'>$error</p>"; ?>
+                            <div class="field-container">
+                                <input type="text" name="code" placeholder="Enter Code" required maxlength="6">
+                                <?php if ($error) echo "<p class='error'>$error</p>"; ?>
+                            </div>
+                            
+                            <button type="submit">Verify Code</button>
+                            
+                            <p id="link"><a href="forgot_password.php">Back</a></p>
                         </div>
-                        
-                        <button type="submit">Verify Code</button>
-                        
-                        <p id="link"><a href="forgot_password.php">Back</a></p>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

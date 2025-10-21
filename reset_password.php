@@ -61,34 +61,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="main-login">
-        <div class="left-panel">
-            <img src="images/3s logo.png" alt="Logo">
-            <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+        <div class="login-con">
+            <div class="left-panel">
+                <img src="images/3s logo.png" alt="Logo">
+                <div>
+                    <h1>MaruHealth</h1>
+                    <p>Barangay Marulas 3S Health Station</p>
+                </div>
             </div>
-        </div>
 
-        <div class="right-panel">
-            <div class="login-box">
-                <form method="POST" class="login-form" novalidate>
-                    <div class="login-container">
-                        <h3>Reset Password</h3>
-                        <p>Enter a new password for your account.</p>
-                        <div class="field-container">
-                            <div class="group-col">
-                                <input type="password" name="new_password" id="new_password" placeholder="New Password" required>
-                                <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
+            <div class="right-panel">
+                <div class="login-box">
+                    <form method="POST" class="login-form" novalidate>
+                        <div class="login-container">
+                            <h3>Reset Password</h3>
+                            <p>Enter a new password for your account.</p>
+                            <div class="field-container">
+                                <div class="group-col">
+                                    <input type="password" name="new_password" id="new_password" placeholder="New Password" required>
+                                    <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
+                                </div>
+                                <div class="group-col">
+                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
+                                    <small class="field-hint">Must match the new password</small>
+                                </div>
                             </div>
-                            <div class="group-col">
-                                <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
-                                <small class="field-hint">Must match the new password</small>
-                            </div>
+                            <button type="submit" id="resetBtn" disabled>Reset Password</button>
+                            <p id="link"><a href="login.php">Back to Login</a></p>
                         </div>
-                        <button type="submit" id="resetBtn" disabled>Reset Password</button>
-                        <p id="link"><a href="login.php">Back to Login</a></p>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

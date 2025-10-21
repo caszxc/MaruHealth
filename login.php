@@ -86,33 +86,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>    
     <div class="main-login">
-        <div class="left-panel">
-            <img src="images/3s logo.png" alt="Logo">
-            <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+        <div class="login-con">
+            <div class="left-panel">
+                <img src="images/3s logo.png" alt="Logo">
+                <div>
+                    <h1>MaruHealth</h1>
+                    <p>Barangay Marulas 3S Health Station</p>
+                </div>
             </div>
-        </div>
 
-        <div class="right-panel">
-            <div class="login-box">
-                <form method="POST" class="login-form">
-                    <div class="login-container">
-                        <h3 id="login-title">Login</h3>
-                        <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
-                        <div class="field-container">
-                            <input type="text" name="identifier" placeholder="Email/Phone/Username" autocomplete="off" required>
-                            <input type="password" name="password" placeholder="Password" required>
-                            <a href="forgot_password.php" class="forgot-link" id="forgot-link">Forgot password?</a>
+            <div class="right-panel">
+                <div class="login-box">
+                    <form method="POST" class="login-form">
+                        <div class="login-container">
+                            <h3 id="login-title">Login</h3>
+                            <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
+                            <div class="field-container">
+                                <input type="text" name="identifier" placeholder="Email/Phone/Username" autocomplete="off" required>
+                                <input type="password" name="password" placeholder="Password" required>
+                                <a href="forgot_password.php" class="forgot-link" id="forgot-link">Forgot password?</a>
+                            </div>
+                            
+                            <button type="submit">Log In</button>
+                            <div id="signup-link">
+                                <p id="link">Don't have an account? <a href="register.php">Sign Up</a></p>
+                                <p id="link">or <br><a href="index.php">Stay signed out</a></p>
+                            </div>     
                         </div>
-                        
-                        <button type="submit">Log In</button>
-                        <div id="signup-link">
-                            <p id="link">Don't have an account? <a href="register.php">Sign Up</a></p>
-                            <p id="link">or <br><a href="index.php">Stay signed out</a></p>
-                        </div>     
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

@@ -31,7 +31,7 @@ nav {
     width: 350px;
     text-align: center;
     z-index: 2;
-    width: 50%;
+    width: 70%;
 }
 
 .register-box h2 {
@@ -487,4 +487,120 @@ input[type="file"] {
 
 .error-summary li {
     margin-bottom: 5px;
+}
+
+/* === SMALL SCREENS (Phones: max-width 600px) === */
+@media (max-width: 600px) {
+    nav{
+        justify-content: center !important;
+    }
+
+  .register-container {
+    padding: 80px 0 0;
+    background-position: center;
+  }
+
+  .register-content{
+    padding: 0;
+  }
+
+  .register-box {
+    width: 100%;
+    border-radius: 0;
+    padding: 20px;
+  }
+
+  .register-box h2 {
+    font-size: 20px;
+  }
+
+  .register-form .group-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .button-container {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .prev-step,
+  .next-step,
+  .submit-button {
+    width: 100%;
+  }
+
+  .id-preview img {
+    max-width: 100%;
+  }
+
+  .custom-file-upload {
+    text-align: center;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  .success-content {
+    width: 90%;
+    padding: 20px;
+  }
+}
+
+/* === MEDIUM SCREENS (Tablets: 601px–1024px) === */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .register-container {
+    padding: 60px;
+  }
+
+  .register-box {
+    width: 70%;
+    padding: 25px;
+  }
+
+  .register-form .group-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .stepper-wrapper {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .button-container {
+    gap: 10px;
+  }
+
+  .modal-content {
+    width: 80%;
+  }
+
+  .success-content {
+    width: 70%;
+  }
+}
+
+/* === LARGE SCREENS (Desktops: min-width 1025px) === */
+@media (min-width: 1025px) {
+  .register-container {
+    padding: 100px;
+  }
+
+  .register-form .group-row {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  .modal-content {
+    width: 70%;
+  }
+
+  .success-content {
+    width: 50%;
+  }
 }

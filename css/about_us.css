@@ -28,13 +28,22 @@ body::-webkit-scrollbar, .announcement-container::-webkit-scrollbar, .events-con
     z-index: 1;
 }
 
-.banner .title-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.banner .about-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     z-index: 2;
     text-align: center;
+    padding: 0 20px;
+}
+
+.banner .title-container {
+    height: 70vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
 }
 
 .banner .title {
@@ -60,22 +69,11 @@ body::-webkit-scrollbar, .announcement-container::-webkit-scrollbar, .events-con
     font-size: 20px;
 }
 
-.container {
-    position: relative;
-    width: 90%;
-    max-width: 1700px;
-    margin: 0 auto;
-    transform: translateY(-150px); /* More responsive */
-    border-radius: 10px;
-    z-index: 10;
+.about-header .container{
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+    gap: 20px;
 }
-
-
 
 .mission-vision{
     display: flex;
@@ -112,6 +110,7 @@ body::-webkit-scrollbar, .announcement-container::-webkit-scrollbar, .events-con
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     padding: 70px;
+    gap: 10px;
     background-color: white;
 }
 
@@ -138,4 +137,150 @@ body::-webkit-scrollbar, .announcement-container::-webkit-scrollbar, .events-con
 
 .img-content img {
     width: 90%;       /* or any fixed size */
+}
+
+
+/* ============================= */
+/* RESPONSIVE STYLES */
+/* ============================= */
+
+/* Small devices: phones (≤600px) */
+@media (max-width: 600px) {
+    .address-contact p {
+        font-size: 10px;
+    }
+    .address-contact {
+        padding: 5px;
+    }
+
+    .banner {
+        height: 70vh;
+        margin-top: 70px;
+    }
+
+    .banner .about-header{
+        padding: 0 10px;
+    }
+
+    .banner .title-container{
+        height: 50vh;
+    }
+
+    .banner .title h1 {
+        font-size: 1.9rem;
+    }
+
+    .banner .tagline {
+        font-size: 0.95rem;
+        padding: 0 15px;
+    }
+
+    .mission, .vision {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 10px 20px;
+    }
+
+    .mission img, .vision img {
+        width: 100px;
+    }
+
+    .mission .title, .vision .title {
+        font-size: 1.3rem;
+    }
+
+    .mission .content, .vision .content {
+        font-size: 0.8rem;
+    }
+
+    .about-content {
+        flex-direction: column;
+        padding: 40px 20px;
+        text-align: center;
+    }
+
+    .about-content.phil{
+        flex-direction: column-reverse;
+    }
+
+    .text-content, .img-content {
+        width: 100%;
+    }
+
+    .text-content h2 {
+        font-size: 1.4rem;
+    }
+
+    .text-content p {
+        font-size: 0.95rem;
+    }
+
+    .img-content img {
+        width: 80%;
+        max-width: 250px;
+    }
+}
+
+/* Medium devices: tablets (601px–1024px) */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .banner {
+        height: 80vh;
+        background-position: center;
+    }
+
+    .banner .title h1 {
+        font-size: 2.4rem;
+    }
+
+    .banner .tagline {
+        font-size: 1.05rem;
+        max-width: 700px;
+    }
+
+    .mission-vision {
+        padding: 50px 30px;
+    }
+
+    .mission, .vision {
+        width: 100%;
+        padding: 20px 40px;
+    }
+
+    .about-content {
+        flex-direction: column;
+        padding: 50px 40px;
+        gap: 30px;
+    }
+
+    .about-content.phil{
+        flex-direction: column-reverse;
+    }
+
+    .text-content, .img-content {
+        width: 100%;
+    }
+
+    .text-content h2 {
+        font-size: 1.8rem;
+    }
+
+    .text-content p {
+        font-size: 1rem;
+    }
+
+    .img-content img {
+        width: 80%;
+        max-width: 300px;
+    }
+}
+
+/* Large devices: desktops (≥1025px) */
+@media (min-width: 1025px) {
+    .banner .title h1 {
+        font-size: 3rem;
+    }
+
+    .banner .tagline {
+        font-size: 1.2rem;
+    }
 }

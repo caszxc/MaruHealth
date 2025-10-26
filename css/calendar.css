@@ -5,186 +5,183 @@ body::-webkit-scrollbar{
 .container {
     display: flex;
     margin-top: 80px;
-    min-height: calc(100vh - 80px);
+    height: calc(100vh - 80px);
+    overflow: hidden;
 }
 
+.calendar-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+
 .event-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     width: 30%;
     background: linear-gradient(to bottom, #8B0000, #C00000);
     padding: 30px;
     color: white;
-    position: relative;
+    overflow: hidden;
+}
+
+.event-panel .title {
+    text-align: left;
+    padding: 10px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.event-container{
+    flex: 1;
     display: flex;
-    flex-direction: column;
+    overflow: hidden;
+}
+
+.event-wrapper{
+    flex: 1;
+    display: flex;
+    overflow: hidden;
 }
 
 #eventList{
-    flex: 1 1 0;
-    overflow-y: auto;
-    padding-bottom: 30px;
+    flex: 1;
+    overflow-y: auto; /* Enable vertical scrolling for table body */
     scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.event-panel .title{
-    text-align: left;
-    padding: 10px;
+#eventList::-webkit-scrollbar {
+    display: none;
 }
 
 .event-card {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     background: white;
     color: black;
     border-radius: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    gap: 10px;
 }
 
 .event-card img {
     width: 100px;
     height: 100px;
-    border-radius: 5px;
-    margin-right: 10px;
+    border-radius: 8px;
+    object-fit: cover;
 }
 
-.event-card .event-details{
+.event-card .event-details {
     display: flex;
     flex-direction: column;
     flex: 1;
     color: #800000;
+    font-size: 14px;
+}
+
+.event-card .event-details strong {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.event-card .event-details em {
+    font-style: italic;
+    color: #6b7280;
 }
 
 #calendar {
+    flex: 1;
     width: 70%;
     background: white;
     display: flex;
     flex-direction: column;
 }
 
-#calendar table {
+#calendar .calendar-header {
     width: 100%;
-    table-layout: fixed; /* This ensures all columns have equal width */
+    table-layout: fixed;
     border-collapse: collapse;
-    flex-grow: 1;
-}
-
-
-body::-webkit-scrollbar{
-    display: none; /* For Chrome, Safari, and Opera */
-}
-
-.container {
     display: flex;
-    margin-top: 80px;
-    min-height: calc(100vh - 80px);
 }
 
-.event-panel {
-    width: 30%;
-    background: linear-gradient(to bottom, #8B0000, #C00000);
-    padding: 30px;
-    color: white;
-    position: relative;
+#calendar .calendar-body {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    flex: 1;
     display: flex;
-    flex-direction: column;
 }
 
-#eventList{
-    flex: 1 1 0;
-    overflow-y: auto;
-    padding-bottom: 30px;
-    scrollbar-width: none;
-}
-
-.event-panel .title{
-    text-align: left;
-    padding: 10px;
-}
-
-.event-card {
-    display: flex;
-    align-items: center;
-    background: white;
-    color: black;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
-}
-
-.event-card img {
-    width: 100px;
-    height: 100px;
-    border-radius: 5px;
-    margin-right: 10px;
-}
-
-.event-card .event-details{
+#calendar tbody {
     display: flex;
     flex-direction: column;
     flex: 1;
-    color: #800000;
 }
 
-#calendar {
-    width: 70%;
-    background: white;
-    display: flex;
-    flex-direction: column;
-}
 
-#calendar table {
-    width: 100%;
-    table-layout: fixed; /* This ensures all columns have equal width */
-    border-collapse: collapse;
-    flex-grow: 1;
-}
-
-#calendar th{
-    width: 14.28%; /* Exactly 1/7 of the table width */
-    height: 40px; /* Fixed height for table headers */
+#calendar th {
+    flex: 1;
     border: 1px solid #800000;
-    vertical-align: middle; /* Center text vertically */
-    position: relative;
+    vertical-align: middle;
     color: #8B0000;
     font-weight: normal;
     font-size: 18px;
-    box-sizing: border-box; /* Include padding and border in the element's width */
-    text-align: center; /* Center text horizontally */
-    padding: 0; /* Remove padding and control height directly */
-    overflow: hidden; /* Prevent content from breaking layout */
-    white-space: nowrap; /* Prevent text wrapping */
+    box-sizing: border-box;
+    text-align: center;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
+#calendar tr{
+    display: flex;
+    flex: 1;
+}
+
+
 #calendar td {
-    width: 14.28%; /* Exactly 1/7 of the table width */
-    height: 110px;
+    /* width: 14.28%;
+    height: 110px; */
     border: 1px solid #800000;
     vertical-align: top;
     position: relative;
     padding: 5px;
     font-size: 14px;
     text-align: right;
-    cursor: pointer; /* Add cursor pointer to indicate clickable */
-    transition: background-color 0.2s ease-in-out; /* Add smooth transition */
-    box-sizing: border-box; /* Include padding and border in the element's width */
-    overflow: hidden; /* Prevent content from breaking layout */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex: 1;
 }
 
+
 #calendar td:hover {
-    background-color: #ffe6e6; /* Light red on hover */
+    background-color: #ffe6e6;
 }
 
 #calendar td.selected-day {
-    background-color: rgba(139, 0, 0, 0.2); /* Semi-transparent maroon background */
+    background-color: rgba(139, 0, 0, 0.2);
 }
 
 #calendar td.selected-day .day-number {
-    color: #8B0000; /* Make the day number maroon for selected day */
+    color: #8B0000;
     font-weight: bold;
 }
 
+
 .today {
-    background-color: rgba(139, 0, 0, 0.1); /* Light indication for current day */
+    background-color: rgba(139, 0, 0, 0.1);
 }
 
 .day-container {
@@ -213,7 +210,237 @@ body::-webkit-scrollbar{
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: left;
-    width: 100%; /* Take full width of container */
-    max-width: 100%; /* Use container width instead of fixed pixel width */
-    box-sizing: border-box; /* Include padding in width calculation */
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.event-indicator {
+    width: 20px;
+    height: 20px;
+    background: darkred;
+    border-radius: 50%;
+    margin: auto;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Month Navigation */
+.month-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 17px;
+    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
+}
+
+.month-navigation h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #8B0000;
+    min-width: 200px;
+    text-align: center;
+}
+
+.nav-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #8B0000;
+    background: white;
+    border-radius: 50%;
+    font-size: 20px;
+    color: #8B0000;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: #8B0000;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+/* ===== Small screens (phones ≤600px) ===== */
+@media (max-width: 600px) {
+    .container {
+        flex-direction: column-reverse;
+        height: auto;
+        margin-top: 70px;
+    }
+
+    .calendar-container {
+        flex-direction: column-reverse;
+        overflow: visible;
+    }
+
+    /* Calendar section */
+    #calendar {
+        width: 100%;
+        order: 1;
+        overflow-x: auto;
+        padding: 10px;
+    }
+
+    #calendar th {
+        font-size: 13px;
+        padding: 6px 2px;
+    }
+
+    #calendar td {
+        font-size: 12px;
+        height: 80px;
+        padding: 4px;
+    }
+
+    .day-number {
+        font-size: 12px;
+    }
+
+    .event-title {
+        font-size: 10px;
+    }
+
+    /* Month navigation */
+    .month-navigation {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .month-navigation h2 {
+        font-size: 18px;
+        min-width: unset;
+    }
+
+    .nav-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+
+    /* Event panel */
+    .event-panel {
+        width: 100%;
+        order: 2;
+        padding: 20px;
+        box-shadow: 0 -4px 8px rgba(0,0,0,0.2);
+        overflow-y: auto;
+        height: 220px;
+    }
+
+    .event-panel .title {
+        text-align: center;
+        font-size: 1.1rem;
+        padding: 5px 0;
+    }
+
+    #eventList {
+        gap: 10px;
+    }
+
+    .event-card {
+        flex-direction: row;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .event-card img {
+        width: 70px;
+        height: 70px;
+    }
+
+    .event-card .event-details strong {
+        font-size: 14px;
+    }
+
+    .event-card .event-details {
+        font-size: 12px;
+    }
+}
+
+/* ===== Medium screens (tablets 601px–1024px) ===== */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .container {
+        flex-direction: column-reverse;
+        height: auto;
+        margin-top: 75px;
+    }
+
+    .calendar-container {
+        flex-direction: column-reverse;
+        overflow: visible;
+    }
+
+    #calendar {
+        width: 100%;
+        padding: 15px;
+        overflow-x: auto;
+    }
+
+    #calendar th {
+        font-size: 15px;
+    }
+
+    #calendar td {
+        font-size: 13px;
+        height: 90px;
+    }
+
+    .month-navigation h2 {
+        font-size: 20px;
+    }
+
+    .nav-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+    }
+
+    .event-panel {
+        width: 100%;
+        padding: 25px;
+        order: 2;
+        height: 280px;
+        overflow-y: auto;
+    }
+
+    .event-card img {
+        width: 90px;
+        height: 90px;
+    }
+
+    .event-card .event-details {
+        font-size: 13px;
+    }
+}
+
+/* ===== Large screens (desktop ≥1025px) ===== */
+@media (min-width: 1025px) {
+    .container {
+        flex-direction: row;
+        height: calc(100vh - 80px);
+    }
+
+    .calendar-container {
+        flex-direction: row;
+    }
+
+    .event-panel {
+        width: 30%;
+        height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    #calendar {
+        width: 70%;
+        height: 100%;
+    }
 }

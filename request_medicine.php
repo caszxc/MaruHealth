@@ -56,9 +56,14 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
+                <h1>MaruHealth</h1>
                 <p>Barangay Marulas 3S Health Station</p>
             </div>
+        </div>
+
+        <!-- Hamburger Icon for Small Screens -->
+        <div class="menu-toggle" id="menu-toggle">
+            <i class="fa fa-bars"></i>
         </div>
 
         <div class="nav-links">
@@ -82,6 +87,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
     </nav>
 
     <div class="container">
+        <div class="form-desc">
+            <p>Please fill out the form carefully. Your request will still need to be validated. Kindly check your SMS or email for updates on your request status.</p>
+        </div>
+
         <div class="form-box">
             <h1>Medicine Request Form</h1>
 
@@ -148,7 +157,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
 
                     <div id="medicine-group">
                         <div class="row medicine-entry">
-                            <div>
+                            <div class="med-name">
                                 <label>Medicine Name <span class="required"></span></label>
                                 <input type="text" name="medicine_name[]" required autocomplete="off">
                                 <small class="field-hint">Enter the generic or brand name (e.g. Paracetamol, Biogesic)</small>
@@ -287,6 +296,37 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
             }
         });
 
+    </script>
+    <script>
+        // Select the hamburger toggle and navigation links container
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        // Toggle the menu visibility when the hamburger icon is clicked
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            menuToggle.classList.toggle('open');
+
+            // Change icon (bars ↔ close)
+            const icon = menuToggle.querySelector('i');
+            if (menuToggle.classList.contains('open')) {
+                icon.classList.replace('fa-bars', 'fa-times');
+            } else {
+                icon.classList.replace('fa-times', 'fa-bars');
+            }
+        });
+
+        // Optional: close menu when a link is clicked (on mobile)
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    menuToggle.classList.remove('open');
+                    const icon = menuToggle.querySelector('i');
+                    icon.classList.replace('fa-times', 'fa-bars');
+                }
+            });
+        });
     </script>
 </body>
 

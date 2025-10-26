@@ -3,10 +3,21 @@ body::-webkit-scrollbar{
 }
 
 .container {
-    padding-top: 100px;
+    min-height: calc(100vh - 80px);
+    margin-top: 80px;
+    padding: 10px 0;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
     background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+}
+
+.form-desc{
+    color: white;
+    text-align: center;
+    width: 70%;
+    padding: 20px;
 }
 
 .form-box {
@@ -37,6 +48,10 @@ h1 {
 
 .row > div {
     flex: 1;
+}
+
+.row > div.med-name{
+    flex: 2;
 }
 
 .row .file-upload{
@@ -234,4 +249,113 @@ input[type="file"]::file-selector-button:hover {
     margin-top: 4px;
     font-style: italic;
     display: block;
+}
+
+
+/* ============================= */
+/* RESPONSIVE STYLES */
+/* ============================= */
+
+/* ====== Small Devices (≤600px) ====== */
+@media (max-width: 600px) {
+    .container{
+        margin-top: 70px;
+        padding: 0;
+    }
+
+    .form-desc{
+        padding: 10px 0;
+        font-size: 0.8rem;
+    }
+
+    .form-box {
+        width: 100%;
+        padding: 20px;
+    }
+
+    label{
+        font-size: 0.9rem;
+    }
+
+    #medicine-group label{
+        font-size: 0.7rem;
+    }
+
+    .field-hint{
+        font-size: 11px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    .row {
+        gap: 10px;
+    }
+
+    .custom-file-upload {
+        width: 100%;
+        text-align: center;
+    }
+
+    .file-upload {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #file-name {
+        word-break: break-all;
+    }
+
+    .checkbox-label {
+        flex-direction: row;
+        align-items: flex-start;
+        font-size: 13px;
+    }
+
+    .submit-btn {
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+
+    .modal-content {
+        width: 85% !important;
+    }
+}
+
+/* ====== Medium Devices (601px–1024px) ====== */
+@media (min-width: 601px) and (max-width: 1024px) {
+    .form-box {
+        width: 85%;
+        padding: 30px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    .row {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .custom-file-upload {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .submit-btn {
+        font-size: 17px;
+    }
+
+    .modal-content {
+        width: 60% !important;
+    }
+}
+
+/* ====== Large Devices (≥1025px) ====== */
+@media (min-width: 1025px) {
+    .form-box {
+        width: 70%;
+    }
 }

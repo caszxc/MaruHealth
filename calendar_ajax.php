@@ -1,4 +1,5 @@
 <?php
+//calendar_ajax.php
 include 'config.php';
 
 $month = intval($_GET['month']);

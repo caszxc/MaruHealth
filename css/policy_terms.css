@@ -85,3 +85,101 @@ body::-webkit-scrollbar{
     margin-top: 30px;
     font-style: italic;
 }
+
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+/* ===== Small Screens (phones ≤600px) ===== */
+@media (max-width: 600px) {
+    .address-contact p {
+        font-size: 10px;
+    }
+
+    .address-contact {
+        padding: 5px;
+    }
+
+    .container{
+        margin-top: 70px;
+    }
+
+    .policy-terms {
+        padding: 0 15px 30px;
+    }
+
+    .breadcrumb {
+        font-size: 12px;
+        padding: 5px 0;
+    }
+
+    .policy-terms .title {
+        font-size: 1.8rem;
+        margin: 15px 0;
+    }
+
+    .policy-terms-container {
+        flex-direction: column;
+        padding: 25px 20px;
+        gap: 10px;
+    }
+
+    .policy-content {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .policy-content .section-title {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    .policy-content ol {
+        padding-left: 15px;
+        gap: 10px;
+    }
+
+    .policy-content ul {
+        padding-left: 20px;
+    }
+
+    .policy-content li {
+        margin-bottom: 6px;
+    }
+}
+
+/* ===== Medium Screens (tablets 601px–1024px) ===== */
+@media (min-width: 601px) and (max-width: 1024px) {
+
+    .policy-terms {
+        padding: 0 30px 40px;
+    }
+
+    .policy-terms .title {
+        font-size: 2.3rem;
+    }
+
+    .policy-terms-container {
+        flex-direction: column;
+        padding: 40px 40px;
+    }
+
+    .policy-content {
+        font-size: 1.2rem;
+        line-height: 1.6;
+    }
+
+    .policy-content .section-title {
+        font-size: 1.6rem;
+    }
+}
+
+/* ===== Large Screens (desktop ≥1025px) ===== */
+@media (min-width: 1025px) {
+    .policy-terms-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+}
+

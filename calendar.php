@@ -39,45 +39,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <title>Calendar</title>
     <link rel="stylesheet" href="css/calendar.css">
     <link rel="stylesheet" href="css/nav_footer.css">
-
-    <style>
-        .month-navigation {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            padding: 17px;
-            box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3); /* Only bottom shadow */
-        }
-
-        .month-navigation h2 {
-            font-size: 24px;
-            font-weight: bold;
-            color: #8B0000;
-            min-width: 200px;
-            text-align: center
-        }
-
-        .nav-btn {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #8B0000;
-            background: white;
-            border-radius: 50%;
-            font-size: 20px;
-            color: #8B0000;
-            cursor: pointer;
-            transition: 0.3s ease-in-out;
-        }
-
-        .nav-btn:hover {
-            background: #8B0000;
-            color: white;
-        }
-    </style>
 
     <script>
         function loadCalendar(month, year) {
@@ -202,9 +167,14 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
+                <h1>MaruHealth</h1>
                 <p>Barangay Marulas 3S Health Station</p>
             </div>
+        </div>
+
+        <!-- Hamburger Icon for Small Screens -->
+        <div class="menu-toggle" id="menu-toggle">
+            <i class="fa fa-bars"></i>
         </div>
 
         <div class="nav-links">
@@ -227,23 +197,60 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         </div>
     </nav>
 
-    <div class="container">
-        <aside class="event-panel">
-            <h2 id="selectedDate" style="text-align: center;" ></h2>
-            <hr>
-            <h3 class="title">Events</h3>
-            <div id="eventList">
-                <!-- Events load dynamically here -->
-            </div>
-        </aside>
+   <div class="container">
+        <div class="calendar-container">
+            <aside class="event-panel">
+                <div class="event-header">
+                    <h2 id="selectedDate" style="text-align: center;"></h2>
+                    <hr>
+                    <h3 class="title">Events</h3>
+                </div>
+                
+                <div class="event-container">
+                    <div class="event-wrapper">
+                        <div id="eventList"></div>
+                    </div>
+                </div>
+            </aside>
 
-        <main id="calendar">
-            <!-- Calendar loads dynamically here -->
-        </main>
+            <main id="calendar"></main>
+        </div>
     </div>
 
     <input type="hidden" id="currentMonth" value="<?= $month ?>">
     <input type="hidden" id="currentYear" value="<?= $year ?>">
+
+    <script>
+        // Select the hamburger toggle and navigation links container
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        // Toggle the menu visibility when the hamburger icon is clicked
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            menuToggle.classList.toggle('open');
+
+            // Change icon (bars ↔ close)
+            const icon = menuToggle.querySelector('i');
+            if (menuToggle.classList.contains('open')) {
+                icon.classList.replace('fa-bars', 'fa-times');
+            } else {
+                icon.classList.replace('fa-times', 'fa-bars');
+            }
+        });
+
+        // Optional: close menu when a link is clicked (on mobile)
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    menuToggle.classList.remove('open');
+                    const icon = menuToggle.querySelector('i');
+                    icon.classList.replace('fa-times', 'fa-bars');
+                }
+            });
+        });
+    </script>
     
 </body>
 </html>

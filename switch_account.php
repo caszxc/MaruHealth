@@ -63,68 +63,11 @@ if (isset($_GET['switch_to'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Switch Account</title>
     <link rel="stylesheet" href="css/nav_footer.css">
-    <link rel="stylesheet" href="">
+    <link rel="stylesheet" href="css/switch_account.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        .switch-account-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            margin-top: 80px;
-            height: calc(100vh - 80px);
-        }
-        .page-title{
-            color: #8b0000;
-            font-size: 3rem;
-            margin: 20px;
-        }
-        .account-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            height: 100%;
-        }
-        .account-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-around;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 20px;
-            width: 300px;
-            text-align: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .account-card:hover {
-            background-color: #f2f2f2;
-        }
-        .account-card img {
-            width: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 10px;
-        }
-        .account-card p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        .account-card .name {
-            font-weight: bold;
-        }
-        .error-message {
-            color: #FF0000;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
 <body>
     <nav>
@@ -138,7 +81,10 @@ if (isset($_GET['switch_to'])) {
     </nav>
 
     <div class="switch-account-container">
-        <h2 class="page-title">Switch Account</h2>
+        <div class="switch-header">
+            <h2 class="page-title">Switch Account</h2>
+            <p class="page-subtitle">Choose which account to use. Tap or click an account below to switch between the primary and dependent profiles.</p>
+        </div>
         <?php if (isset($error)): ?>
             <div class="error-message"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>

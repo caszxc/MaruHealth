@@ -79,7 +79,6 @@ try {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Home</title>
 </head>
@@ -88,9 +87,14 @@ try {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
+                <h1>MaruHealth</h1>
                 <p>Barangay Marulas 3S Health Station</p>
             </div>
+        </div>
+
+        <!-- Hamburger Icon for Small Screens -->
+        <div class="menu-toggle" id="menu-toggle">
+            <i class="fa fa-bars"></i>
         </div>
 
         <div class="nav-links">
@@ -126,7 +130,7 @@ try {
             </div>
             <div class="announcement-event">
                 <div class="announcement" data-aos="fade-up" data-aos-delay="600">
-                    <h3 style="text-align: center; color: #800000;">Latest Announcement</h3>
+                    <h3>Latest Announcement</h3>
                     <?php if (!empty($announcements)): ?>
                         <?php 
                             $latest = $announcements[0]; // Get only the first announcement 
@@ -160,8 +164,8 @@ try {
                                  class="event-image">
                             <div class="event-details">
                                 <h3 style="color: #800000;"><?= htmlspecialchars($latest['title']); ?></h3>
-                                <p><?= date("F j, Y", strtotime($latest['event_date'])); ?> - <?= date("g:i A", strtotime($latest['start'])); ?> - <?= date("g:i A", strtotime($latest['end'])); ?></p>
-                                <p></p>
+                                <p><?= date("F j, Y", strtotime($latest['event_date'])); ?></p>
+                                <p><?= date("g:i A", strtotime($latest['start'])); ?> - <?= date("g:i A", strtotime($latest['end'])); ?></p>
                                 <p><?= htmlspecialchars($latest['venue']); ?></p>
                             </div>
                         </div>
@@ -173,8 +177,10 @@ try {
                 </div>
 
                 <div class="open-hours" data-aos="fade-up" data-aos-delay="900">
-                    <h3 style="text-align: center; color: #800000;">Open Hours and Schedules</h3>
-                    <p style="text-align: center;">Barangay Marulas 3S Health Center is open Monday to Friday.<br><br>8:00AM - 6:00PM</p>
+                    <h3>Open Hours and Schedules</h3>
+                    <div class="open-hours-banner">
+                        <p style="text-align: center;">Barangay Marulas 3S Health Center is open Monday to Friday.<br><br>8:00AM - 6:00PM</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -300,6 +306,38 @@ try {
 
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
     <script>
+        // Select the hamburger toggle and navigation links container
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        // Toggle the menu visibility when the hamburger icon is clicked
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            menuToggle.classList.toggle('open');
+
+            // Change icon (bars ↔ close)
+            const icon = menuToggle.querySelector('i');
+            if (menuToggle.classList.contains('open')) {
+                icon.classList.replace('fa-bars', 'fa-times');
+            } else {
+                icon.classList.replace('fa-times', 'fa-bars');
+            }
+        });
+
+        // Optional: close menu when a link is clicked (on mobile)
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    menuToggle.classList.remove('open');
+                    const icon = menuToggle.querySelector('i');
+                    icon.classList.replace('fa-times', 'fa-bars');
+                }
+            });
+        });
+    </script>
+
+    <script>
         AOS.init({
             duration: 1000, // duration of animation in ms
             once: true      // whether animation should happen only once
@@ -315,6 +353,6 @@ try {
             });
         });
     </script>
-    
+
 </body>
 </html>

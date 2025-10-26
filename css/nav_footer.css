@@ -22,9 +22,7 @@ nav {
     height: 80px; /* Adjust as needed */
     z-index: 1000; /* Ensures it stays above other content */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
-
 }
-
 
 .logo-container{
     display: flex;
@@ -49,6 +47,13 @@ nav {
 .logo-container div p {
     color: white;
     font-size: 11px;
+}
+
+.menu-toggle {
+  display: none;
+  color: white;
+  font-size: 26px;
+  cursor: pointer;
 }
 
 .nav-links{
@@ -196,6 +201,126 @@ footer {
     text-decoration: underline;
 }
   
+@media (max-width: 1024px) {
+  .nav-links ul {
+    gap: 10px;
+  }
+
+  .logo-container img {
+    height: 60px;
+  }
+
+  .logo-container div h1 {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  nav {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    width: 100%;
+    background-color: #800000;
+    text-align: center;
+  }
+
+  .nav-links ul {
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    padding: 10px 0;
+  }
+
+  .nav-links ul li {
+    width: 100%;
+    padding: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .nav-links ul li a {
+    width: 100%;
+    padding: 5px;
+  }
+
+  .nav-links.active {
+    display: flex;
+  }
+
+  .logo-container {
+    justify-content: space-between;
+  }
+
+  .nav-profile-pic {
+    width: 40px;
+    height: 40px;
+  }
+
+  .login-button {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .footer-logo {
+    width: 120px;
+    height: 120px;
+  }
+
+  .footer-logo-section h3 {
+    font-size: 1.5rem;
+  }
+
+  .footer-text p {
+    font-size: 16px;
+  }
+
+  .footer-links h4 {
+    margin-top: 15px;
+    font-size: 18px;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    padding: 15px 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .logo-container img {
+    height: 50px;
+  }
+
+  .logo-container div h1 {
+    font-size: 18px;
+  }
+
+  .logo-container div p {
+    font-size: 10px;
+  }
+
+  .menu-toggle {
+    font-size: 22px;
+  }
+}
 
   
 

@@ -1,7 +1,46 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Istok Web";
+}
+
 nav {
-    background-color: transparent !important; 
-    box-shadow: none !important;
-    position: absolute !important;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    position: absolute; /* Keeps it fixed on top */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px; /* Adjust as needed */
+    z-index: 1000; /* Ensures it stays above other content */
+}
+
+.logo-container{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-container img {
+    height: 70px; 
+}
+
+.logo-container div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-container div h1{
+    color: white;
+}
+
+.logo-container div p {
+    color: white;
+    font-size: 11px;
 }
 
 .register-container {

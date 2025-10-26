@@ -15,6 +15,7 @@ $requests = []; // default to empty
 $patient = null; // linked patient record (if any)
 $consultations = []; // patient's consultation history
 $dependents = []; // dependents list
+$pending_dependents = [];
 
 // Fetch user details for the active user (primary or dependent)
 $sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture, family_number, primary_user_id 
@@ -42,6 +43,17 @@ if (!$is_dependent) {
     $stmt->bindParam(':primary_user_id', $primary_user_id, PDO::PARAM_INT);
     $stmt->execute();
     $dependents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+if (!$is_dependent) {
+    $sql = "SELECT pu.id, pu.first_name, pu.last_name, pu.middle_name, pu.birthday, pdr.relationship 
+            FROM pending_users pu 
+            JOIN pending_dependent_relationships pdr ON pu.id = pdr.dependent_user_id 
+            WHERE pdr.primary_user_id = :primary_user_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':primary_user_id', $primary_user_id, PDO::PARAM_INT);
+    $stmt->execute();
+    $pending_dependents = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Fetch medicine requests for the active user
@@ -91,9 +103,14 @@ try {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
+                <h1>MaruHealth</h1>
                 <p>Barangay Marulas 3S Health Station</p>
             </div>
+        </div>
+
+        <!-- Hamburger Icon for Small Screens -->
+        <div class="menu-toggle" id="menu-toggle">
+            <i class="fa fa-bars"></i>
         </div>
 
         <div class="nav-links">
@@ -128,16 +145,18 @@ try {
                     </button>
                 </div>
                 <p class="full-name"><?php echo htmlspecialchars($user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']); ?></p>
-                <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
-                <?php if ($is_dependent): ?>
-                    <a href="switch_account.php" class="switch-acc-btn">Switch Account</a>
-                <?php endif; ?>
-                <?php if (!$is_dependent): ?>
-                    <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
-                <?php endif; ?>
-                <form action="logout.php" method="POST">
-                    <button type="submit" class="logout-button">Log Out</button>
-                </form>
+                <div class="buttons-profile">
+                    <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
+                    <?php if ($is_dependent): ?>
+                        <a href="switch_account.php" class="switch-acc-btn">Switch Account</a>
+                    <?php endif; ?>
+                    <?php if (!$is_dependent): ?>
+                        <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
+                    <?php endif; ?>
+                    <form action="logout.php" method="POST">
+                        <button type="submit" class="logout-button">Log Out</button>
+                    </form>
+                </div>
             </div>
 
             <div class="profile-info">
@@ -241,9 +260,9 @@ try {
                                             <?php
                                                 $statusColors = [
                                                     'claimed' => 'style="background-color: #28a745; color: white;"',
-                                                    'pending' => 'style="background-color: #bbb; color: white;"',
+                                                    'pending' => 'style="background-color: #ffc107; color: white;"',
                                                     'declined' => 'style="background-color: #dc3545; color: white;"',
-                                                    'to be claimed' => 'style="background-color: #ffc107; color: white;"',
+                                                    'to be claimed' => 'style="background-color: #17a2b8; color: white;"',
                                                     'cancelled' => 'style="background-color: #6c757d; color: white;"'
                                                 ];
                                             ?>
@@ -259,9 +278,9 @@ try {
                                                     <td><span class="status-badge" <?= $colorStyle ?>><?= ucfirst($status) ?></span></td>
                                                     <td>
                                                         <div class="button-container">
-                                                            <button class="view-btn" data-id="<?= $request['id'] ?>" onclick="viewRequest(this)">View Request</button>
+                                                            <button class="view-btn" data-id="<?= $request['id'] ?>" onclick="viewRequest(this)">View</button>
                                                             <?php if (in_array($status, ['pending', 'to be claimed'])): ?>
-                                                            <button class="cancel-request-btn" data-id="<?= $request['id'] ?>" onclick="openCancelRequestModal(this)">Cancel Request</button>
+                                                            <button class="cancel-request-btn" data-id="<?= $request['id'] ?>" onclick="openCancelRequestModal(this)">Cancel</button>
                                                             <?php endif; ?>
                                                         </div>
                                                     </td>
@@ -338,35 +357,67 @@ try {
 
                     <!-- Dependents Tab -->
                     <?php if (!$is_dependent): ?>
-                        <div id="dependents" class="tab-content" style="display: none;">
-                            <div class="dependents-con">
-                                <div class="dependents-header">
-                                    <button class="add-dependent-btn" onclick="openAddDependentModal()">Add Dependent</button>
+                    <div id="dependents" class="tab-content" style="display: none;">
+                        <div class="dependents-con">
+                            <div class="dependents-header">
+                                <div>
+                                    <p class="dependents-desc">Add dependent accounts for family members who are incapable of managing their own, such as children, seniors, or persons with disabilities (PWD). These dependent accounts will use your registered contact number, email and password for login, notifications, and other communications.</p>
                                 </div>
-                                <div class="table-container">
+                                <button class="add-dependent-btn" onclick="openAddDependentModal()">Add Dependent</button>
+                            </div>
+                            <div class="table-container">
+                                <div class="table-wrapper">
                                     <table>
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
                                                 <th>Relationship</th>
                                                 <th>Date of Birth</th>
+                                                <th>Status</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($dependents as $dependent): ?>
+                                            <?php if (empty($dependents) && empty($pending_dependents)): ?>
                                                 <tr>
-                                                    <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
-                                                    <td><?= htmlspecialchars($dependent['relationship']) ?></td>
-                                                    <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
-                                                    <td><button class="switch-account-btn" onclick="switchAccount(<?= $dependent['id'] ?>)">Switch to Account</button></td>
+                                                    <td colspan="5" style="text-align: center;">No dependents found</td>
                                                 </tr>
-                                            <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <!-- Approved Dependents -->
+                                                <?php foreach ($dependents as $dependent): ?>
+                                                    <tr>
+                                                        <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
+                                                        <td><?= htmlspecialchars($dependent['relationship']) ?></td>
+                                                        <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
+                                                        <td><span class="status-badge" style="background-color: #28a745; color: white;">Approved</span></td>
+                                                        <td>
+                                                            <div class="button-container">
+                                                                <button class="switch-account-btn" onclick="switchAccount(<?= $dependent['id'] ?>)">Switch</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                                <!-- Pending Dependents -->
+                                                <?php foreach ($pending_dependents as $pending_dependent): ?>
+                                                    <tr>
+                                                        <td><?= htmlspecialchars($pending_dependent['first_name'] . ' ' . $pending_dependent['middle_name'] . ' ' . $pending_dependent['last_name']) ?></td>
+                                                        <td><?= htmlspecialchars($pending_dependent['relationship']) ?></td>
+                                                        <td><?= htmlspecialchars(date('F j, Y', strtotime($pending_dependent['birthday']))) ?></td>
+                                                        <td><span class="status-badge" style="background-color: #ffc107; color: white;">Pending</span></td>
+                                                        <td>
+                                                            <div class="button-container">
+                                                                <button class="cancel-dependent-btn" data-id="<?= $pending_dependent['id'] ?>" onclick="openCancelDependentModal(this)">Cancel</button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
+                    </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -401,57 +452,59 @@ try {
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
             <h2>Edit Profile</h2>
-            <form id="editProfileForm" action="update_profile.php" method="POST">
-                <input type="hidden" name="active_user_id" value="<?= htmlspecialchars($active_user_id) ?>">
-                <div class="group-row">
-                    <div class="group-col">
-                        <label for="first_name">First Name <span class="required">*</span></label>
-                        <input type="text" id="first_name" name="first_name" value="<?= htmlspecialchars($user['first_name']) ?>" required>
+            <div class="error-message" id="editProfileError"></div>
+            <div class="form-scroll">
+                <form id="editProfileForm" action="update_profile.php" method="POST">
+                    <input type="hidden" name="active_user_id" value="<?= htmlspecialchars($active_user_id) ?>">
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label for="first_name">First Name <span class="required">*</span></label>
+                            <input type="text" id="first_name" name="first_name" value="<?= htmlspecialchars($user['first_name']) ?>" required>
+                        </div>
+                        <div class="group-col">
+                            <label for="last_name">Last Name <span class="required">*</span></label>
+                            <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($user['last_name']) ?>" required>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label for="middle_name">Middle Name <span class="required">*</span></label>
+                            <input type="text" id="middle_name" name="middle_name" value="<?= htmlspecialchars($user['middle_name']) ?>" required>
+                        </div>
+                        <div class="group-col">
+                            <label for="gender">Gender <span class="required">*</span></label>
+                            <select id="gender" name="gender" required>
+                                <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="group-col">
-                        <label for="last_name">Last Name <span class="required">*</span></label>
-                        <input type="text" id="last_name" name="last_name" value="<?= htmlspecialchars($user['last_name']) ?>" required>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label for="middle_name">Middle Name <span class="required">*</span></label>
-                        <input type="text" id="middle_name" name="middle_name" value="<?= htmlspecialchars($user['middle_name']) ?>" required>
+                        <label for="birthday">Date of Birth <span class="required">*</span></label>
+                        <input type="date" id="birthday" name="birthday" value="<?= htmlspecialchars($user['birthday']) ?>" required>
                     </div>
                     <div class="group-col">
-                        <label for="gender">Gender <span class="required">*</span></label>
-                        <select id="gender" name="gender" required>
-                            <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-                            <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
-                        </select>
+                        <label for="address">Address <span class="required">*</span></label>
+                        <input type="text" id="address" name="address" value="<?= htmlspecialchars($user['address']) ?>" required>
                     </div>
-                </div>
-                <div class="group-col">
-                    <label for="birthday">Date of Birth <span class="required">*</span></label>
-                    <input type="date" id="birthday" name="birthday" value="<?= htmlspecialchars($user['birthday']) ?>" required>
-                </div>
-                <div class="group-col">
-                    <label for="address">Address <span class="required">*</span></label>
-                    <input type="text" id="address" name="address" value="<?= htmlspecialchars($user['address']) ?>" required>
-                </div>
-                <?php if (!$is_dependent): ?>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label for="phone_number">Phone Number <span class="required">*</span></label>
-                        <input type="text" id="phone_number" name="phone_number" value="<?= htmlspecialchars($user['phone_number']) ?>" required>
+                    <?php if (!$is_dependent): ?>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label for="phone_number">Phone Number <span class="required">*</span></label>
+                            <input type="text" id="phone_number" name="phone_number" value="<?= htmlspecialchars($user['phone_number']) ?>" required>
+                        </div>
+                        <div class="group-col">
+                            <label for="email">Email Address <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
+                        </div>
                     </div>
-                    <div class="group-col">
-                        <label for="email">Email Address <span class="required">*</span></label>
-                        <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
-                    </div>
-                </div>
-                <?php endif; ?>
-                <div class="error-message" id="editProfileError"></div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeEditProfileModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
-                </div>
-            </form>
+                    <?php endif; ?>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeEditProfileModal()">Cancel</button>
+                <button type="submit"  form="editProfileForm" class="save-btn">Save</button>
+            </div>
         </div>
     </div>
 
@@ -460,6 +513,7 @@ try {
     <div id="changePasswordModal" class="modal">
         <div class="modal-content">
             <h2>Change Password</h2>
+            <div class="error-message" id="changePasswordError"></div>
             <form id="changePasswordForm" action="change_password.php" method="POST">
                 <div class="group-col">
                     <label for="current_password">Current Password <span class="required">*</span></label>
@@ -473,7 +527,6 @@ try {
                     <label for="confirm_password">Confirm New Password <span class="required">*</span></label>
                     <input type="password" id="confirm_password" name="confirm_password" required>
                 </div>
-                <div class="error-message" id="changePasswordError"></div>
                 <div class="modal-footer">
                     <button type="button" class="cancel-btn" onclick="closeChangePasswordModal()">Cancel</button>
                     <button type="submit" class="save-btn">Save</button>
@@ -488,76 +541,78 @@ try {
     <div id="addDependentModal" class="modal">
         <div class="modal-content">
             <h2>Add Dependent</h2>
-            <form id="addDependentForm" action="add_dependent.php" method="POST" enctype="multipart/form-data">
-                <div class="group-row">
-                    <div class="group-col">
-                        <label for="dep_first_name">First Name <span class="required">*</span></label>
-                        <input type="text" id="dep_first_name" name="first_name" required>
+            <div class="error-message" id="addDependentError"></div>
+            <div class="form-scroll">
+                <form id="addDependentForm" action="add_dependent.php" method="POST" enctype="multipart/form-data">
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label for="dep_first_name">First Name <span class="required">*</span></label>
+                            <input type="text" id="dep_first_name" name="first_name" required>
+                        </div>
+                        <div class="group-col">
+                            <label for="dep_last_name">Last Name <span class="required">*</span></label>
+                            <input type="text" id="dep_last_name" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label for="dep_middle_name">Middle Name</label>
+                            <input type="text" id="dep_middle_name" name="middle_name">
+                        </div>
+                        <div class="group-col">
+                            <label for="dep_gender">Gender <span class="required">*</span></label>
+                            <select id="dep_gender" name="gender" required>
+                                <option value="" disabled selected>Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="group-col">
-                        <label for="dep_last_name">Last Name <span class="required">*</span></label>
-                        <input type="text" id="dep_last_name" name="last_name" required>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label for="dep_middle_name">Middle Name</label>
-                        <input type="text" id="dep_middle_name" name="middle_name">
+                        <label for="dep_birthday">Date of Birth <span class="required">*</span></label>
+                        <input type="date" id="dep_birthday" name="birthday" required>
                     </div>
                     <div class="group-col">
-                        <label for="dep_gender">Gender <span class="required">*</span></label>
-                        <select id="dep_gender" name="gender" required>
-                            <option value="" disabled selected>Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
+                        <label for="dep_address">Address <span class="required">*</span></label>
+                        <input type="text" id="dep_address" name="address" required value="<?= htmlspecialchars($user['address']) ?>">
+                    </div>
+                    <div class="group-col">
+                        <label for="dep_relationship">Relationship to You <span class="required">*</span></label>
+                        <select id="dep_relationship" name="relationship" required>
+                            <option value="" disabled selected>Select Relationship</option>
+                            <option value="Child">Child</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Grandparent">Grandparent</option>
+                            <option value="Sibling">Sibling</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
-                </div>
-                <div class="group-col">
-                    <label for="dep_birthday">Date of Birth <span class="required">*</span></label>
-                    <input type="date" id="dep_birthday" name="birthday" required>
-                </div>
-                <div class="group-col">
-                    <label for="dep_address">Address <span class="required">*</span></label>
-                    <input type="text" id="dep_address" name="address" required value="<?= htmlspecialchars($user['address']) ?>">
-                </div>
-                <div class="group-col">
-                    <label for="dep_relationship">Relationship to You <span class="required">*</span></label>
-                    <select id="dep_relationship" name="relationship" required>
-                        <option value="" disabled selected>Select Relationship</option>
-                        <option value="Child">Child</option>
-                        <option value="Parent">Parent</option>
-                        <option value="Grandparent">Grandparent</option>
-                        <option value="Sibling">Sibling</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="group-col">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="dep_hasFamilyNumber" name="hasFamilyNumber">
-                        I know their family number
-                    </label>
-                </div>
-                <div class="group-col" id="dep_familyNumberContainer" style="display: none;">
-                    <label for="dep_familyNumber">Family Number</label>
-                    <input type="text" id="dep_familyNumber" name="familyNumber">
-                    <small class="field-hint">Enter their family number (letters, numbers, and hyphens only)</small>
-                </div>
-                <div class="group-col">
-                    <label>Upload Valid ID <span class="required">*</span></label>
-                    <div class="file-upload">
-                        <label for="dep_validID_front">Add File</label>
-                        <input type="file" id="dep_validID_front" name="validID_front" accept="image/jpeg,image/png" required>
-                        <span class="file-name" id="dep_file_name">No file chosen</span>
+                    <div class="group-col">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="dep_hasFamilyNumber" name="hasFamilyNumber">
+                            I know their family number
+                        </label>
                     </div>
-                    <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
-                </div>
-                <div class="error-message" id="addDependentError"></div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeAddDependentModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Add Dependent</button>
-                </div>
-            </form>
+                    <div class="group-col" id="dep_familyNumberContainer" style="display: none;">
+                        <label for="dep_familyNumber">Family Number</label>
+                        <input type="text" id="dep_familyNumber" name="familyNumber">
+                        <small class="field-hint">Enter their family number (letters, numbers, and hyphens only)</small>
+                    </div>
+                    <div class="group-col">
+                        <label>Upload Valid ID <span class="required">*</span></label>
+                        <div class="file-upload">
+                            <label for="dep_validID_front">Add File</label>
+                            <input type="file" id="dep_validID_front" name="validID_front" accept="image/jpeg,image/png" required>
+                            <span class="file-name" id="dep_file_name">No file chosen</span>
+                        </div>
+                        <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeAddDependentModal()">Cancel</button>
+                <button type="submit" form="addDependentForm" class="save-btn">Add Dependent</button>
+            </div>
         </div>
     </div>
     <?php endif; ?>
@@ -566,62 +621,64 @@ try {
     <div id="viewConsultationModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Consultation Details</h2>
-            <div class="consultation-container">
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Type of Consultation</label>
-                        <input type="text" id="view_consultation_type" readonly>
+            <div class="form-scroll">
+                <div class="consultation-container">
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Type of Consultation</label>
+                            <input type="text" id="view_consultation_type" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Date of Consultation</label>
+                            <input type="text" id="view_consultation_date" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Reason for Consultation</label>
+                            <input type="text" id="view_reason_for_consultation" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Blood Pressure</label>
+                            <input type="text" id="view_blood_pressure" readonly>
+                        </div>
+                        <div class="group-col">
+                            <label>Temperature</label>
+                            <input type="text" id="view_temperature" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Diagnosis</label>
+                            <input type="text" id="view_diagnosis" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Prescribed Medicine</label>
+                            <input type="text" id="view_prescribed_medicine" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Treatment Given</label>
+                            <input type="text" id="view_treatment_given" readonly>
+                        </div>
+                    </div>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Consulting Physician/Nurse</label>
+                            <input type="text" id="view_consulting_physician_nurse" readonly>
+                        </div>
                     </div>
                 </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Date of Consultation</label>
-                        <input type="text" id="view_consultation_date" readonly>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Reason for Consultation</label>
-                        <input type="text" id="view_reason_for_consultation" readonly>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Blood Pressure</label>
-                        <input type="text" id="view_blood_pressure" readonly>
-                    </div>
-                    <div class="group-col">
-                        <label>Temperature</label>
-                        <input type="text" id="view_temperature" readonly>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Diagnosis</label>
-                        <input type="text" id="view_diagnosis" readonly>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Prescribed Medicine</label>
-                        <input type="text" id="view_prescribed_medicine" readonly>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Treatment Given</label>
-                        <input type="text" id="view_treatment_given" readonly>
-                    </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Consulting Physician/Nurse</label>
-                        <input type="text" id="view_consulting_physician_nurse" readonly>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="document.getElementById('viewConsultationModal').classList.remove('show')">Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="document.getElementById('viewConsultationModal').classList.remove('show')">Close</button>
             </div>
         </div>
     </div>
@@ -630,83 +687,85 @@ try {
     <div id="viewRequestModal" class="modal"> 
         <div class="modal-content">
             <h2>Request Medicine Details</h2>
-            <div class="modal-container">
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Request ID</label>
-                        <span id="requestId"></span>
+            <div class="form-scroll">
+                <div class="modal-container">
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Request ID</label>
+                            <span id="requestId"></span>
+                        </div>
                     </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Request Status</label>
-                        <span id="requestStatus"></span>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Request Status</label>
+                            <span id="requestStatus"></span>
+                        </div>
                     </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Patient's Full Name</label>
-                        <span id="req_fullName"></span>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Patient's Full Name</label>
+                            <span id="req_fullName"></span>
+                        </div>
                     </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Sex</label>
-                        <span id="req_sex"></span>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Sex</label>
+                            <span id="req_sex"></span>
+                        </div>
+                        <div class="group-col">
+                            <label>Birthdate</label>
+                            <span id="req_birthdate"></span>
+                        </div>
+                        <div class="group-col">
+                            <label>Contact Number</label>
+                            <span id="req_phone"></span>
+                        </div>
                     </div>
-                    <div class="group-col">
-                        <label>Birthdate</label>
-                        <span id="req_birthdate"></span>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Address</label>
+                            <span id="req_address"></span>
+                        </div>
                     </div>
-                    <div class="group-col">
-                        <label>Contact Number</label>
-                        <span id="req_phone"></span>
+                    <div id="medicine-group">
+                        <label>Requested Medicines</label>
                     </div>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Address</label>
-                        <span id="req_address"></span>
+                    <div class="group-row">
+                        <div class="group-col">
+                            <label>Reason for Request</label>
+                            <span id="req_reason"></span>
+                        </div>
                     </div>
-                </div>
-                <div id="medicine-group">
-                    <label>Requested Medicines</label>
-                </div>
-                <div class="group-row">
-                    <div class="group-col">
-                        <label>Reason for Request</label>
-                        <span id="req_reason"></span>
+                    <div class="prescription-preview">
+                        <div class="group-col">
+                            <label>Prescription</label>
+                            <img id="prescriptionImg" src="" alt="Prescription Image">
+                        </div>
                     </div>
-                </div>
-                <div class="prescription-preview">
-                    <div class="group-col">
-                        <label>Prescription</label>
-                        <img id="prescriptionImg" src="" alt="Prescription Image">
+                    <div id="claim-info" style="display: none;">
+                        <div class="claim-container">
+                            <div>
+                                <label>Claim Information</label>
+                                <div class="claim-details">
+                                    <p><strong>Claim Date:</strong> <span id="claimDate"></span></p>
+                                    <p><strong>Claim Until:</strong> <span id="claimUntil"></span></p>
+                                    <p><strong>Claimed Date:</strong> <span id="claimedDate"></span></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div id="claim-info" style="display: none;">
-                    <div class="claim-container">
-                        <div>
-                            <label>Claim Information</label>
-                            <div class="claim-details">
-                                <p><strong>Claim Date:</strong> <span id="claimDate"></span></p>
-                                <p><strong>Claim Until:</strong> <span id="claimUntil"></span></p>
-                                <p><strong>Claimed Date:</strong> <span id="claimedDate"></span></p>
+                    <div id="note-info" style="display: none;">
+                        <div class="group-row">
+                            <div class="group-col">
+                                <label>Note</label>
+                                <span id="req_note"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="note-info" style="display: none;">
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Note</label>
-                            <span id="req_note"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeViewModal()">Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeViewModal()">Close</button>
             </div>
         </div>
     </div>
@@ -719,6 +778,18 @@ try {
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeCancelRequestModal()">Cancel</button>
                 <button type="button" class="confirm-btn" id="confirmCancelBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Dependent Confirmation Modal -->
+    <div id="cancelDependentModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Cancellation</h2>
+            <p>Are you sure you want to cancel this pending dependent account?</p>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeCancelDependentModal()">Cancel</button>
+                <button type="button" class="confirm-btn" id="confirmCancelDependentBtn">Confirm</button>
             </div>
         </div>
     </div>
@@ -788,7 +859,7 @@ try {
                     errorDiv.style.color = "#28a745"; // Green for success
                     setTimeout(() => {
                         location.reload(); // Reload to reflect new dependent
-                    }, 1500);
+                    }, 1700);
                 } else {
                     errorDiv.style.color = "#FF0000"; // Red for error
                 }
@@ -837,7 +908,7 @@ try {
                     errorDiv.style.color = "#28a745"; // Green for success
                     setTimeout(() => {
                         closeChangePasswordModal();
-                    }, 1500);
+                    }, 1700);
                 } else {
                     errorDiv.style.color = "#FF0000"; // Red for error
                 }
@@ -876,7 +947,7 @@ try {
                     errorDiv.style.color = "#28a745"; // Green for success
                     setTimeout(() => {
                         location.reload(); // Reload to reflect updated profile data
-                    }, 1500);
+                    }, 1700);
                 } else {
                     errorDiv.style.color = "#FF0000"; // Red for error
                 }
@@ -921,7 +992,7 @@ try {
                     errorDiv.style.color = "#28a745"; // Green for success
                     setTimeout(() => {
                         location.reload(); // Reload to reflect updated profile picture
-                    }, 1500);
+                    }, 1700);
                 } else {
                     errorDiv.style.color = "#FF0000"; // Red for error
                 }
@@ -1083,6 +1154,80 @@ try {
                 })
                 .catch(() => alert('Failed to load consultation details.'));
         }
+
+        function openCancelDependentModal(button) {
+            const dependentId = button.getAttribute('data-id');
+            const modal = document.getElementById("cancelDependentModal");
+            const confirmBtn = document.getElementById("confirmCancelDependentBtn");
+            confirmBtn.setAttribute('data-id', dependentId);
+            modal.classList.add("show");
+        }
+
+        function closeCancelDependentModal() {
+            document.getElementById("cancelDependentModal").classList.remove("show");
+            const confirmBtn = document.getElementById("confirmCancelDependentBtn");
+            confirmBtn.removeAttribute('data-id');
+        }
+
+        function cancelDependent(dependentId) {
+            fetch(`cancel_pending_dependent.php?id=${dependentId}`, {
+                method: "POST"
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Pending dependent cancelled successfully.");
+                    location.reload(); // Reload to reflect updated dependents list
+                } else {
+                    alert("Failed to cancel pending dependent: " + data.message);
+                }
+            })
+            .catch(error => {
+                alert("An error occurred while cancelling the pending dependent.");
+                console.error(error);
+            });
+        }
+
+        document.getElementById("confirmCancelDependentBtn")?.addEventListener("click", function() {
+            const dependentId = this.getAttribute('data-id');
+            if (dependentId) {
+                cancelDependent(dependentId);
+                closeCancelDependentModal();
+            }
+        });
+        
+    </script>
+
+    <script>
+        // Select the hamburger toggle and navigation links container
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
+
+        // Toggle the menu visibility when the hamburger icon is clicked
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            menuToggle.classList.toggle('open');
+
+            // Change icon (bars ↔ close)
+            const icon = menuToggle.querySelector('i');
+            if (menuToggle.classList.contains('open')) {
+                icon.classList.replace('fa-bars', 'fa-times');
+            } else {
+                icon.classList.replace('fa-times', 'fa-bars');
+            }
+        });
+
+        // Optional: close menu when a link is clicked (on mobile)
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    menuToggle.classList.remove('open');
+                    const icon = menuToggle.querySelector('i');
+                    icon.classList.replace('fa-times', 'fa-bars');
+                }
+            });
+        });
     </script>
 </body>
 </html>

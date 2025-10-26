@@ -21,7 +21,7 @@ if (!isset($_POST['active_user_id']) || !is_numeric($_POST['active_user_id'])) {
 $active_user_id = (int)$_POST['active_user_id'];
 
 // Verify the active user exists and is either the primary user or a dependent
-$stmt = $conn->prepare("SELECT id, primary_user_id FROM users WHERE id = :active_user_id");
+$stmt = $conn->prepare("SELECT id, primary_user_id, profile_picture FROM users WHERE id = :active_user_id");
 $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
 $stmt->execute();
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -62,6 +62,13 @@ if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPL
     }
 
     $destPath = $uploadDir . $newFileName;
+
+    // Delete the previous profile picture if it exists and is not the default placeholder
+    if (!empty($user['profile_picture']) && $user['profile_picture'] !== 'images/uploads/profile_pictures/profile-placeholder.png') {
+        if (file_exists($user['profile_picture'])) {
+            unlink($user['profile_picture']);
+        }
+    }
 
     // Move the uploaded file
     if (move_uploaded_file($fileTmpPath, $destPath)) {

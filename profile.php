@@ -153,9 +153,7 @@ try {
                     <?php if (!$is_dependent): ?>
                         <button class="change-password-btn" onclick="openChangePasswordModal()">Change Password</button>
                     <?php endif; ?>
-                    <form action="logout.php" method="POST">
-                        <button type="submit" class="logout-button">Log Out</button>
-                    </form>
+                    <button class="logout-button" onclick="openLogoutConfirmModal()">Log Out</button>
                 </div>
             </div>
 
@@ -392,7 +390,7 @@ try {
                                                         <td><span class="status-badge" style="background-color: #28a745; color: white;">Approved</span></td>
                                                         <td>
                                                             <div class="button-container">
-                                                                <button class="switch-account-btn" onclick="switchAccount(<?= $dependent['id'] ?>)">Switch</button>
+                                                                <button class="switch-account-btn" onclick="openSwitchAccountConfirmModal(<?= $dependent['id'] ?>)">Switch</button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -790,6 +788,30 @@ try {
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeCancelDependentModal()">Cancel</button>
                 <button type="button" class="confirm-btn" id="confirmCancelDependentBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutConfirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Logout</h2>
+            <p>Are you sure you want to log out?</p>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeLogoutConfirmModal()">Cancel</button>
+                <button type="button" class="confirm-btn" onclick="confirmLogout()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Switch Account Confirmation Modal -->
+    <div id="switchAccountConfirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Account Switch</h2>
+            <p>Are you sure you want to switch to this account?</p>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeSwitchAccountConfirmModal()">Cancel</button>
+                <button type="button" class="confirm-btn" id="confirmSwitchAccountBtn">Confirm</button>
             </div>
         </div>
     </div>
@@ -1193,6 +1215,39 @@ try {
             if (dependentId) {
                 cancelDependent(dependentId);
                 closeCancelDependentModal();
+            }
+        });
+
+        // Logout Confirmation Modal
+        function openLogoutConfirmModal() {
+            document.getElementById("logoutConfirmModal").classList.add("show");
+        }
+
+        function closeLogoutConfirmModal() {
+            document.getElementById("logoutConfirmModal").classList.remove("show");
+        }
+
+        function confirmLogout() {
+            window.location.href = "logout.php";
+        }
+
+        // Switch Account Confirmation Modal
+        let pendingSwitchId = null;
+
+        function openSwitchAccountConfirmModal(dependentId) {
+            pendingSwitchId = dependentId;
+            document.getElementById("switchAccountConfirmModal").classList.add("show");
+        }
+
+        function closeSwitchAccountConfirmModal() {
+            document.getElementById("switchAccountConfirmModal").classList.remove("show");
+            pendingSwitchId = null;
+        }
+
+        document.getElementById("confirmSwitchAccountBtn")?.addEventListener("click", function() {
+            if (pendingSwitchId) {
+                window.location.href = `switch_account.php?switch_to=${pendingSwitchId}`;
+                closeSwitchAccountConfirmModal();
             }
         });
         

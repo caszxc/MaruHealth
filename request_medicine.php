@@ -232,9 +232,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                 const allEntries = document.querySelectorAll('.medicine-entry');
                 if (allEntries.length > 1) {
                     e.target.closest('.medicine-entry').remove();
-                } else {
-                    alert("At least one medicine entry must remain.");
-                }
+                } 
             }
         });
 

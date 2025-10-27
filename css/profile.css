@@ -469,13 +469,13 @@ body::-webkit-scrollbar {
     overflow: hidden;
 }
 
-#cancelRequestModal .modal-content, #cancelDependentModal .modal-content {
-    min-width: 40%;
+#cancelRequestModal .modal-content, #cancelDependentModal .modal-content, #logoutConfirmModal .modal-content, #switchAccountConfirmModal .modal-content{
+    min-width: 30%;
     text-align: center;
 }
 
-#cancelRequestModal .modal-content p, #cancelDependentModal .modal-content p{
-    padding: 20px 0;
+#cancelRequestModal .modal-content p, #cancelDependentModal .modal-content p, #logoutConfirmModal .modal-content p, #switchAccountConfirmModal .modal-content p{
+    padding: 20px 5px;
 }
 
 .modal-content h2 {
@@ -490,6 +490,10 @@ body::-webkit-scrollbar {
 
 /* Edit Profile Modal, Add Dependent Modal and Change Password Modal Forms */
 /* Scrollable form area */
+#editProfileModal .modal-content{
+    width: 50%;
+}
+
 .form-scroll {
     flex: 1; /* take available space between header and footer */
     overflow-y: auto;
@@ -672,11 +676,13 @@ body::-webkit-scrollbar {
 }
 
 .modal-footer .cancel-btn {
+    flex: 1;
     background-color: #ccc;
     color: #333;
 }
 
 .modal-footer .save-btn, .modal-footer .confirm-btn {
+    flex: 1;
     background-color: #800000;
     color: white;
 }
@@ -820,7 +826,7 @@ body::-webkit-scrollbar {
         padding: 15px;
     }
 
-    #cancelRequestModal .modal-content, #cancelDependentModal .modal-content{
+    #cancelRequestModal .modal-content, #cancelDependentModal .modal-content, #logoutConfirmModal .modal-content, #switchAccountConfirmModal .modal-content{
         width: 85%;
     }
 
@@ -904,7 +910,7 @@ body::-webkit-scrollbar {
         max-height: 85vh;
     }
 
-    #cancelRequestModal .modal-content, #cancelDependentModal .modal-content{
+    #cancelRequestModal .modal-content, #cancelDependentModal .modal-content, #logoutConfirmModal .modal-content, #switchAccountConfirmModal .modal-content{
         width: 40%;
     }
 

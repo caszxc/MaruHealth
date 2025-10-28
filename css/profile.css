@@ -490,10 +490,6 @@ body::-webkit-scrollbar {
 
 /* Edit Profile Modal, Add Dependent Modal and Change Password Modal Forms */
 /* Scrollable form area */
-#editProfileModal .modal-content{
-    width: 50%;
-}
-
 .form-scroll {
     flex: 1; /* take available space between header and footer */
     overflow-y: auto;
@@ -557,6 +553,29 @@ body::-webkit-scrollbar {
 }
 .modal-content .file-upload input[type="file"] {
     display: none;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* space for the icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: #800000;
+    font-size: 1.1rem;
+}
+
+.toggle-password:hover {
+    opacity: 0.7; 
 }
 
 /* Change Profile Modal Specific CSS */

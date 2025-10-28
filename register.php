@@ -277,12 +277,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         <div class="group-col">
                             <label>Password <span class="required">*</span></label>
-                            <input type="password" name="password" required>
+                            <div class="password-wrapper">
+                                <input type="password" name="password" required>
+                                <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                            </div>
                             <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
                         </div>
                         <div class="group-col">
                             <label>Confirm Password <span class="required">*</span></label>
-                            <input type="password" name="confirmPassword" required>
+                            <div class="password-wrapper">
+                                <input type="password" name="confirmPassword" required>
+                                <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                            </div>
                         </div>
                         
                         <div class="group-col">
@@ -519,6 +525,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
     <script>
+        function togglePass(icon) {
+            const input = icon.previousElementSibling; // the password input
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             // Form Step Navigation
             let currentStep = 0;
@@ -747,28 +766,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Error handling functions
             function showFieldError(element, message) {
+                // Remove any existing error
                 removeFieldError(element);
-                
+
                 const errorSpan = document.createElement("span");
                 errorSpan.className = "field-error";
                 errorSpan.textContent = message;
                 errorSpan.style.color = "#FF0000";
                 errorSpan.style.fontSize = "12px";
-                
-                // Add red border to highlight the field
+                errorSpan.style.display = "block";
+                errorSpan.style.marginTop = "4px";
+                errorSpan.style.textAlign = "left";
+
+                // Highlight the input
                 element.style.borderColor = "#FF0000";
-                
-                // Insert error message after the field
-                element.parentNode.appendChild(errorSpan);
+
+                // Find the .group-col parent
+                const groupCol = element.closest('.group-col');
+
+                // Insert error AFTER the .group-col's last child (after hint or wrapper)
+                groupCol.appendChild(errorSpan);
             }
 
             function removeFieldError(element) {
-                // Remove existing error messages
-                const existingError = element.parentNode.querySelector(".field-error");
+                const groupCol = element.closest('.group-col');
+                const existingError = groupCol.querySelector(".field-error");
                 if (existingError) {
                     existingError.remove();
                 }
-                
+
                 // Reset border color
                 element.style.borderColor = "";
             }

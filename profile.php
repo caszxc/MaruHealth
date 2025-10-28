@@ -512,22 +512,41 @@ try {
         <div class="modal-content">
             <h2>Change Password</h2>
             <div class="error-message" id="changePasswordError"></div>
-            <form id="changePasswordForm" action="change_password.php" method="POST">
+
+            <form id="changePasswordForm" action="change_password.php" method="POST" novalidate>
+                <!-- Current Password -->
                 <div class="group-col">
                     <label for="current_password">Current Password <span class="required">*</span></label>
-                    <input type="password" id="current_password" name="current_password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="current_password" name="current_password" required>
+                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    </div>
+                    <small class="field-hint">Enter your existing password</small>
                 </div>
+
+                <!-- New Password -->
                 <div class="group-col">
                     <label for="new_password">New Password <span class="required">*</span></label>
-                    <input type="password" id="new_password" name="new_password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="new_password" name="new_password" required>
+                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    </div>
+                    <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
                 </div>
+
+                <!-- Confirm New Password -->
                 <div class="group-col">
                     <label for="confirm_password">Confirm New Password <span class="required">*</span></label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" required>
+                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    </div>
+                    <small class="field-hint">Must match the new password</small>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="cancel-btn" onclick="closeChangePasswordModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
+                    <button type="submit" class="save-btn" id="changePasswordSubmitBtn" disabled>Save</button>
                 </div>
             </form>
         </div>
@@ -848,6 +867,105 @@ try {
             document.getElementById("changePasswordForm").reset();
             document.getElementById("changePasswordError").textContent = "";
         }
+
+        function togglePass(icon) {
+            const input = icon.previousElementSibling; // the password input
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentPass = document.getElementById('current_password');
+            const newPass = document.getElementById('new_password');
+            const confirmPass = document.getElementById('confirm_password');
+            const submitBtn = document.getElementById('changePasswordSubmitBtn');
+
+            // Validation rules
+            const validators = {
+                current_password: {
+                    element: currentPass,
+                    errorMsg: "Current password is required",
+                    validator: v => v.trim().length > 0
+                },
+                new_password: {
+                    element: newPass,
+                    errorMsg: "Password must be at least 8 characters and include uppercase, lowercase, and numbers",
+                    validator: v => {
+                        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+                        return regex.test(v);
+                    }
+                },
+                confirm_password: {
+                    element: confirmPass,
+                    errorMsg: "Passwords do not match",
+                    validator: v => v && v === newPass.value
+                }
+            };
+
+            // Show error under input (outside .password-wrapper)
+            function showFieldError(input, msg) {
+                removeFieldError(input);
+                const err = document.createElement('span');
+                err.className = 'field-error';
+                err.textContent = msg;
+                err.style.display = 'block';
+                err.style.color = '#FF0000';
+                err.style.fontSize = '12px';
+                input.style.borderColor = '#FF0000';
+                input.closest('.group-col').appendChild(err);
+            }
+
+            function removeFieldError(input) {
+                const group = input.closest('.group-col');
+                const old = group.querySelector('.field-error');
+                if (old) old.remove();
+                input.style.borderColor = '';
+            }
+
+            // Validate single field
+            function validateField(name) {
+                const field = validators[name];
+                const value = field.element.value;
+                if (field.validator(value)) {
+                    removeFieldError(field.element);
+                    return true;
+                } else {
+                    showFieldError(field.element, field.errorMsg);
+                    return false;
+                }
+            }
+
+            // Update submit button
+            function updateSubmitButton() {
+                const allValid = 
+                    validators.current_password.validator(currentPass.value.trim()) &&
+                    validators.new_password.validator(newPass.value) &&
+                    validators.confirm_password.validator(confirmPass.value);
+                submitBtn.disabled = !allValid;
+            }
+
+            // Real-time validation
+            [currentPass, newPass, confirmPass].forEach(input => {
+                input.addEventListener('input', () => {
+                    validateField(input.id);
+                    updateSubmitButton();
+                });
+                input.addEventListener('blur', () => {
+                    validateField(input.id);
+                    updateSubmitButton();
+                });
+            });
+
+            // Initial state
+            updateSubmitButton();
+        });
 
         function openAddDependentModal() {
             document.getElementById("addDependentModal").classList.add("show");

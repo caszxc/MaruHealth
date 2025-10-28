@@ -78,11 +78,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <p>Enter a new password for your account.</p>
                             <div class="field-container">
                                 <div class="group-col">
-                                    <input type="password" name="new_password" id="new_password" placeholder="New Password" required>
+                                    <div class="password-wrapper">
+                                        <input type="password" name="new_password" id="new_password" placeholder="New Password" required>
+                                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                                    </div>
+                                    
                                     <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
                                 </div>
                                 <div class="group-col">
-                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
+                                    <div class="password-wrapper">
+                                        <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm Password" required>
+                                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                                    </div>
+                                    
                                     <small class="field-hint">Must match the new password</small>
                                 </div>
                             </div>
@@ -108,6 +116,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div>
 
     <script>
+        function togglePass(icon) {
+            const input = icon.previousElementSibling; // the password input
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            }
+        }
         document.addEventListener("DOMContentLoaded", function () {
             const newPasswordInput = document.getElementById('new_password');
             const confirmPasswordInput = document.getElementById('confirm_password');
@@ -133,35 +153,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             };
 
             // Error handling functions
-            function showFieldError(element, message) {
-                const existingError = element.parentNode.querySelector(".field-error");
-                if (existingError) {
-                    existingError.remove();
-                }
+            function showFieldError(inputEl, message) {
+                // 1. remove old error
+                removeFieldError(inputEl);
 
-                const errorSpan = document.createElement("span");
-                errorSpan.className = "field-error";
-                errorSpan.textContent = message;
-                element.parentNode.appendChild(errorSpan);
+                const err = document.createElement('span');
+                err.className = 'field-error';
+                err.textContent = message;
+                err.style.display = 'block';
+                err.style.color = '#FF0000';
+                err.style.fontSize = '12px';
+                err.style.textAlign = 'left';
 
-                element.classList.remove("valid");
-                element.style.borderColor = "#FF0000";
+                // 2. highlight input
+                inputEl.style.borderColor = '#FF0000';
+
+                // 3. insert AFTER the .group-col (after hint)
+                const groupCol = inputEl.closest('.group-col');
+                groupCol.appendChild(err);
             }
 
-            function removeFieldError(element) {
-                const existingError = element.parentNode.querySelector(".field-error");
-                if (existingError) {
-                    existingError.remove();
-                }
+            function removeFieldError(inputEl) {
+                const groupCol = inputEl.closest('.group-col');
+                const old = groupCol.querySelector('.field-error');
+                if (old) old.remove();
 
-                element.style.borderColor = "#008000";
-                element.classList.add("valid");
+                // reset border (green when valid – optional)
+                inputEl.style.borderColor = '#ccc';
+                inputEl.classList.add('valid');
             }
 
             // Validate field
             function validateField(fieldName) {
                 const field = passwordValidator[fieldName];
-                const value = field.element.value;
+                const value = field.element.value.trim();
 
                 if (field.validator(value)) {
                     removeFieldError(field.element);

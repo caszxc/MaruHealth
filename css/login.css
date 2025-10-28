@@ -87,6 +87,29 @@
     box-sizing: border-box;
 }
 
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px; /* space for the icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: #800000;
+    font-size: 1.1rem;
+}
+
+.toggle-password:hover {
+    opacity: 0.7; 
+}
+
 .login-form div .field-container .group-col {
     display: flex;
     flex-direction: column;
@@ -139,12 +162,12 @@
     color: #666;
     font-style: italic;
     display: block;
+    text-align: left;
 }
 
 .field-error {
     color: #FF0000;
     font-size: 12px;
-    margin-top: 5px;
     display: block;
 }
 

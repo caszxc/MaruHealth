@@ -82,6 +82,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <!-- Font Awesome for eye icons (you can also use SVG) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <title>Login</title>
 </head>
 <body>    
@@ -103,7 +105,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <?php if (isset($error)) { echo "<p class='error'>$error</p>"; } ?>
                             <div class="field-container">
                                 <input type="text" name="identifier" placeholder="Email/Phone/Username" autocomplete="off" required>
-                                <input type="password" name="password" placeholder="Password" required>
+
+                                <!-- PASSWORD FIELD WITH TOGGLE -->
+                                <div class="password-wrapper">
+                                    <input type="password" name="password" id="password" placeholder="Password" required>
+                                    <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                                </div>
+
                                 <a href="forgot_password.php" class="forgot-link" id="forgot-link">Forgot password?</a>
                             </div>
                             
@@ -118,5 +126,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
         </div>
     </div>
+
+    <!-- ---------- JavaScript for toggle ---------- -->
+    <script>
+        function togglePass(icon) {
+            const input = icon.previousElementSibling; // the password input
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            }
+        }
+    </script>
 </body>
 </html>

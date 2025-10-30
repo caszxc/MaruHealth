@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
             VALUES (:admin_id, 'event_create', :details, :target_id)
         ");
-        $details = "Created event titled '{$title}' scheduled for {$date}";
+        $details = "Created event titled '{$title}'";
         $logStmt->execute([
             ':admin_id' => $_SESSION['admin_id'],
             ':details' => $details,

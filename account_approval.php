@@ -152,14 +152,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="tiles-container">
             <a href="account_requests.php">
                 <div class="tile">
-                    <img src="images/icons/reqmd_icon_active.png" alt="">
+                    <img src="images/icons/pending_account_icon_active.png" alt="">
                     <h3>Pending Accounts</h3>
                     <p><?= $requestsCount ?></p>
                 </div>
             </a>
             <a href="approvedAcc_requests.php">
                 <div class="tile">
-                    <img src="images/icons/pendings_icon_active.png" alt="">
+                    <img src="images/icons/approved_account_icon_active.png" alt="">
                     <h3>Approved Accounts</h3>
                     <p><?= $approvedCount ?></p>
                 </div>

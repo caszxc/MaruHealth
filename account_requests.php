@@ -149,11 +149,17 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 $conn->commit();
                 
                 // Log the approval action
+                $primaryName = '';
+                if ($primaryUserId) {
+                    $primaryStmt = $conn->prepare("SELECT CONCAT(first_name,' ',last_name) AS name FROM users WHERE id = ?");
+                    $primaryStmt->execute([$primaryUserId]);
+                    $primaryName = $primaryStmt->fetchColumn() ?: 'Unknown';
+                }
                 $logStmt = $conn->prepare("
                     INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
                     VALUES (:admin_id, 'user_approval', :details, :target_id)
                 ");
-                $details = "Approved user {$userName} (Email: {$userEmail})" . ($primaryUserId ? " as dependent of user ID {$primaryUserId} with relationship {$relationship}" : "");
+                $details = "Approved user {$userName} (Email: {$userEmail})" . ($primaryUserId ? " as dependent of user {$primaryName} with relationship {$relationship}" : "");
                 $logStmt->execute([
                     ':admin_id' => $_SESSION['admin_id'],
                     ':details' => $details,
@@ -220,11 +226,16 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             $rejectStmt->execute([':id' => $pendingUserId]);
             
             // Log the rejection action
+            if ($primaryUserId) {
+                $primaryStmt = $conn->prepare("SELECT CONCAT(first_name,' ',last_name) AS name FROM users WHERE id = ?");
+                $primaryStmt->execute([$primaryUserId]);
+                $primaryName = $primaryStmt->fetchColumn() ?: 'Unknown';
+            }
             $logStmt = $conn->prepare("
                 INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
                 VALUES (:admin_id, 'user_rejection', :details, :target_id)
             ");
-            $details = "Rejected user {$userName} (Email: {$userEmail})" . ($primaryUserId ? " as dependent of user ID {$primaryUserId} with relationship {$relationship}" : "");
+            $details = "Rejected user {$userName} (Email: {$userEmail})" . ($primaryUserId ? " as dependent of user {$primaryName} with relationship {$relationship}" : "");
             $logStmt->execute([
                 ':admin_id' => $_SESSION['admin_id'],
                 ':details' => $details,

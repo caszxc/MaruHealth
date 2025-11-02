@@ -221,98 +221,100 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <!-- Add Patient Modal -->
     <div id="addPatientModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Add Patient</h2>
-            <form id="addPatientForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <div class="form-row-address">
-                            <label>Family Number</label>
-                            <input type="text" id="family_number" name="family_number" autocomplete="off" required>
+            <h2>Add Patient</h2>
+            <div class="form-scroll">
+                <form id="addPatientForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <div class="form-row-address">
+                                <label>Family Number</label>
+                                <input type="text" id="family_number" name="family_number" autocomplete="off" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>First Name</label>
-                            <input type="text" id="first_name" name="first_name" autocomplete="off" required>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>First Name</label>
+                                <input type="text" id="first_name" name="first_name" autocomplete="off" required>
+                            </div>
+                            <div class="form-row">
+                                <label>Middle Name</label>
+                                <input type="text" id="middle_name" name="middle_name" autocomplete="off">
+                            </div>
+                            <div class="form-row">
+                                <label>Last Name</label>
+                                <input type="text" id="last_name" name="last_name" autocomplete="off" required>
+                            </div>
                         </div>
-                        <div class="form-row">
-                            <label>Middle Name</label>
-                            <input type="text" id="middle_name" name="middle_name" autocomplete="off">
+                        <p>Demographic-Socio Economic Profile</p>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Birthdate</label>
+                                <input type="date" id="birthdate" name="birthdate" required>
+                            </div>
+                            <div class="form-row">
+                                <label>Sex</label>
+                                <select name="sex" id="sex" required>
+                                    <option value="" disabled selected>Select</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Contact Number</label>
+                                <input type="tel" id="contact_number" name="contact_number" autocomplete="off">
+                            </div>
                         </div>
-                        <div class="form-row">
-                            <label>Last Name</label>
-                            <input type="text" id="last_name" name="last_name" autocomplete="off" required>
+                        
+                        <div class="form-group">
+                            <div class="form-row-address">
+                                <label>Address</label>
+                                <input type="text" id="address" name="address" autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <p>Demographic-Socio Economic Profile</p>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Birthdate</label>
-                            <input type="date" id="birthdate" name="birthdate" required>
-                        </div>
-                        <div class="form-row">
-                            <label>Sex</label>
-                            <select name="sex" id="sex" required>
-                                <option value="" disabled selected>Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        </div>
-                        <div class="form-row">
-                            <label>Contact Number</label>
-                            <input type="tel" id="contact_number" name="contact_number" autocomplete="off">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-row-address">
-                            <label>Address</label>
-                            <input type="text" id="address" name="address" autocomplete="off">
-                        </div>
-                    </div>
-                    <p>Anthropometric Measurement</p>
-                    <p>Insert your height and weight to compute for your BMI and status</p>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Weight (kg)</label>
-                            <input type="number" id="weight" name="weight">
-                        </div>
-                        <div class="form-row">
-                            <label>Height (cm)</label>
-                            <input type="number" id="height" name="height">
-                        </div>
-                        <div class="form-row">
-                            <label>BMI</label>
-                            <input type="number" id="bmi" name="bmi" readonly>
-                        </div>
-                        <div class="form-row">
-                            <label>Status</label>
-                            <input type="text" id="bmi_status" name="bmi_status" readonly>
-                        </div>
-                        <div class="form-row">
-                            <div class="legend-box">
-                                <div class="legend-item">
-                                    <span class="circle blue"></span> Underweight (< 18.5)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle green"></span> Normal (18.5 - 22.9)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle orange"></span> Overweight (> 23 - 24.9)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle red"></span> Obese (> 25)
+                        <p>Anthropometric Measurement</p>
+                        <p>Insert your height and weight to compute for your BMI and status</p>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Weight (kg)</label>
+                                <input type="number" id="weight" name="weight">
+                            </div>
+                            <div class="form-row">
+                                <label>Height (cm)</label>
+                                <input type="number" id="height" name="height">
+                            </div>
+                            <div class="form-row">
+                                <label>BMI</label>
+                                <input type="number" id="bmi" name="bmi" readonly>
+                            </div>
+                            <div class="form-row">
+                                <label>Status</label>
+                                <input type="text" id="bmi_status" name="bmi_status" readonly>
+                            </div>
+                            <div class="form-row">
+                                <div class="legend-box">
+                                    <div class="legend-item">
+                                        <span class="circle blue"></span> Underweight (< 18.5)
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="circle green"></span> Normal (18.5 - 22.9)
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="circle orange"></span> Overweight (> 23 - 24.9)
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="circle red"></span> Obese (> 25)
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <!-- Submit and Cancel Buttons -->
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="submit-btn">Add</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <!-- Submit and Cancel Buttons -->
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button type="submit" form="addPatientForm" class="submit-btn">Add</button>
+            </div>
         </div>
     </div>
 
@@ -337,13 +339,16 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 method: "POST",
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                alert(data);
+                alert(data.message);
                 closeModal();
                 location.reload(); // Refresh page after submission
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while adding a patient. Please try again.");
+            });
         });
     </script>
 

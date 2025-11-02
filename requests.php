@@ -1,4 +1,5 @@
 <?php
+//requests.php
 session_start();
 require_once "config.php";
 
@@ -220,63 +221,61 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         function populateModal(data) {
             const modal = document.querySelector('.modal-content');
             let modalHTML = `
-                <div class="modal-header">
-                    <span class="close" onclick="closeModal()">×</span>
-                    <h2 class="title">Medicine Request Details</h2>
-                </div>
-                <form id="medicineApprovalForm" method="post" action="process_request.php">
-                    <input type="hidden" id="request_id" name="request_id" value="${data.request.id}">
-                    <div class="patient-details">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Request ID</label>
-                                <div class="detail-box">${data.request.request_id}</div>
+                <h2 class="title">Medicine Request Details</h2>
+                <div class="patient-scroll">
+                    <form id="medicineApprovalForm" method="post" action="process_request.php">
+                        <input type="hidden" id="request_id" name="request_id" value="${data.request.id}">
+                        <div class="patient-details">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Request ID</label>
+                                    <div class="detail-box">${data.request.request_id}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Patient's Full Name <span class="sub-label">(Buong Pangalan ng Pasyente)</span></label>
-                                <div class="detail-box">${data.request.full_name}</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Patient's Full Name <span class="sub-label">(Buong Pangalan ng Pasyente)</span></label>
+                                    <div class="detail-box">${data.request.full_name}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group half">
-                                <label>Gender <span class="sub-label">(Kasarian)</span></label>
-                                <div class="detail-box">${data.request.gender}</div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Gender <span class="sub-label">(Kasarian)</span></label>
+                                    <div class="detail-box">${data.request.gender}</div>
+                                </div>
+                                <div class="form-group half">
+                                    <label>Birthdate <span class="sub-label">(Araw ng Kapanganakan)</span></label>
+                                    <div class="detail-box">${data.request.birthdate}</div>
+                                </div>
                             </div>
-                            <div class="form-group half">
-                                <label>Birthdate <span class="sub-label">(Araw ng Kapanganakan)</span></label>
-                                <div class="detail-box">${data.request.birthdate}</div>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
+                                    <div class="detail-box">${data.request.address}</div>
+                                </div>
+                                <div class="form-group half">
+                                    <label>Contact Number <span class="sub-label">(Numero ng Telepono)</span></label>
+                                    <div class="detail-box">${data.request.phone}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group half">
-                                <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
-                                <div class="detail-box">${data.request.address}</div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
+                                    <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
+                                </div>
                             </div>
-                            <div class="form-group half">
-                                <label>Contact Number <span class="sub-label">(Numero ng Telepono)</span></label>
-                                <div class="detail-box">${data.request.phone}</div>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
-                                <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Prescription <span class="sub-label">(Reseta)</span></label>
-                                <div class="prescription-image">
-                                    <img src="${data.request.prescription}" alt="Prescription">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Prescription <span class="sub-label">(Reseta)</span></label>
+                                    <div class="prescription-image">
+                                        <img src="${data.request.prescription}" alt="Prescription">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="requested-medicines">
-                        <h3>Requested Medicines</h3>`;
+                        
+                        <div class="requested-medicines">
+                            <h3>Requested Medicines</h3>`;
             
             window.matchedMedicinesData = {};
             data.medicines.forEach((medicine, index) => {
@@ -341,12 +340,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <textarea id="admin_note" name="admin_note"></textarea>
                         </div>
                     </div>
-                    <div class="button-group">
-                        <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>
-                        <button type="submit" id="approveButton" class="btn-primary" disabled>Approve</button>
-                        <button type="button" id="declineButton" class="btn-decline" onclick="processDecline()">Decline</button>
-                    </div>
-                </form>`;
+                </form>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>
+                    <button type="submit" form="medicineApprovalForm" id="approveButton" class="btn-primary" disabled>Approve</button>
+                    <button type="button" id="declineButton" class="btn-decline" onclick="processDecline()">Decline</button>
+                </div>`;
             
             modal.innerHTML = modalHTML;
             

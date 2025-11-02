@@ -284,134 +284,138 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <!-- Add Consultation Modal -->
     <div id="addConsultationModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Add Consultation Form</h2>
-            <form id="addConsultationForm">
-                <div class="form-grid">
-                    <input type="hidden" id="patient_id" name="patient_id" value="<?= $patient_id ?>">
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Type of Consultation</label>
-                            <select name="consultation_type" id="consultation_type" required>
-                                <option value="" disabled selected>Select</option>
-                                <option value="General Check Up">General Check Up</option>
-                                <option value="Vaccination">Vaccination</option>
-                                <option value="Prenatal">Prenatal</option>
-                                <option value="Dentistry">Dentistry</option>
-                                <option value="Family Planning">Family Planning</option>
-                            </select>
+            <h2>Add Consultation Form</h2>
+            <div class="form-scroll">
+                <form id="addConsultationForm">
+                    <div class="form-grid">
+                        <input type="hidden" id="patient_id" name="patient_id" value="<?= $patient_id ?>">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Type of Consultation</label>
+                                <select name="consultation_type" id="consultation_type" required>
+                                    <option value="" disabled selected>Select</option>
+                                    <option value="General Check Up">General Check Up</option>
+                                    <option value="Vaccination">Vaccination</option>
+                                    <option value="Prenatal">Prenatal</option>
+                                    <option value="Dentistry">Dentistry</option>
+                                    <option value="Family Planning">Family Planning</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Date of Consultation</label>
-                            <input type="date" id="consultation_date" name="consultation_date" required>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Date of Consultation</label>
+                                <input type="date" id="consultation_date" name="consultation_date" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Reason for Consultation</label>
-                            <input type="text" id="reason_for_consultation" name="reason_for_consultation" required autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Reason for Consultation</label>
+                                <input type="text" id="reason_for_consultation" name="reason_for_consultation" required autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row-vitals">
-                            <label>Blood Pressure</label>
-                            <input type="text" id="blood_pressure" name="blood_pressure" placeholder="e.g., 120/80" autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row-vitals">
+                                <label>Blood Pressure</label>
+                                <input type="text" id="blood_pressure" name="blood_pressure" placeholder="e.g., 120/80" autocomplete="off">
+                            </div>
+                            <div class="form-row">
+                                <label>Temperature (°C)</label>
+                                <input type="number" id="temperature" name="temperature" step="0.1" required autocomplete="off">
+                            </div>
                         </div>
-                        <div class="form-row">
-                            <label>Temperature (°C)</label>
-                            <input type="number" id="temperature" name="temperature" step="0.1" required autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Diagnosis</label>
+                                <input type="text" id="diagnosis" name="diagnosis" required autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Diagnosis</label>
-                            <input type="text" id="diagnosis" name="diagnosis" required autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Prescribed Medicine (if any)</label>
+                                <input type="text" id="prescribed_medicine" name="prescribed_medicine" autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Prescribed Medicine (if any)</label>
-                            <input type="text" id="prescribed_medicine" name="prescribed_medicine" autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Treatment Given (if any)</label>
+                                <input type="text" id="treatment_given" name="treatment_given" autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Treatment Given (if any)</label>
-                            <input type="text" id="treatment_given" name="treatment_given" autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Consulting Physician/Nurse</label>
+                                <input type="text" id="consulting_physician_nurse" name="consulting_physician_nurse" required autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Consulting Physician/Nurse</label>
-                            <input type="text" id="consulting_physician_nurse" name="consulting_physician_nurse" required autocomplete="off">
-                        </div>
-                    </div>
-                </div>  
-                <!-- Submit and Cancel Buttons -->
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="submit-btn">Add</button>
-                </div>  
-            </form>
+                    </div>  
+                </form>
+            </div>
+            <!-- Submit and Cancel Buttons -->
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button type="submit" form="addConsultationForm" class="submit-btn">Add</button>
+            </div> 
         </div>
     </div>
 
     <!-- View Consultation Modal -->
     <div id="viewConsultationModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Consultation Details</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Type of Consultation</label>
-                        <input type="text" id="view_consultation_type" readonly>
+            <h2>Consultation Details</h2>
+            <div class="form-scroll">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Type of Consultation</label>
+                            <input type="text" id="view_consultation_type" readonly>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Date of Consultation</label>
-                        <input type="text" id="view_consultation_date" readonly>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Date of Consultation</label>
+                            <input type="text" id="view_consultation_date" readonly>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Reason for Consultation</label>
-                        <input type="text" id="view_reason_for_consultation" readonly>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Reason for Consultation</label>
+                            <input type="text" id="view_reason_for_consultation" readonly>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row-vitals">
-                        <label>Blood Pressure</label>
-                        <input type="text" id="view_blood_pressure" readonly>
+                    <div class="form-group">
+                        <div class="form-row-vitals">
+                            <label>Blood Pressure</label>
+                            <input type="text" id="view_blood_pressure" readonly>
+                        </div>
+                        <div class="form-row">
+                            <label>Temperature</label>
+                            <input type="text" id="view_temperature" readonly>
+                        </div>
                     </div>
-                    <div class="form-row">
-                        <label>Temperature</label>
-                        <input type="text" id="view_temperature" readonly>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Diagnosis</label>
+                            <input type="text" id="view_diagnosis" readonly>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Diagnosis</label>
-                        <input type="text" id="view_diagnosis" readonly>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Prescribed Medicine</label>
+                            <input type="text" id="view_prescribed_medicine" readonly>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Prescribed Medicine</label>
-                        <input type="text" id="view_prescribed_medicine" readonly>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Treatment Given</label>
+                            <input type="text" id="view_treatment_given" readonly>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Treatment Given</label>
-                        <input type="text" id="view_treatment_given" readonly>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="form-row">
-                        <label>Consulting Physician/Nurse</label>
-                        <input type="text" id="view_consulting_physician_nurse" readonly>
+                    <div class="form-group">
+                        <div class="form-row">
+                            <label>Consulting Physician/Nurse</label>
+                            <input type="text" id="view_consulting_physician_nurse" readonly>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -426,97 +430,97 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <div id="editPatientModal" class="modal">
         <div class="modal-content">
             <h2 class="title">Edit Patient</h2>
-            <form id="editPatientForm">
-                <div class="form-grid">
-                    <input type="hidden" id="edit_patient_id" name="patient_id" value="' . htmlspecialchars($patient_id) . '">
-                    <div class="form-group">
-                        <div class="form-row-address">
-                            <label>Family Number</label>
-                            <input type="text" id="edit_family_number" name="family_number" value="' . htmlspecialchars($patient['family_number']) . '">
+            <div class="form-scroll">
+                <form id="editPatientForm">
+                    <div class="form-grid">
+                        <input type="hidden" id="edit_patient_id" name="patient_id" value="' . htmlspecialchars($patient_id) . '">
+                        <div class="form-group">
+                            <div class="form-row-address">
+                                <label>Family Number</label>
+                                <input type="text" id="edit_family_number" name="family_number" value="' . htmlspecialchars($patient['family_number']) . '">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>First Name</label>
-                            <input type="text" id="edit_first_name" name="first_name" value="' . htmlspecialchars($patient['first_name']) . '" autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>First Name</label>
+                                <input type="text" id="edit_first_name" name="first_name" value="' . htmlspecialchars($patient['first_name']) . '" autocomplete="off">
+                            </div>
+                            <div class="form-row">
+                                <label>Middle Name</label>
+                                <input type="text" id="edit_middle_name" name="middle_name" value="' . htmlspecialchars($patient['middle_name']) . '" autocomplete="off">
+                            </div>
+                            <div class="form-row">
+                                <label>Last Name</label>
+                                <input type="text" id="edit_last_name" name="last_name" value="' . htmlspecialchars($patient['last_name']) . '" autocomplete="off">
+                            </div>
                         </div>
-                        <div class="form-row">
-                            <label>Middle Name</label>
-                            <input type="text" id="edit_middle_name" name="middle_name" value="' . htmlspecialchars($patient['middle_name']) . '" autocomplete="off">
+                        <p>Demographic-Socio Economic Profile</p>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Birthdate</label>
+                                <input type="date" id="edit_birthdate" name="birthdate" value="' . htmlspecialchars($patient['birthdate']) . '" readonly>
+                            </div>
+                            <div class="form-row">
+                                <label>Sex</label>
+                                <select name="sex" id="edit_sex">
+                                    <option value="Male" ' . ($patient['sex'] == 'Male' ? 'selected' : '') . '>Male</option>
+                                    <option value="Female" ' . ($patient['sex'] == 'Female' ? 'selected' : '') . '>Female</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label>Contact Number</label>
+                                <input type="tel" id="edit_contact_number" name="contact_number" value="' . htmlspecialchars($patient['contact_number']) . '" autocomplete="off">
+                            </div>
                         </div>
-                        <div class="form-row">
-                            <label>Last Name</label>
-                            <input type="text" id="edit_last_name" name="last_name" value="' . htmlspecialchars($patient['last_name']) . '" autocomplete="off">
+                        <div class="form-group">
+                            <div class="form-row-address">
+                                <label>Address</label>
+                                <input type="text" id="edit_address" name="address" value="' . htmlspecialchars($patient['address']) . '" autocomplete="off">
+                            </div>
                         </div>
-                    </div>
-                    <p>Demographic-Socio Economic Profile</p>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Birthdate</label>
-                            <input type="date" id="edit_birthdate" name="birthdate" value="' . htmlspecialchars($patient['birthdate']) . '" readonly>
-                        </div>
-                        <div class="form-row">
-                            <label>Sex</label>
-                            <select name="sex" id="edit_sex" disabled>
-                                <option value="Male" ' . ($patient['sex'] == 'Male' ? 'selected' : '') . '>Male</option>
-                                <option value="Female" ' . ($patient['sex'] == 'Female' ? 'selected' : '') . '>Female</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Contact Number</label>
-                            <input type="tel" id="edit_contact_number" name="contact_number" value="' . htmlspecialchars($patient['contact_number']) . '" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="form-row-address">
-                            <label>Address</label>
-                            <input type="text" id="edit_address" name="address" value="' . htmlspecialchars($patient['address']) . '" autocomplete="off">
-                        </div>
-                    </div>
-                    <p>Anthropometric Measurement</p>
-                    <p>Insert your height and weight to compute for your BMI and status</p>
-                    <div class="form-group">
-                        <div class="form-row">
-                            <label>Weight (kg)</label>
-                            <input type="number" id="edit_weight" name="weight" value="' . htmlspecialchars($patient['weight']) . '" step="0.01">
-                        </div>
-                        <div class="form-row">
-                            <label>Height (cm)</label>
-                            <input type="number" id="edit_height" name="height" value="' . htmlspecialchars($patient['height']) . '" step="0.01">
-                        </div>
-                        <div class="form-row">
-                            <label>BMI</label>
-                            <input type="number" id="edit_bmi" name="bmi" value="' . htmlspecialchars($patient['bmi']) . '" readonly>
-                        </div>
-                        <div class="form-row">
-                            <label>Status</label>
-                            <input type="text" id="edit_bmi_status" name="bmi_status" value="' . htmlspecialchars($patient['bmi_status']) . '" readonly>
-                        </div>
-                        <div class="form-row">
-                            <div class="legend-box">
-                                <div class="legend-item">
-                                    <span class="circle blue"></span> Underweight (< 18.5)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle green"></span> Normal (18.5 - 24.9)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle orange"></span> Overweight (25 - 29.9)
-                                </div>
-                                <div class="legend-item">
-                                    <span class="circle red"></span> Obese (≥ 30)
+                        <p>Anthropometric Measurement</p>
+                        <p>Insert your height and weight to compute for your BMI and status</p>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <label>Weight (kg)</label>
+                                <input type="number" id="edit_weight" name="weight" value="' . htmlspecialchars($patient['weight']) . '" step="0.01">
+                            </div>
+                            <div class="form-row">
+                                <label>Height (cm)</label>
+                                <input type="number" id="edit_height" name="height" value="' . htmlspecialchars($patient['height']) . '" step="0.01">
+                            </div>
+                            <div class="form-row">
+                                <label>BMI</label>
+                                <input type="number" id="edit_bmi" name="bmi" value="' . htmlspecialchars($patient['bmi']) . '" readonly>
+                            </div>
+                            <div class="form-row">
+                                <label>Status</label>
+                                <input type="text" id="edit_bmi_status" name="bmi_status" value="' . htmlspecialchars($patient['bmi_status']) . '" readonly>
+                            </div>
+                            <div class="form-row">
+                                <div class="legend-box">
+                                    <div class="legend-item">
+                                        <span class="circle blue"></span> Underweight (< 18.5)
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="circle green"></span> Normal (18.5 - 24.9)
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="circle orange"></span> Overweight (25 - 29.9)
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="circle red"></span> Obese (≥ 30)
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeEditModal()">Cancel</button>
-                    <button type="submit" class="submit-btn">Update</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" form="editPatientForm" class="submit-btn">Update</button>
+            </div>
         </div>
     </div>';
     ?>

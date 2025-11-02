@@ -104,6 +104,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     ':details' => $details,
                     ':performed_by' => $_SESSION['admin_id']
                 ]);
+
+                // Log in activity_logs
+                $logStmt = $conn->prepare("
+                    INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) 
+                    VALUES (:admin_id, 'update_medicine', :details, :medicine_id)
+                ");
+                $logDetails = "Updated medicine: " . implode('; ', $changes);
+                $logStmt->execute([
+                    ':admin_id' => $_SESSION['admin_id'],
+                    ':details' => $logDetails,
+                    ':medicine_id' => $medicine_id
+                ]);
             }
 
             $conn->commit();

@@ -1,5 +1,5 @@
 <?php
-// superadmin_dashboard.php
+// admin_dashboard.php
 session_start();
 require_once "config.php";
 

@@ -144,13 +144,20 @@
 
 .dashboard-sections {
     display: flex;
-    flex-direction: column;
     background-color: #ffffff; /* WHITE as requested */
     flex: 1;
-    padding: 24px;
+    padding: 20px;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.section-wrapper{
     overflow-y: auto;
+    scrollbar-width: thin;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     gap: 28px;
 }
 
@@ -201,15 +208,28 @@ section h3 {
 /* ==============================================================
    1. ALERTS
    ============================================================== */
-.alert-section { background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%); }
+.alert-section { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+
+.alert-grid{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 .alert-card {
     background: #ffffff;
     border-radius: 12px;
     padding: 18px;
     box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-    border-left: 5px solid #e74c3c;
+    flex: 1;
+    min-width: 20%;
+    transition: all 0.3s ease;
 }
-.alert-card.has-pending { border-left-color: #c0392b; }
+
+.alert-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
 
 .alert-header {
     display: flex;
@@ -230,8 +250,43 @@ section h3 {
 .pending-number {
     font-size: 2.2rem;
     font-weight: 800;
-    color: #e74c3c;
+    color: #95a5a6;
 }
+
+/* Severity Colors */
+.alert-card[data-type="expired"] .pending-number,
+.alert-card[data-type="out-of-stock"] .pending-number,
+.alert-card[data-type="overdue"] .pending-number {
+    color: #e74c3c; /* Critical Red */
+}
+
+.alert-card[data-type="overdue"] .pending-number {
+    color: #9b59b6;
+}
+
+.alert-card[data-type="expiring-week"] .pending-number,
+.alert-card[data-type="low-stock"] .pending-number {
+    color: #f39c12; /* Warning Orange */
+}
+
+.alert-card[data-type="expiring-month"] .pending-number,
+.alert-card[data-type="to-claim"] .pending-number {
+    color: #f1c40f; /* Caution Yellow */
+}
+
+.alert-card[data-type="to-claim"] .pending-number{
+    color: #2ecc71;
+}
+
+.alert-card[data-type="pending-request"] .pending-number {
+    color: #3498db; /* Action Blue */
+}
+
+.alert-card:not(.has-pending) .pending-number {
+    color: #95a5a6;
+    font-weight: 500;
+}
+
 .manage-link {
     display: inline-block;
     margin-top: 12px;
@@ -244,7 +299,8 @@ section h3 {
 /* ==============================================================
    2. SUMMARY (Stat Bars)
    ============================================================== */
-.summary-section { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+.summary-section { 
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%); }
 
 .stat-bars { display: flex; flex-direction: column; gap: 14px; }
 .stat-item {
@@ -275,8 +331,10 @@ section h3 {
 
 /* Gradient colors per stat */
 .stat-item:nth-child(1) .stat-value { color: #27ae60; }
-.stat-item:nth-child(2) .stat-value { color: #8e44ad; }
-.stat-item:nth-child(3) .stat-value { color: #e67e22; }
+.stat-item:nth-child(2) .stat-value { color: #2980b9; }
+.stat-item:nth-child(3) .stat-value { color: #8e44ad; }
+.stat-item:nth-child(4) .stat-value { color: #d63a12; }
+.stat-item:nth-child(5) .stat-value { color: #e67e22; }
 
 /* ==============================================================
    3. QUICK ACTIONS
@@ -318,10 +376,8 @@ section h3 {
 }
 
 /* Button gradients */
-.admin-btn    { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.announce-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-.event-btn    { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-.service-btn  { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.medicine-btn    { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.patient-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
 
 /* ==============================================================
    4. RECENT ACTIVITIES
@@ -418,9 +474,10 @@ section h3 {
 .stats-reports-section { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
 
 .stats-card-container {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    
 }
 
 .stats-card {

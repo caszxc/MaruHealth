@@ -20,6 +20,13 @@ $catalog_id = trim($_GET['catalog_id']);
 // Get search term from GET request and sanitize it
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+// Handle filter parameter
+$filter = isset($_GET['filter']) ? trim($_GET['filter']) : 'all';
+$validFilters = ['all', 'expired', 'week', 'month'];
+if (!in_array($filter, $validFilters)) {
+    $filter = 'all';
+}
+
 // Fetch Admin's Name
 $adminId = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
@@ -53,18 +60,35 @@ $batchQuery = "
     SELECT id, batch_lot_number, pono, manufacturing_date, expiration_date, stocks, 
            stock_status, expiry_status, source
     FROM medicine_batches
-    WHERE catalog_id = :catalog_id";
+    WHERE catalog_id = :catalog_id
+";
+
+// Apply expiry filter
+if ($filter !== 'all') {
+    if ($filter === 'expired') {
+        $batchQuery .= " AND expiry_status = 'Expired'";
+    } elseif ($filter === 'week') {
+        $batchQuery .= " AND expiry_status = 'Expiring within a week'";
+    } elseif ($filter === 'month') {
+        $batchQuery .= " AND expiry_status = 'Expiring within a month'";
+    }
+}
+
+// Search filter
 if (!empty($searchTerm)) {
     $batchQuery .= " AND (batch_lot_number LIKE :search OR pono LIKE :search OR source LIKE :search)";
 }
+
 $batchQuery .= " ORDER BY expiration_date ASC";
 
 $batchStmt = $conn->prepare($batchQuery);
 $batchStmt->bindParam(':catalog_id', $catalog_id, PDO::PARAM_INT);
+
 if (!empty($searchTerm)) {
     $searchParam = "%$searchTerm%";
     $batchStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
 }
+
 $batchStmt->execute();
 $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -80,6 +104,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     <nav>
@@ -174,13 +199,31 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <div class="med-container">
             <div class="sort-controls">
-                <div class="search-con">
-                    <form method="GET" action="view_batches.php">
-                        <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
-                        <input type="text" name="search" placeholder="Search by Batch Lot, PONO, or Source" value="<?= htmlspecialchars($searchTerm) ?>">
-                        <button type="submit">Search</button>
-                    </form>
+                <div class="search-filter">
+                    <div class="search-con">
+                        <form method="GET" action="view_batches.php">
+                            <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
+                            <input type="text" name="search" placeholder="Search by Batch Lot, PONO, or Source" value="<?= htmlspecialchars($searchTerm) ?>">
+                            <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+                            <button type="submit">Search</button>
+                        </form>
+                    </div>
+                    <div class="filter-buttons" data-initial-filter="<?= $filter ?>">
+                        <button class="filter-btn <?= $filter === 'all' ? 'active' : '' ?>" data-filter="all" title="All Batches">
+                            <i class="fas fa-boxes"></i>
+                        </button>
+                        <button class="filter-btn <?= $filter === 'expired' ? 'active' : '' ?>" data-filter="expired" title="Expired">
+                            <i class="fas fa-skull-crossbones"></i>
+                        </button>
+                        <button class="filter-btn <?= $filter === 'week' ? 'active' : '' ?>" data-filter="week" title="Expiring in 7 Days">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </button>
+                        <button class="filter-btn <?= $filter === 'month' ? 'active' : '' ?>" data-filter="month" title="Expiring in 30 Days">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                    </div>
                 </div>
+                
                 <div class="button-con">
                     <button class="add-batch-btn" onclick="openBatchModal()">ADD BATCH</button>
                 </div>
@@ -239,45 +282,65 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <div id="batchModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h2>Add Batch</h2>
-            <form method="POST" action="add_batch.php" id="addBatchForm">
-                <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
-                <div class="form-group">
-                    <label>Batch Lot Number</label>
-                    <input type="text" name="batch_lot_number" required placeholder="Enter batch lot number" autocomplete="off">
+            <div class="form-scroll">
+                <form method="POST" action="add_batch.php" id="addBatchForm">
+                    <input type="hidden" name="catalog_id" value="<?= htmlspecialchars($catalog_id) ?>">
+                    <div class="form-group">
+                        <label>Batch Lot Number</label>
+                        <input type="text" name="batch_lot_number" required placeholder="Enter batch lot number" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>PONO</label>
+                        <input type="text" name="pono" placeholder="Enter PONO" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Manufacturing Date</label>
+                        <input type="date" name="manufacturing_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Expiration Date</label>
+                        <input type="date" name="expiration_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stocks</label>
+                        <input type="number" name="stocks" min="1" required placeholder="Enter stock quantity">
+                    </div>
+                    <div class="form-group">
+                        <label>Source</label>
+                        <select name="source" class="select2" required>
+                            <option value="" disabled selected>Select or type to add new</option>
+                            <?php
+                            $categoryStmt = $conn->query("SELECT DISTINCT source FROM medicine_batches ORDER BY source");
+                            while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
+                                echo "<option value='" . htmlspecialchars($category['source']) . "'>" . htmlspecialchars($category['source']) . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeBatchModal()">Cancel</button>
+                <button type="submit" form="addBatchForm" class="save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==== FULL HISTORY MODAL ==== -->
+    <div id="historyModal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:90%;">
+            <h2>Medicine History</h2>
+            <div class="history-container">
+                <div class="medicine-name">
+                    <h4>Medicine Name</h4>
                 </div>
-                <div class="form-group">
-                    <label>PONO</label>
-                    <input type="text" name="pono" placeholder="Enter PONO" autocomplete="off">
+                <div id="fullHistoryContent">
+                    <p>Loading full history...</p>
                 </div>
-                <div class="form-group">
-                    <label>Manufacturing Date</label>
-                    <input type="date" name="manufacturing_date">
-                </div>
-                <div class="form-group">
-                    <label>Expiration Date</label>
-                    <input type="date" name="expiration_date" required>
-                </div>
-                <div class="form-group">
-                    <label>Stocks</label>
-                    <input type="number" name="stocks" min="1" required placeholder="Enter stock quantity">
-                </div>
-                <div class="form-group">
-                    <label>Source</label>
-                    <select name="source" class="select2" required>
-                        <option value="" disabled selected>Select or type to add new</option>
-                        <?php
-                        $categoryStmt = $conn->query("SELECT DISTINCT source FROM medicine_batches ORDER BY source");
-                        while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
-                            echo "<option value='" . htmlspecialchars($category['source']) . "'>" . htmlspecialchars($category['source']) . "</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="button-group">
-                    <button type="button" class="cancel-btn" onclick="closeBatchModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeHistoryModal()">Close</button>
+            </div>
         </div>
     </div>
 
@@ -285,6 +348,34 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // BATCH FILTERS – CLIENT-SIDE URL UPDATE
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const filter = this.getAttribute('data-filter');
+                    const url = new URL(window.location);
+                    url.searchParams.set('filter', filter);
+
+                    // Keep search term if exists
+                    const searchInput = document.querySelector('input[name="search"]');
+                    if (searchInput && searchInput.value.trim()) {
+                        url.searchParams.set('search', searchInput.value.trim());
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+
+                    // Keep catalog_id
+                    url.searchParams.set('catalog_id', '<?= $catalog_id ?>' );
+
+                    window.location = url.toString();
+                });
+            });
+        });
+
         let selectedBatchId = null;
         let medicineDetails = null;
 
@@ -313,53 +404,51 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                             <button class="edit-btn" id="editBtn" onclick="enableEditing()">Edit</button>
                             <button class="delete-btn" onclick="deleteBatch()">Delete</button>
                         </div>
-                        <form id="batchForm">
-                            <input type="hidden" name="batch_id" value="${batch.id}">
-                            <div class="details-fields">
-                                <div class="field">
-                                    <label>Medicine</label>
-                                    <p>${medicine.generic_name} ${medicine.brand_name ? '(' + medicine.brand_name + ')' : ''} - ${medicine.dosage} ${medicine.dosage_form} (${medicine.unit})</p>
-                                </div>
-                                <div class="field">
-                                    <label>Batch Lot Number</label>
-                                    <input type="text" name="batch_lot_number" id="batch_lot_number" value="${batch.batch_lot_number || ''}" readonly>
-                                </div>
-                                <div class="field">
-                                    <label>PONO</label>
-                                    <input type="text" name="pono" id="pono" value="${batch.pono || ''}" readonly>
-                                </div>
-                                <div class="field">
-                                    <label>Manufacturing Date</label>
-                                    <input type="date" name="manufacturing_date" id="manufacturing_date" value="${batch.manufacturing_date || ''}" readonly>
-                                </div>
-                                <div class="field">
-                                    <label>Expiration Date</label>
-                                    <input type="date" name="expiration_date" id="expiration_date" value="${batch.expiration_date || ''}" readonly>
-                                </div>
-                                <div class="row">
+                        <div class="form-scroll">
+                            <form id="batchForm">
+                                <input type="hidden" name="batch_id" value="${batch.id}">
+                                <div class="details-fields">
                                     <div class="field">
-                                        <label>Stocks</label>
-                                        <input type="number" name="stocks" id="stocks" value="${batch.stocks || 0}" readonly>
+                                        <label>Batch Lot Number</label>
+                                        <input type="text" name="batch_lot_number" id="batch_lot_number" value="${batch.batch_lot_number || ''}" readonly>
                                     </div>
                                     <div class="field">
-                                        <label>Stock Status</label>
-                                        <input type="text" name="stock_status" id="stock_status" value="${batch.stock_status || ''}" readonly>
+                                        <label>PONO</label>
+                                        <input type="text" name="pono" id="pono" value="${batch.pono || ''}" readonly>
+                                    </div>
+                                    <div class="field">
+                                        <label>Manufacturing Date</label>
+                                        <input type="date" name="manufacturing_date" id="manufacturing_date" value="${batch.manufacturing_date || ''}" readonly>
+                                    </div>
+                                    <div class="field">
+                                        <label>Expiration Date</label>
+                                        <input type="date" name="expiration_date" id="expiration_date" value="${batch.expiration_date || ''}" readonly>
+                                    </div>
+                                    <div class="row">
+                                        <div class="field">
+                                            <label>Stocks</label>
+                                            <input type="number" name="stocks" id="stocks" value="${batch.stocks || 0}" readonly>
+                                        </div>
+                                        <div class="field">
+                                            <label>Stock Status</label>
+                                            <input type="text" name="stock_status" id="stock_status" value="${batch.stock_status || ''}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label>Expiry Status</label>
+                                        <input type="text" name="expiry_status" id="expiry_status" value="${batch.expiry_status || ''}" readonly>
+                                    </div>
+                                    <div class="field">
+                                        <label>Source</label>
+                                        <input type="text" name="source" id="source" value="${batch.source || ''}" readonly>
                                     </div>
                                 </div>
-                                <div class="field">
-                                    <label>Expiry Status</label>
-                                    <input type="text" name="expiry_status" id="expiry_status" value="${batch.expiry_status || ''}" readonly>
-                                </div>
-                                <div class="field">
-                                    <label>Source</label>
-                                    <input type="text" name="source" id="source" value="${batch.source || ''}" readonly>
-                                </div>
-                            </div>
-                            <div class="action-buttons" style="display:none; text-align:center; margin-top:20px;">
-                                <button type="button" class="save-btn" onclick="saveBatchChanges()">Save</button>
-                                <button type="button" class="cancel-btn" onclick="cancelEditing()">Cancel</button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
+                        <div class="action-buttons" style="display:none;">
+                            <button type="button" class="save-btn" onclick="saveBatchChanges()">Save</button>
+                            <button type="button" class="cancel-btn" onclick="cancelEditing()">Cancel</button>
+                        </div>
                     </div>
 
                     <div id="addStockTab" class="tab-page" style="display:none;">
@@ -454,70 +543,158 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             tabPages.forEach(page => page.style.display = 'none');
 
             if (tabName === 'details') {
-                document.getElementById('detailsTab').style.display = 'block';
+                document.getElementById('detailsTab').style.display = 'flex';
                 tabs[0].classList.add('active');
             } else if (tabName === 'addStock') {
-                document.getElementById('addStockTab').style.display = 'block';
+                document.getElementById('addStockTab').style.display = 'flex';
                 tabs[1].classList.add('active');
                 // fetchBatchSummary(selectedMedicineId); // Uncomment if needed
             } else if (tabName === 'history') {
-                document.getElementById('historyTab').style.display = 'block';
+                document.getElementById('historyTab').style.display = 'flex';
                 tabs[2].classList.add('active');
                 fetchBatchHistory(selectedBatchId);
             }
         }
 
-        function fetchBatchHistory(batchId) {
+        function fetchBatchHistory(batchId, limit = 5) {
             const historyTab = document.getElementById('historyTab');
             historyTab.innerHTML = '<p>Loading history...</p>';
 
+            const formData = new URLSearchParams();
+            formData.append('batch_id', batchId);
+            if (limit > 0) formData.append('limit', limit);
+
             fetch('get_batch_history.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `batch_id=${encodeURIComponent(batchId)}`
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    if (data.data.length === 0) {
-                        historyTab.innerHTML = '<p>No history available for this batch.</p>';
-                    } else {
-                        let tableHTML = `
-                            <table class="history-table">
-                                <thead>
-                                    <tr>
-                                        <th>Action</th>
-                                        <th>Details</th>
-                                        <th>Performed by</th>
-                                        <th>When</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                        `;
-                        data.data.forEach(entry => {
-                            tableHTML += `
-                                <tr>
-                                    <td>${entry.action_type}</td>
-                                    <td>${entry.details}</td>
-                                    <td>${entry.performed_by}</td>
-                                    <td>${entry.created_at}</td>
-                                </tr>
-                            `;
-                        });
-                        tableHTML += '</tbody></table>';
-                        historyTab.innerHTML = tableHTML;
-                    }
-                } else {
-                    historyTab.innerHTML = `<p style="color: red;">Error: ${data.message}</p>`;
+                if (!data.success) {
+                    historyTab.innerHTML = `<p style="color:red;">${data.message}</p>`;
+                    return;
                 }
+
+                const rows = data.data;
+                if (rows.length === 0) {
+                    historyTab.innerHTML = '<p>No history available for this batch.</p>';
+                    return;
+                }
+
+                let html = '';
+
+                // Show "View Detailed" button only when limit was applied
+                if (limit > 0) {
+                    html += `
+                        <div class="details-buttons">
+                            <button class="view-detailed-btn" onclick="openBatchHistoryModal(${batchId})">
+                                View Detailed History
+                            </button>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>By</th>
+                                    <th>Date & Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                rows.forEach(r => {
+                    html += `<tr>
+                                <td>${r.action_type}</td>
+                                <td>${r.performed_by}</td>
+                                <td>${r.created_at}</td>
+                            </tr>`;
+                });
+
+                html += `</tbody></table></div>`;
+                historyTab.innerHTML = html;
             })
-            .catch(error => {
-                console.error('Error:', error);
-                historyTab.innerHTML = '<p style="color: red;">Failed to load history.</p>';
+            .catch(err => {
+                console.error(err);
+                historyTab.innerHTML = '<p style="color:red;">Failed to load history.</p>';
             });
         }
+
+        let fullBatchHistoryId = null;
+
+        function openBatchHistoryModal(batchId) {
+            fullBatchHistoryId = batchId;
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('fullHistoryContent');
+            modal.style.display = 'flex';
+            content.innerHTML = '<p>Loading full history...</p>';
+
+            const formData = new URLSearchParams();
+            formData.append('batch_id', batchId);
+            // No limit → full history
+
+            fetch('get_batch_history.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    content.innerHTML = `<p style="color:red;">${data.message}</p>`;
+                    return;
+                }
+
+                document.querySelector('#historyModal .modal-content h2')
+                .textContent = `Batch History: ${data.batch_lot}`;
+
+                // UPDATE SUBTITLE (Medicine Name + Dosage)
+                const subtitle = document.querySelector('#historyModal .medicine-name h4');
+                subtitle.textContent = data.medicine_full;
+
+                const rows = data.data;
+                if (rows.length === 0) {
+                    content.innerHTML = '<p>No history found.</p>';
+                    return;
+                }
+
+                let table = `
+                    <table class="history-table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Details</th>
+                                <th>Performed By</th>
+                                <th>Date & Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                rows.forEach(r => {
+                    table += `<tr>
+                        <td>${r.action_type}</td>
+                        <td>${r.details}</td>
+                        <td>${r.performed_by}</td>
+                        <td>${r.created_at}</td>
+                    </tr>`;
+                });
+                table += `</tbody></table>`;
+                content.innerHTML = table;
+            })
+            .catch(() => {
+                content.innerHTML = '<p style="color:red;">Failed to load full history.</p>';
+            });
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
 
         function deleteBatch() {
             if (!selectedBatchId) {

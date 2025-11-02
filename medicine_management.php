@@ -27,24 +27,56 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 $searchQuery = "%" . $searchTerm . "%";
 
+// Handle filter parameter
+$filter = isset($_GET['filter']) ? trim($_GET['filter']) : 'all';
+$validFilters = ['all', 'low', 'out'];
+if (!in_array($filter, $validFilters)) {
+    $filter = 'all';
+}
+
+// Build query with stock_status
 $catalogQuery = "
-    SELECT id, therapeutic_category, generic_name, brand_name, 
-           dosage, dosage_form, unit, min_stock
-    FROM medicines_catalog
+    SELECT 
+        c.id, 
+        c.therapeutic_category, 
+        c.generic_name, 
+        c.brand_name, 
+        c.dosage, 
+        c.dosage_form, 
+        c.unit, 
+        c.min_stock,
+        c.stock_status
+    FROM medicines_catalog c
 ";
 
+$whereConditions = [];
+$params = [];
+
+// Search filter
 if (!empty($searchTerm)) {
-    $catalogQuery .= " WHERE generic_name LIKE :search 
-                     OR brand_name LIKE :search 
-                     OR therapeutic_category LIKE :search";
+    $whereConditions[] = "(c.generic_name LIKE :search 
+                       OR c.brand_name LIKE :search 
+                       OR c.therapeutic_category LIKE :search)";
+    $params[':search'] = $searchQuery;
 }
+
+// Stock status filter
+if ($filter === 'low') {
+    $whereConditions[] = "c.stock_status = 'Low Stock'";
+} elseif ($filter === 'out') {
+    $whereConditions[] = "c.stock_status = 'Out of Stock'";
+}
+
+if (!empty($whereConditions)) {
+    $catalogQuery .= " WHERE " . implode(" AND ", $whereConditions);
+}
+
+$catalogQuery .= " ORDER BY c.generic_name ASC";
 
 $catalogStmt = $conn->prepare($catalogQuery);
-
-if (!empty($searchTerm)) {
-    $catalogStmt->bindParam(':search', $searchQuery);
+foreach ($params as $key => $value) {
+    $catalogStmt->bindValue($key, $value);
 }
-
 $catalogStmt->execute();
 $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -58,6 +90,7 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
@@ -148,15 +181,31 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="content">
         <div class="med-container">
             <div class="sort-controls">
-                <div class="search-con">
-                    <form method="GET" action="medicine_management.php">
-                        <input type="text" name="search" placeholder="Search medicines..." value="<?= htmlspecialchars($searchTerm) ?>">
-                        <button type="submit">Search</button>
-                    </form>
+                <div class="search-filter">
+                    <div class="search-con">
+                        <form method="GET" action="medicine_management.php">
+                            <input type="text" name="search" placeholder="Search medicines..." value="<?= htmlspecialchars($searchTerm) ?>">
+                            <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
+                            <button type="submit">Search</button>
+                        </form>
+                    </div>
+
+                    <div class="filter-buttons" data-initial-filter="<?= $filter ?>">
+                        <button class="filter-btn <?= $filter === 'all' ? 'active' : '' ?>" data-filter="all" title="Show All">
+                            <i class="fas fa-boxes"></i>
+                        </button>
+                        <button class="filter-btn <?= $filter === 'low' ? 'active' : '' ?>" data-filter="low" title="Low Stock">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </button>
+                        <button class="filter-btn <?= $filter === 'out' ? 'active' : '' ?>" data-filter="out" title="Out of Stock">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                    </div>
                 </div>
+
                 <div class="button-con">
                     <button class="add-med-btn" onclick="openModal()">ADD MEDICINE</button>
-                    <a href="expiring_low_stock.php" class="expired-low-btn">View Expiring & Low Stock</a>
+                    <a href="view_expiring.php" class="expiring-btn">View Expiring Medicines</a>
                 </div>
             </div>
             <div class="table-details">
@@ -177,19 +226,29 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                             <tbody>
                                 <?php if (empty($catalogs)): ?>
                                     <tr>
-                                        <td colspan="9" style="text-align: center;">No medicines found.</td>
+                                        <td colspan="8" style="text-align: center;">No medicines found.</td>
                                     </tr>
                                 <?php else: ?>
-                                    <?php foreach ($catalogs as $catalog): ?>
-                                        <tr onclick="selectRow(this); showDetails(<?= htmlspecialchars(json_encode($catalog)) ?>)">
-                                            <td><?= htmlspecialchars($catalog['therapeutic_category']) ?></td>
-                                            <td><?= htmlspecialchars($catalog['generic_name']) ?></td>
-                                            <td><?= htmlspecialchars($catalog['brand_name']) ?></td>
-                                            <td><?= htmlspecialchars($catalog['dosage']) ?></td>
-                                            <td><?= htmlspecialchars($catalog['dosage_form']) ?></td>
-                                            <td><?= htmlspecialchars($catalog['unit']) ?></td>
-                                            <td><?= htmlspecialchars($catalog['min_stock']) ?></td>
-                                        </tr>
+                                    <?php foreach ($catalogs as $catalog): 
+                                        $statusClass = '';
+                                        if ($catalog['stock_status'] === 'Out of Stock') {
+                                            $statusClass = 'out-of-stock';
+                                        } elseif ($catalog['stock_status'] === 'Low Stock') {
+                                            $statusClass = 'low-stock';
+                                        }
+                                    ?>
+                                    <tr 
+                                        onclick="selectRow(this); showDetails(<?= htmlspecialchars(json_encode($catalog)) ?>)"
+                                        class="<?= $statusClass ?>"
+                                        data-status="<?= strtolower(str_replace(' ', '-', $catalog['stock_status'])) ?>">
+                                        <td><?= htmlspecialchars($catalog['therapeutic_category']) ?></td>
+                                        <td><?= htmlspecialchars($catalog['generic_name']) ?></td>
+                                        <td><?= htmlspecialchars($catalog['brand_name']) ?></td>
+                                        <td><?= htmlspecialchars($catalog['dosage']) ?></td>
+                                        <td><?= htmlspecialchars($catalog['dosage_form']) ?></td>
+                                        <td><?= htmlspecialchars($catalog['unit']) ?></td>
+                                        <td><?= htmlspecialchars($catalog['min_stock']) ?></td>
+                                    </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </tbody>
@@ -214,92 +273,111 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <div id="medicineModal" class="modal" style="display: none;">
         <div class="modal-content">
             <h2>Add Medicine</h2>
-            <form method="POST" action="add_medicine.php" id="addMedicineForm">
-                <div class="form-group">
-                    <label>Therapeutic Category</label>
-                    <select name="therapeutic_category" class="select2" required>
-                        <option value="" disabled selected>Select or type to add new</option>
-                        <?php
-                        $categoryStmt = $conn->query("SELECT DISTINCT therapeutic_category FROM medicines_catalog ORDER BY therapeutic_category");
-                        while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
-                            echo "<option value='" . htmlspecialchars($category['therapeutic_category']) . "'>" . htmlspecialchars($category['therapeutic_category']) . "</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Generic Name</label>
-                    <select name="generic_name" class="select2" required>
-                        <option value="" disabled selected>Select or type to add new</option>
-                        <?php
-                        $genericStmt = $conn->query("SELECT DISTINCT generic_name FROM medicines_catalog ORDER BY generic_name");
-                        while ($generic = $genericStmt->fetch(PDO::FETCH_ASSOC)) {
-                            echo "<option value='" . htmlspecialchars($generic['generic_name']) . "'>" . htmlspecialchars($generic['generic_name']) . "</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Brand Name</label>
-                    <select name="brand_name" class="select2">
-                        <option value="" disabled selected>Select or type to add new</option>
-                        <?php
-                        $brandStmt = $conn->query("SELECT DISTINCT brand_name FROM medicines_catalog WHERE brand_name IS NOT NULL ORDER BY brand_name");
-                        while ($brand = $brandStmt->fetch(PDO::FETCH_ASSOC)) {
-                            echo "<option value='" . htmlspecialchars($brand['brand_name']) . "'>" . htmlspecialchars($brand['brand_name']) . "</option>";
-                        }
-                        ?>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Dosage Form</label>
-                    <select name="dosage_form" required>
-                        <option value="" disabled selected>Select Dosage Form</option>
-                        <option value="Tablet">Tablet</option>
-                        <option value="Capsule">Capsule</option>
-                        <option value="Syrup">Syrup</option>
-                        <option value="Suspension">Suspension</option>
-                        <option value="Cream">Cream</option>
-                        <option value="Drops">Drops</option>
-                        <option value="Ointment">Ointment</option>
-                    </select>
-                </div>
-
-                <div class="form-row">
+            <div class="form-scroll">
+                <form method="POST" action="add_medicine.php" id="addMedicineForm">
                     <div class="form-group">
-                        <label>Dosage</label>
-                        <input type="text" name="dosage" required autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label>Unit</label>
-                        <select name="unit" required>
-                            <option value="" disabled selected>Select Unit</option>
-                            <option value="PCS">PCS</option>
-                            <option value="TABS">TABS</option>
-                            <option value="CAPS">CAPS</option>
-                            <option value="BOTTLE">BOTTLE</option>
-                            <option value="BOX">BOX</option>
-                            <option value="SACHET">SACHET</option>
-                            <option value="AMPULE">AMPULE</option>
+                        <label>Therapeutic Category</label>
+                        <select name="therapeutic_category" class="select2" required>
+                            <option value="" disabled selected>Select or type to add new</option>
+                            <?php
+                            $categoryStmt = $conn->query("SELECT DISTINCT therapeutic_category FROM medicines_catalog ORDER BY therapeutic_category");
+                            while ($category = $categoryStmt->fetch(PDO::FETCH_ASSOC)) {
+                                echo "<option value='" . htmlspecialchars($category['therapeutic_category']) . "'>" . htmlspecialchars($category['therapeutic_category']) . "</option>";
+                            }
+                            ?>
                         </select>
                     </div>
-                </div>
-
-                <div class="form-row">
+                    
                     <div class="form-group">
-                        <label>Minimum Stock</label>
-                        <input type="number" name="min_stock" min="1" required placeholder="Enter minimum stock">
+                        <label>Generic Name</label>
+                        <select name="generic_name" class="select2" required>
+                            <option value="" disabled selected>Select or type to add new</option>
+                            <?php
+                            $genericStmt = $conn->query("SELECT DISTINCT generic_name FROM medicines_catalog ORDER BY generic_name");
+                            while ($generic = $genericStmt->fetch(PDO::FETCH_ASSOC)) {
+                                echo "<option value='" . htmlspecialchars($generic['generic_name']) . "'>" . htmlspecialchars($generic['generic_name']) . "</option>";
+                            }
+                            ?>
+                        </select>
                     </div>
-                </div>
 
-                <div class="button-group">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
+                    <div class="form-group">
+                        <label>Brand Name</label>
+                        <select name="brand_name" class="select2">
+                            <option value="" disabled selected>Select or type to add new</option>
+                            <?php
+                            $brandStmt = $conn->query("SELECT DISTINCT brand_name FROM medicines_catalog WHERE brand_name IS NOT NULL ORDER BY brand_name");
+                            while ($brand = $brandStmt->fetch(PDO::FETCH_ASSOC)) {
+                                echo "<option value='" . htmlspecialchars($brand['brand_name']) . "'>" . htmlspecialchars($brand['brand_name']) . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dosage Form</label>
+                        <select name="dosage_form" required>
+                            <option value="" disabled selected>Select Dosage Form</option>
+                            <option value="Tablet">Tablet</option>
+                            <option value="Capsule">Capsule</option>
+                            <option value="Syrup">Syrup</option>
+                            <option value="Suspension">Suspension</option>
+                            <option value="Cream">Cream</option>
+                            <option value="Drops">Drops</option>
+                            <option value="Ointment">Ointment</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Dosage</label>
+                            <input type="text" name="dosage" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <select name="unit" required>
+                                <option value="" disabled selected>Select Unit</option>
+                                <option value="PCS">PCS</option>
+                                <option value="TABS">TABS</option>
+                                <option value="CAPS">CAPS</option>
+                                <option value="BOTTLE">BOTTLE</option>
+                                <option value="BOX">BOX</option>
+                                <option value="SACHET">SACHET</option>
+                                <option value="AMPULE">AMPULE</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Minimum Stock</label>
+                            <input type="number" name="min_stock" min="1" required placeholder="Enter minimum stock">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button type="submit" form="addMedicineForm" class="save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==== FULL HISTORY MODAL ==== -->
+    <div id="historyModal" class="modal" style="display:none;">
+        <div class="modal-content" style="width:90%;">
+            <h2>Medicine History</h2>
+            <div class="history-container">
+                <div class="medicine-name">
+                    <h4>Medicine Name</h4>
                 </div>
-            </form>
+                <div id="fullHistoryContent">
+                    <p>Loading full history...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeHistoryModal()">Close</button>
+            </div>
         </div>
     </div>
 
@@ -307,6 +385,31 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // FILTER FUNCTIONALITY + AUTO-APPLY FROM URL
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const filter = this.getAttribute('data-filter');
+                    const url = new URL(window.location);
+                    url.searchParams.set('filter', filter);
+
+                    // Keep search term
+                    const searchInput = document.querySelector('input[name="search"]');
+                    if (searchInput && searchInput.value.trim()) {
+                        url.searchParams.set('search', searchInput.value.trim());
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+
+                    window.location = url.toString();
+                });
+            });
+        });
+
         let selectedMedicineId = null;
         //CATALOG INVENTORY TABLE
         function selectRow(row) {
@@ -335,48 +438,49 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                             <button class="edit-btn" id="editBtn" onclick="enableEditing()">Edit</button>
                             <button class="delete-btn" onclick="deleteMedicine()">Delete</button>
                         </div>
-                        <form id="medicineForm">
-                            <div class="details-fields">
-                                <div class="field">
-                                    <label>Therapeutic Category</label>
-                                    <input type="text" name="therapeutic_category" value="${medicine.therapeutic_category}" readonly>
-                                </div>
-
-                                <div class="field">
-                                    <label>Generic Name</label>
-                                    <input type="text" name="generic_name" value="${medicine.generic_name}" readonly>
-                                </div>
-                                <div class="field">
-                                    <label>Brand Name</label>
-                                    <input type="text" name="brand_name" value="${medicine.brand_name || ''}" readonly>
-                                </div>
-                                <div class="field">
-                                    <label>Dosage Form</label>
-                                    <input type="text" name="dosage_form" value="${medicine.dosage_form || ''}" readonly>
-                                </div>
-
-                                <div class="row">
+                        <div class="form-scroll">
+                            <form id="medicineForm">
+                                <div class="details-fields">
                                     <div class="field">
-                                        <label>Dosage</label>
-                                        <input type="text" name="dosage" value="${medicine.dosage || ''}" readonly>
+                                        <label>Therapeutic Category</label>
+                                        <input type="text" name="therapeutic_category" value="${medicine.therapeutic_category}" readonly>
+                                    </div>
+
+                                    <div class="field">
+                                        <label>Generic Name</label>
+                                        <input type="text" name="generic_name" value="${medicine.generic_name}" readonly>
                                     </div>
                                     <div class="field">
-                                        <label>Unit</label>
-                                        <input type="text" name="unit" value="${medicine.unit || ''}" readonly>
+                                        <label>Brand Name</label>
+                                        <input type="text" name="brand_name" value="${medicine.brand_name || ''}" readonly>
+                                    </div>
+                                    <div class="field">
+                                        <label>Dosage Form</label>
+                                        <input type="text" name="dosage_form" value="${medicine.dosage_form || ''}" readonly>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="field">
+                                            <label>Dosage</label>
+                                            <input type="text" name="dosage" value="${medicine.dosage || ''}" readonly>
+                                        </div>
+                                        <div class="field">
+                                            <label>Unit</label>
+                                            <input type="text" name="unit" value="${medicine.unit || ''}" readonly>
+                                        </div>
+                                    </div>
+
+                                    <div class="field">
+                                        <label>Minimum Stocks</label>
+                                        <input type="number" name="min_stock" value="${medicine.min_stock}" readonly>
                                     </div>
                                 </div>
-
-                                <div class="field">
-                                    <label>Minimum Stocks</label>
-                                    <input type="number" name="min_stock" value="${medicine.min_stock}" readonly>
-                                </div>
-                            </div>
-
-                            <div class="action-buttons" style="display:none; text-align:center; margin-top:20px;">
-                                <button type="button" class="save-btn" onclick="saveChanges()">Save</button>
-                                <button type="button" class="cancel-btn" onclick="cancelEditing()">Cancel</button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>   
+                        <div class="action-buttons" style="display:none;">
+                            <button type="button" class="save-btn" onclick="saveChanges()">Save</button>
+                            <button type="button" class="cancel-btn" onclick="cancelEditing()">Cancel</button>
+                        </div> 
                     </div>
 
                     <div id="batchSummaryTab" class="tab-page" style="display:none;">
@@ -403,69 +507,152 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             tabPages.forEach(page => page.style.display = 'none');
 
             if (tabName === 'details') {
-                document.getElementById('detailsTab').style.display = 'block';
+                document.getElementById('detailsTab').style.display = 'flex';
                 tabs[0].classList.add('active');
             } else if (tabName === 'batchSummary') {
-                document.getElementById('batchSummaryTab').style.display = 'block';
+                document.getElementById('batchSummaryTab').style.display = 'flex';
                 tabs[1].classList.add('active');
                 fetchBatchSummary(selectedMedicineId);
             } else if (tabName === 'history') {
-                document.getElementById('historyTab').style.display = 'block';
+                document.getElementById('historyTab').style.display = 'flex';
                 tabs[2].classList.add('active');
                 fetchHistory(selectedMedicineId);
             }
         }
 
-        function fetchHistory(catalogId) {
+        function fetchHistory(catalogId, limit = 5) {
             const historyTab = document.getElementById('historyTab');
-            historyTab.innerHTML = '<p>Loading history...</p>';
+            historyTab.innerHTML = '<p>Loading...</p>';
+
+            const formData = new URLSearchParams();
+            formData.append('catalog_id', catalogId);
+            if (limit > 0) formData.append('limit', limit);
 
             fetch('get_medicine_history.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `catalog_id=${encodeURIComponent(catalogId)}`
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    if (data.data.length === 0) {
-                        historyTab.innerHTML = '<p>No history available for this medicine.</p>';
-                    } else {
-                        let tableHTML = `
-                            <table class="history-table">
-                                <thead>
-                                    <tr>
-                                        <th>Action</th>
-                                        <th>Details</th>
-                                        <th>Performed By</th>
-                                        <th>Date & Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                        `;
-                        data.data.forEach(entry => {
-                            tableHTML += `
-                                <tr>
-                                    <td>${entry.action_type}</td>
-                                    <td>${entry.details}</td>
-                                    <td>${entry.performed_by}</td>
-                                    <td>${entry.created_at}</td>
-                                </tr>
-                            `;
-                        });
-                        tableHTML += '</tbody></table>';
-                        historyTab.innerHTML = tableHTML;
-                    }
-                } else {
-                    historyTab.innerHTML = `<p style="color: red;">Error: ${data.message}</p>`;
+                if (!data.success) {
+                    historyTab.innerHTML = `<p style="color:red;">${data.message}</p>`;
+                    return;
                 }
+
+                const rows = data.data;
+                if (rows.length === 0) {
+                    historyTab.innerHTML = '<p>No history available.</p>';
+                    return;
+                }
+
+                let html = '';
+
+                // Only show button when we applied a limit (i.e., not full view)
+                if (limit > 0) {
+                    html += `
+                        <div class="details-buttons">
+                            <button class="view-detailed-btn" onclick="openHistoryModal(${catalogId})">
+                                View Detailed History
+                            </button>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="history-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>By</th>
+                                    <th>Date & Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                rows.forEach(r => {
+                    html += `<tr>
+                                <td>${r.action_type}</td>
+                                <td>${r.performed_by}</td>
+                                <td>${r.created_at}</td>
+                            </tr>`;
+                });
+
+                html += `</tbody></table></div>`;
+
+                historyTab.innerHTML = html;
             })
-            .catch(error => {
-                console.error('Error:', error);
-                historyTab.innerHTML = '<p style="color: red;">Failed to load history.</p>';
+            .catch(err => {
+                console.error(err);
+                historyTab.innerHTML = '<p style="color:red;">Failed to load history.</p>';
             });
+        }
+
+        let fullHistoryCatalogId = null;
+
+        function openHistoryModal(catalogId) {
+            fullHistoryCatalogId = catalogId;
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('fullHistoryContent');
+            modal.style.display = 'flex';
+            content.innerHTML = '<p>Loading full history...</p>';
+
+            // Fetch **without** limit
+            const formData = new URLSearchParams();
+            formData.append('catalog_id', catalogId);
+
+            fetch('get_medicine_history.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) {
+                    content.innerHTML = `<p style="color:red;">${data.message}</p>`;
+                    return;
+                }
+
+                document.querySelector('#historyModal .modal-content .history-container h4').textContent = `${data.medicine_name}`;
+
+                const rows = data.data;
+                if (rows.length === 0) {
+                    content.innerHTML = '<p>No history found.</p>';
+                    return;
+                }
+
+                let table = `
+                    <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th >Performed By</th>
+                                    <th>Date &amp; Time</th>
+                                </tr>
+                            </thead>
+                        <tbody>
+                `;
+                rows.forEach(r => {
+                    table += `<tr>
+                        <td>${r.action_type}</td>
+                        <td>${r.details}</td>
+                        <td>${r.performed_by}</td>
+                        <td>${r.created_at}</td>
+                    </tr>`;
+                });
+                table += `</tbody></table>`;
+                content.innerHTML = table;
+            })
+            .catch(() => {
+                content.innerHTML = '<p style="color:red;">Failed to load full history.</p>';
+            });
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
         }
 
         function fetchBatchSummary(catalogId) {
@@ -481,26 +668,28 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                 const batchSummaryTab = document.getElementById('batchSummaryTab');
                 if (data.success) {
                     batchSummaryTab.innerHTML = `
-                        <div class="details-fields">
-                            <div class="field">
-                                <label>Total Stock</label>
-                                <p>${data.data.total_stock}</p>
-                            </div>
-                            <div class="field">
-                                <label>Number of Batches</label>
-                                <p>${data.data.batch_count}</p>
-                            </div>
-                            <div class="field">
-                                <label>Expiry Status Summary</label>
-                                <p>${data.data.expiry_summary}</p>
-                            </div>
-                            <div class="field">
-                                <label>Earliest Expiration Date</label>
-                                <p>${data.data.earliest_expiry}</p>
-                            </div>
-                            <div class="field">
-                                <label>Stock Status</label>
-                                <p>${data.data.stock_status}</p>
+                        <div class="form-scroll">
+                            <div class="details-fields">
+                                <div class="field">
+                                    <label>Total Stock</label>
+                                    <p>${data.data.total_stock}</p>
+                                </div>
+                                <div class="field">
+                                    <label>Number of Batches</label>
+                                    <p>${data.data.batch_count}</p>
+                                </div>
+                                <div class="field">
+                                    <label>Expiry Status Summary</label>
+                                    <p>${data.data.expiry_summary}</p>
+                                </div>
+                                <div class="field">
+                                    <label>Earliest Expiration Date</label>
+                                    <p>${data.data.earliest_expiry}</p>
+                                </div>
+                                <div class="field">
+                                    <label>Stock Status</label>
+                                    <p>${data.data.stock_status}</p>
+                                </div>
                             </div>
                         </div>
                     `;

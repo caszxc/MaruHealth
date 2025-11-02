@@ -20,7 +20,7 @@ $pendingStmt->execute();
 $pendingCount = $pendingStmt->fetch(PDO::FETCH_ASSOC)['pending'];
 
 // Count archives (claimed + declined)
-$archivesQuery = "SELECT COUNT(*) AS archives FROM medicine_requests WHERE request_status IN ('claimed', 'declined')";
+$archivesQuery = "SELECT COUNT(*) AS archives FROM medicine_requests WHERE request_status IN ('claimed', 'declined', 'unclaimed', 'cancelled')";
 $archivesStmt = $conn->prepare($archivesQuery);
 $archivesStmt->execute();
 $archivesCount = $archivesStmt->fetch(PDO::FETCH_ASSOC)['archives'];
@@ -155,14 +155,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="tiles-container">
             <a href="requests.php">
                 <div class="tile">
-                    <img src="images/icons/reqmd_icon_active.png" alt="">
+                    <img src="images/icons/pendings_icon_active.png" alt="">
                     <h3>Pending Requests</h3>
                     <p><?= $requestsCount ?></p>
                 </div>
             </a>
             <a href="pending_requests.php">
                 <div class="tile">
-                    <img src="images/icons/pendings_icon_active.png" alt="">
+                    <img src="images/icons/to_claim_icon_active.png" alt="">
                     <h3>To be Claimed Requests</h3>
                     <p><?= $pendingCount ?></p>
                 </div>

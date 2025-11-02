@@ -19,80 +19,128 @@ $adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
 $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
-// Get expiring medicines (within next 60 days)
-$expiryDate = date('Y-m-d', strtotime('+60 days'));
-$expiringStmt = $conn->prepare("
-    SELECT mc.id, mc.generic_name, mc.brand_name, mb.expiration_date, mb.stocks 
-    FROM medicines_catalog mc
-    JOIN medicine_batches mb ON mc.id = mb.catalog_id
-    WHERE mb.expiration_date <= :expiryDate 
-    AND mb.expiration_date >= CURDATE() 
-    AND mb.stocks > 0
-    ORDER BY mb.expiration_date ASC
-    LIMIT 5
-");
-$expiringStmt->bindParam(':expiryDate', $expiryDate);
-$expiringStmt->execute();
-$expiringMedicines = $expiringStmt->fetchAll(PDO::FETCH_ASSOC);
+// ---------------------------------------------------------------------
+// 1. ALERTS
+// ---------------------------------------------------------------------
+// Expired batches
+$expiredStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiry_status = 'Expired'");
+$expiredCount = $expiredStmt->fetchColumn();
 
-// Get low stock medicines (below min_stock level)
-$lowStockStmt = $conn->prepare("
-    SELECT mc.id, mc.generic_name, mc.brand_name, mb.stocks, mc.min_stock 
-    FROM medicines_catalog mc
-    JOIN medicine_batches mb ON mc.id = mb.catalog_id
-    WHERE mb.stocks <= mc.min_stock 
-    AND mb.stocks > 0
-    AND mb.expiry_status != 'Expired'
-    ORDER BY (mb.stocks / mc.min_stock) ASC
-    LIMIT 5
-");
-$lowStockStmt->execute();
-$lowStockMedicines = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
+// Expiring within a week
+$weekStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiry_status = 'Expiring within a week'");
+$expiringWeekCount = $weekStmt->fetchColumn();
 
-// Get pending medicine requests
-$pendingRequestsStmt = $conn->prepare("
-    SELECT mr.id, mr.full_name, mr.request_date, 
-           COUNT(rm.id) as medicine_count
-    FROM medicine_requests mr
-    JOIN requested_medicines rm ON mr.id = rm.request_id
-    WHERE mr.request_status IN ('pending', 'to be claimed')
-    GROUP BY mr.id
-    ORDER BY mr.request_date ASC
-    LIMIT 5
-");
-$pendingRequestsStmt->execute();
-$pendingRequests = $pendingRequestsStmt->fetchAll(PDO::FETCH_ASSOC);
+// Expiring within a month
+$monthStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiry_status = 'Expiring within a month'");
+$expiringMonthCount = $monthStmt->fetchColumn();
 
-// Get recent consultations
-$recentConsultationsStmt = $conn->prepare("
-    SELECT c.id, CONCAT(p.first_name, ' ', p.last_name) as patient_name,
-           c.consultation_type, c.consultation_date
-    FROM consultations c
-    JOIN patients p ON c.patient_id = p.id
-    ORDER BY c.created_at DESC
-    LIMIT 5
-");
-$recentConsultationsStmt->execute();
-$recentConsultations = $recentConsultationsStmt->fetchAll(PDO::FETCH_ASSOC);
+// Out of stock
+$outOfStockStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog WHERE stock_status = 'Out of Stock'");
+$outOfStockCount = $outOfStockStmt->fetchColumn();
 
-// Count total patients
+// Low stock
+$lowStockStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog WHERE stock_status = 'Low Stock'");
+$lowStockCount = $lowStockStmt->fetchColumn();
+
+// Pending medicine requests
+$pendingReqStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status = 'pending'");
+$pendingReqCount = $pendingReqStmt->fetchColumn();
+
+// To be claimed
+$toClaimStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status = 'to be claimed'");
+$toClaimCount = $toClaimStmt->fetchColumn();
+
+// Overdue reserved (claim_until_date < today and status = 'to be claimed')
+$overdueStmt = $conn->prepare("
+    SELECT COUNT(*) FROM medicine_requests 
+    WHERE request_status = 'to be claimed' 
+      AND claim_until_date < CURDATE()
+");
+$overdueStmt->execute();
+$overdueCount = $overdueStmt->fetchColumn();
+
+// ---------------------------------------------------------------------
+// 2. SUMMARY
+// ---------------------------------------------------------------------
 $totalPatientsStmt = $conn->query("SELECT COUNT(*) FROM patients");
 $totalPatients = $totalPatientsStmt->fetchColumn();
 
-// Count total medicines (count distinct medicines in medicines_catalog)
+$totalFamiliesStmt = $conn->query("SELECT COUNT(*) FROM families");
+$totalFamilies = $totalFamiliesStmt->fetchColumn();
+
+$totalConsultationsStmt = $conn->query("SELECT COUNT(*) FROM consultations");
+$totalConsultations = $totalConsultationsStmt->fetchColumn();
+
 $totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog");
 $totalMedicines = $totalMedicinesStmt->fetchColumn();
 
-// Count pending medicine requests
-$pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status IN ('pending', 'to be claimed')");
-$pendingReqCount = $pendingReqCountStmt->fetchColumn();
+$totalMedRequestsStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests");
+$totalMedRequests = $totalMedRequestsStmt->fetchColumn();
 
-// Count consultations this month
-$currentMonth = date('Y-m');
-$consultationsThisMonthStmt = $conn->prepare("SELECT COUNT(*) FROM consultations WHERE DATE_FORMAT(consultation_date, '%Y-%m') = :currentMonth");
-$consultationsThisMonthStmt->bindParam(':currentMonth', $currentMonth);
-$consultationsThisMonthStmt->execute();
-$consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
+// ---------------------------------------------------------------------
+// 3. RECENT ACTIVITIES (health staff only)
+// ---------------------------------------------------------------------
+$activityStmt = $conn->prepare("
+    SELECT al.*, a.full_name AS admin_name
+    FROM activity_logs al
+    LEFT JOIN admin_staff a ON al.admin_id = a.id
+    WHERE a.role = 'health_staff'
+      AND al.admin_id IS NOT NULL
+    ORDER BY al.created_at DESC
+    LIMIT 8
+");
+$activityStmt->execute();
+$activities = $activityStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Helper: Human-readable time ago
+function timeAgo($datetime) {
+    $now = new DateTime();
+    $past = new DateTime($datetime);
+    $interval = $now->diff($past);
+
+    if ($interval->d == 0 && $interval->m == 0 && $interval->y == 0) {
+        if ($interval->h > 0) return $interval->h . " hour" . ($interval->h > 1 ? "s" : "") . " ago";
+        if ($interval->i > 0) return $interval->i . " minute" . ($interval->i > 1 ? "s" : "") . " ago";
+        return "Just now";
+    }
+    if ($interval->d < 30) return $interval->d . " day" . ($interval->d > 1 ? "s" : "") . " ago";
+    if ($interval->m < 12) return $interval->m . " month" . ($interval->m > 1 ? "s" : "") . " ago";
+    return $interval->y . " year" . ($interval->y > 1 ? "s" : "") . " ago";
+}
+
+$stats = [
+
+    'patients_total' => $totalPatients,
+    'consultations_total' => $totalConsultations,
+    'families_total' => $totalFamilies,
+
+    // MEDICINE STATISTICS
+    'catalog_total' => $totalMedicines,
+    'batches_total' => $conn->query("SELECT COUNT(*) FROM medicine_batches")->fetchColumn(),
+    'units_total'   => $conn->query("SELECT COALESCE(SUM(stocks), 0) FROM medicine_batches")->fetchColumn(),
+
+
+    'requests_total'     => $totalMedRequests,
+    'requests_pending'   => $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status = 'pending'")->fetchColumn(),
+];
+
+
+// ---------------------------------------------------------------------
+// 4. SYSTEM LOGS (medicine request only)
+// ---------------------------------------------------------------------
+$medSmsLogs = $conn->query("
+    SELECT * FROM sms_logs 
+    WHERE message LIKE '%medicine%' OR message LIKE '%request%'
+    ORDER BY sent_at DESC 
+    LIMIT 5
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$medEmailLogs = $conn->query("
+    SELECT * FROM email_logs 
+    WHERE subject LIKE '%medicine request%'
+    ORDER BY sent_at DESC 
+    LIMIT 5
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -101,183 +149,12 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Health Staff Dashboard</title>
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/healthstaff_dashboard.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-    <style>
-        .stats-cards {
-            display: flex;
-            justify-content: flex-start;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 22%;
-            margin-bottom: 15px;
-            transition: transform 0.3s;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-card h3 {
-            margin-top: 0;
-            color: #555;
-            font-size: 16px;
-        }
-        
-        .stat-card .count {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            margin: 10px 0;
-        }
-        
-        .alert-section {
-            margin-bottom: 30px;
-        }
-        
-        .alert-section h2 {
-            margin-bottom: 15px;
-            color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        .alert-cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        
-        .alert-card {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 15px;
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .alert-card h3 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        
-        .alert-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .alert-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .alert-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .alert-list .critical {
-            color: #d9534f;
-            font-weight: bold;
-        }
-        
-        .alert-list .warning {
-            color: #f0ad4e;
-            font-weight: bold;
-        }
-        
-        .view-all {
-            display: block;
-            text-align: right;
-            margin-top: 10px;
-            color: #337ab7;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        
-        .view-all:hover {
-            text-decoration: underline;
-        }
-        
-        .expiry-date {
-            color: #d9534f;
-            font-weight: bold;
-        }
-        
-        .stock-level {
-            font-weight: bold;
-        }
-        
-        .low-stock {
-            color: #f0ad4e;
-        }
-        
-        .critical-stock {
-            color: #d9534f;
-        }
-        
-        .request-date {
-            color: #777;
-            font-size: 12px;
-        }
-        
-        .tiles-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 30px;
-        }
-        
-        .tile {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            width: 200px;
-            height: 150px;
-            transition: transform 0.3s, background-color 0.3s;
-        }
-        
-        .tile:hover {
-            transform: translateY(-5px);
-            background-color: #e9ecef;
-        }
-        
-        .tile img {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 10px;
-        }
-        
-        .tile h3 {
-            margin: 0;
-            color: #333;
-            text-align: center;
-        }
-        
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-    </style>
+    
 </head>
 <body>
     <nav>
@@ -333,137 +210,355 @@ $consultationsThisMonth = $consultationsThisMonthStmt->fetchColumn();
         <div class="title-con">
             <h2>Health Staff Dashboard</h2>
         </div>
-        
-        <!-- Stats Cards -->
-        <div class="stats-cards">
-            <div class="stat-card">
-                <h3>Total Patients</h3>
-                <div class="count"><?= $totalPatients ?></div>
-                <a href="patient_stats.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Total Medicines</h3>
-                <div class="count"><?= $totalMedicines ?></div>
-                <a href="medicine_stats.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Pending Requests</h3>
-                <div class="count"><?= $pendingReqCount ?></div>
-                <a href="medicine_request_stats.php" class="view-all">View Details</a>
-            </div>
-            
-            <div class="stat-card">
-                <h3>Consultations This Month</h3>
-                <div class="count"><?= $consultationsThisMonth ?></div>
-                <a href="consultation_stats.php" class="view-all">View Details</a>
-            </div>
-        </div>
-        
-        <!-- Alert Sections -->
-        <div class="alert-section">
-            <h2>Critical Alerts</h2>
-            
-            <div class="alert-cards">
-                <!-- Expiring Medicines -->
-                <div class="alert-card">
-                    <h3>Expiring Medicines</h3>
-                    <?php if (count($expiringMedicines) > 0): ?>
-                        <ul class="alert-list">
-                            <?php foreach ($expiringMedicines as $medicine): ?>
-                                <?php 
-                                    $daysUntilExpiry = (strtotime($medicine['expiration_date']) - time()) / (60 * 60 * 24);
-                                    $severityClass = $daysUntilExpiry <= 30 ? 'critical' : 'warning';
-                                ?>
-                                <li class="<?= $severityClass ?>">
-                                    <?= htmlspecialchars($medicine['generic_name']) ?> 
-                                    <?= !empty($medicine['brand_name']) ? '(' . htmlspecialchars($medicine['brand_name']) . ')' : '' ?>
-                                    <br>
-                                    <span class="expiry-date">Expires: <?= date('M d, Y', strtotime($medicine['expiration_date'])) ?></span>
-                                    <span> - Stock: <?= $medicine['stocks'] ?></span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <a href="expiring_low_stock.php" class="view-all">View All Expiring & Low Stock</a>
-                    <?php else: ?>
-                        <p>No medicines expiring soon.</p>
-                    <?php endif; ?>
-                </div>
+        <div class="dashboard-sections">
+            <div class="section-wrapper">
+                <!-- ==================== ALERTS ==================== -->
+                <section class="alert-section">
+                    <h3>Alerts</h3>
+                    <div class="alert-grid">
+                        <div class="alert-card <?= $overdueCount > 0 ? 'has-pending' : '' ?>" data-type="overdue">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/overdue_icon.png" alt="Overdue" class="alert-icon">
+                                <h4>Overdue Claims</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $overdueCount ?></span> Requests
+                            </p>
+                            <a href="medicine_requests.php?status=overdue" class="manage-link">Notify</a>
+                        </div>
+                        <div class="alert-card <?= $expiredCount > 0 ? 'has-pending' : '' ?>" data-type="expired">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/expired_icon.png" alt="Expired" class="alert-icon">
+                                <h4>Expired Batches</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $expiredCount ?></span> Medicine Batches
+                            </p>
+                            <a href="view_expiring.php?filter=expired" class="manage-link">View</a>
+                        </div>
 
-                <!-- Low Stock Medicines -->
-                <div class="alert-card">
-                    <h3>Low Stock Medicines</h3>
-                    <?php if (count($lowStockMedicines) > 0): ?>
-                        <ul class="alert-list">
-                            <?php foreach ($lowStockMedicines as $medicine): ?>
-                                <?php 
-                                    $stockRatio = $medicine['stocks'] / $medicine['min_stock'];
-                                    $severityClass = $stockRatio <= 0.5 ? 'critical-stock' : 'low-stock';
+                        <div class="alert-card <?= $outOfStockCount > 0 ? 'has-pending' : '' ?>" data-type="out-of-stock">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/out_of_stock_icon.png" alt="Out of Stock" class="alert-icon">
+                                <h4>Out of Stock</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $outOfStockCount ?></span> Medicines
+                            </p>
+                            <a href="medicine_management.php?filter=out" class="manage-link">Restock</a>
+                        </div>
+
+                        <div class="alert-card <?= $lowStockCount > 0 ? 'has-pending' : '' ?>" data-type="low-stock">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/low_stock_icon.png" alt="Low Stock" class="alert-icon">
+                                <h4>Low Stock</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $lowStockCount ?></span> Medicines
+                            </p>
+                            <a href="medicine_management.php?filter=low" class="manage-link">Restock</a>
+                        </div>
+
+                        <div class="alert-card <?= $expiringWeekCount > 0 ? 'has-pending' : '' ?>" data-type="expiring-week">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/expiring_week_icon.png" alt="Expiring Week" class="alert-icon">
+                                <h4>Expiring in 7 Days</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $expiringWeekCount ?></span> Medicine Batches
+                            </p>
+                            <a href="view_expiring.php?filter=week" class="manage-link">View</a>
+                        </div>
+
+                        <div class="alert-card <?= $expiringMonthCount > 0 ? 'has-pending' : '' ?>" data-type="expiring-month">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/expiring_month_icon.png" alt="Expiring Month" class="alert-icon">
+                                <h4>Expiring in 30 Days</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $expiringMonthCount ?></span> Medicine Batches
+                            </p>
+                            <a href="view_expiring.php?filter=month" class="manage-link">View</a>
+                        </div>
+
+                        <div class="alert-card <?= $pendingReqCount > 0 ? 'has-pending' : '' ?>" data-type="pending-request">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/pending_icon.png" alt="Pending" class="alert-icon">
+                                <h4>Pending Requests</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $pendingReqCount ?></span> Requests
+                            </p>
+                            <a href="requests.php" class="manage-link">Review</a>
+                        </div>
+
+                        <div class="alert-card <?= $toClaimCount > 0 ? 'has-pending' : '' ?>" data-type="to-claim">
+                            <div class="alert-header">
+                                <img src="images/icons/dashboard/to_be_claim_icon.png" alt="To Claim" class="alert-icon">
+                                <h4>To Be Claimed</h4>
+                            </div>
+                            <p class="pending-info">
+                                <span class="pending-number"><?= $toClaimCount ?></span> Requests
+                            </p>
+                            <a href="medicine_requests.php?status=to_be_claimed" class="manage-link">View</a>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== SUMMARY ==================== -->
+                <section class="summary-section">
+                    <h3>Summary</h3>
+                    <div class="stat-bars">
+                        <div class="stat-item">
+                            <div class="stat-label">
+                                <img src="images/icons/dashboard/total_patients_icon.png" alt="">
+                                <span>Total Patients</span>
+                            </div>
+                            <div class="stat-value"><?= number_format($totalPatients) ?></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">
+                                <img src="images/icons/dashboard/total_families_icon.png" alt="">
+                                <span>Total Families</span>
+                            </div>
+                            <div class="stat-value"><?= number_format($totalFamilies) ?></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">
+                                <img src="images/icons/dashboard/total_consultations_icon.png" alt="">
+                                <span>Total Consultations</span>
+                            </div>
+                            <div class="stat-value"><?= number_format($totalConsultations) ?></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">
+                                <img src="images/icons/dashboard/total_medicines_icon.png" alt="">
+                                <span>Total Unique Medicines</span>
+                            </div>
+                            <div class="stat-value"><?= number_format($totalMedicines) ?></div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">
+                                <img src="images/icons/dashboard/total_requests_icon.png" alt="">
+                                <span>Total Medicine Requests</span>
+                            </div>
+                            <div class="stat-value"><?= number_format($totalMedRequests) ?></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== QUICK ACTIONS ==================== -->
+                <section class="quick-actions-section">
+                    <h3>Quick Actions</h3>
+                    <div class="actions-container">
+                        <a href="medicine_management.php?action=add" class="action-btn medicine-btn">
+                            <img src="images/icons/med_icon.png" alt="Add Medicine">
+                            <span>Add Medicine</span>
+                        </a>
+                        <a href="patient_management.php?action=add" class="action-btn patient-btn">
+                            <img src="images/icons/patient_icon.png" alt="Add Patient">
+                            <span>Add Patient</span>
+                        </a>
+                    </div>
+                </section>
+
+                <!-- ==================== RECENT ACTIVITIES ==================== -->
+                <section class="recent-activities-section">
+                    <h3>Recent Activities</h3>
+                    <div class="activity-list">
+                        <?php if (empty($activities)): ?>
+                            <p class="no-activity">No recent activity.</p>
+                        <?php else: ?>
+                            <?php foreach ($activities as $act): ?>
+                                <?php
+                                    $iconMap = [
+                                        'medicine_add' => ['icon' => 'med_icon.png', 'color' => '#27ae60'],
+                                        'medicine_distribute' => ['icon' => 'reqmd_icon.png', 'color' => '#3498db'],
+                                        'add_patient_record' => ['icon' => 'patient_icon.png', 'color' => '#9b59b6'],
+                                        'archive_patient' => ['icon' => 'patient_icon.png', 'color' => '#9b59b6'],
+                                        'restore_patient' => ['icon' => 'patient_icon.png', 'color' => '#9b59b6'],
+                                        // Add more as needed
+                                    ];
+                                    $type = $act['action_type'];
+                                    $info = $iconMap[$type] ?? ['icon' => 'dashboard_icon_active.png', 'color' => '#7f8c8d'];
+
+                                    // Humanize action
+                                    $actionText = ucwords(str_replace('_', ' ', $type));
                                 ?>
-                                <li>
-                                    <?= htmlspecialchars($medicine['generic_name']) ?> 
-                                    <?= !empty($medicine['brand_name']) ? '(' . htmlspecialchars($medicine['brand_name']) . ')' : '' ?>
-                                    <br>
-                                    <span class="stock-level <?= $severityClass ?>">
-                                        Stock: <?= $medicine['stocks'] ?> (Min: <?= $medicine['min_stock'] ?>)
-                                    </span>
-                                </li>
+                                <details class="activity-item" style="border-left: 4px solid <?= $info['color'] ?>;">
+                                    <summary>
+                                        <img src="images/icons/<?= $info['icon'] ?>" alt="" class="activity-icon">
+                                        <div class="activity-content">
+                                            <p class="activity-desc">
+                                                <strong><?= htmlspecialchars($act['admin_name'] ?? 'System') ?></strong>
+                                                <?= htmlspecialchars($actionText) ?>
+                                            </p>
+                                            <p class="activity-time"><?= timeAgo($act['created_at']) ?></p>
+                                        </div>
+                                    </summary>
+                                    <div class="activity-details">
+                                        <p><?= nl2br(htmlspecialchars($act['action_details'] ?? 'No details recorded.')) ?></p>
+                                    </div>
+                                </details>
                             <?php endforeach; ?>
-                        </ul>
-                        <a href="expiring_low_stock.php" class="view-all">View All Expiring & Low Stock</a>
-                    <?php else: ?>
-                        <p>No medicines with low stock.</p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        
-        <div class="alert-section">
-            <h2>Recent Activity</h2>
-            
-            <div class="alert-cards">
-                <!-- Pending Medicine Requests -->
-                <div class="alert-card">
-                    <h3>Pending Medicine Requests</h3>
-                    <?php if (count($pendingRequests) > 0): ?>
-                        <ul class="alert-list">
-                            <?php foreach ($pendingRequests as $request): ?>
-                                <li>
-                                    <strong><?= htmlspecialchars($request['full_name']) ?></strong> 
-                                    (<?= $request['medicine_count'] ?> medicine<?= $request['medicine_count'] > 1 ? 's' : '' ?>)
-                                    <br>
-                                    <span class="request-date">Requested: <?= date('M d, Y g:i A', strtotime($request['request_date'])) ?></span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <a href="medicine_requests.php" class="view-all">View All Requests</a>
-                    <?php else: ?>
-                        <p>No pending medicine requests.</p>
-                    <?php endif; ?>
-                </div>
-                
-                <!-- Recent Consultations -->
-                <div class="alert-card">
-                    <h3>Recent Consultations</h3>
-                    <?php if (count($recentConsultations) > 0): ?>
-                        <ul class="alert-list">
-                            <?php foreach ($recentConsultations as $consultation): ?>
-                                <li>
-                                    <strong><?= htmlspecialchars($consultation['patient_name']) ?></strong> 
-                                    - <?= htmlspecialchars($consultation['consultation_type']) ?>
-                                    <br>
-                                    <span class="request-date">Date: <?= date('M d, Y', strtotime($consultation['consultation_date'])) ?></span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <a href="patient_management.php" class="view-all">View All Consultations</a>
-                    <?php else: ?>
-                        <p>No recent consultations.</p>
-                    <?php endif; ?>
-                </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
+
+                <!-- ==================== STATISTICS & REPORTS ==================== -->
+                <section class="stats-reports-section">
+                    <h3>Statistics and Reports</h3>
+                    <div class="stats-card-container">
+                        <a href="patient_stats.php" class="stats-card">
+                            <div class="stats-icon">
+                                <img src="images/icons/patient_icon.png" alt="">
+                            </div>
+                            <div class="stats-content">
+                                <h4>Patient Statistics</h4>
+                                <div class="stats-numbers">
+                                    <div class="stat-line">
+                                        <span class="label">Total Patients</span>
+                                        <span class="value"><?= number_format($stats['patients_total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Total Families</span>
+                                        <span class="value"><?= number_format($stats['families_total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Total Consultation</span>
+                                        <span class="value"><?= number_format($stats['consultations_total']) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+                        <a href="medicine_stats.php" class="stats-card">
+                            <div class="stats-icon">
+                                <img src="images/icons/med_icon.png" alt="">
+                            </div>
+                            <div class="stats-content">
+                                <h4>Medicine Statistics</h4>
+                                <div class="stats-numbers">
+                                    <div class="stat-line">
+                                        <span class="label">Unique Medicines</span>
+                                        <span class="value"><?= number_format($stats['catalog_total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Total Batches</span>
+                                        <span class="value"><?= number_format($stats['batches_total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Total Units</span>
+                                        <span class="value"><?= number_format($stats['units_total']) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+                        <a href="medrequest_stats.php" class="stats-card">
+                            <div class="stats-icon">
+                                <img src="images/icons/reqmd_icon.png" alt="">
+                            </div>
+                            <div class="stats-content">
+                                <h4>Request Statistics</h4>
+                                <div class="stats-numbers">
+                                    <div class="stat-line">
+                                        <span class="label">Total Requests </span>
+                                        <span class="value"><?= number_format($stats['requests_total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Pending Requests</span>
+                                        <span class="value"><?= number_format($stats['requests_pending']) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+                    </div>
+                </section>
+
+                <!-- ==================== SYSTEM LOGS (Medicine Only) ==================== -->
+                <section class="system-logs-section">
+                    <h3>System Logs</h3>
+                    <div class="log-tabs">
+                        <button class="tab-btn active" data-tab="sms">SMS Logs</button>
+                        <button class="tab-btn" data-tab="email">Email Logs</button>
+                    </div>
+
+                    <div class="log-content active" id="sms">
+                        <?php if (empty($medSmsLogs)): ?>
+                            <p class="no-logs">No SMS logs found.</p>
+                        <?php else: ?>
+                            <div class="log-list">
+                                <?php foreach ($medSmsLogs as $log): ?>
+                                    <details class="log-item">
+                                        <summary>
+                                            <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
+                                                <?= ucfirst($log['status']) ?>
+                                            </span>
+                                            <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
+                                            <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
+                                        </summary>
+                                        <div class="log-details">
+                                            <p><strong>Phone:</strong> <?= htmlspecialchars($log['recipient_phone']) ?></p>
+                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
+                                            <?php if ($log['status'] === 'failed'): ?>
+                                                <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </details>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="log-content" id="email">
+                        <?php if (empty($medEmailLogs)): ?>
+                            <p class="no-logs">No email logs found.</p>
+                        <?php else: ?>
+                            <div class="log-list">
+                                <?php foreach ($medEmailLogs as $log): ?>
+                                    <details class="log-item">
+                                        <summary>
+                                            <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
+                                                <?= ucfirst($log['status']) ?>
+                                            </span>
+                                            <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
+                                            <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
+                                        </summary>
+                                        <div class="log-details">
+                                            <p><strong>Email:</strong> <?= htmlspecialchars($log['recipient_email']) ?></p>
+                                            <p><strong>Subject:</strong> <?= htmlspecialchars($log['subject']) ?></p>
+                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
+                                            <?php if ($log['status'] === 'failed'): ?>
+                                                <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </details>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
+
+    <script>
+        // Tab switching (reuse from admin)
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const contents = document.querySelectorAll('.log-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    contents.forEach(c => c.classList.remove('active'));
+                    document.getElementById(target).classList.add('active');
+                });
+            });
+        });
+    </script>
 </body>
 </html>

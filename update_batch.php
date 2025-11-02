@@ -126,19 +126,31 @@ try {
     if ($current['stocks'] !== $stocks) $changes[] = "Stocks: {$current['stocks']} to $stocks";
     if ($current['source'] !== $source) $changes[] = "Source: {$current['source']} to " . ($source ?: 'N/A');
 
-    if (!empty($changes)) {
-        $details = "Updated batch: " . implode(', ', $changes);
-        $historyStmt = $conn->prepare("INSERT INTO medicine_history (batch_id, action_type, details, performed_by) VALUES (:batch_id, 'update_batch', :details, :performed_by)");
-        $historyStmt->execute([
-            ':batch_id' => $batch_id,
-            ':details' => $details,
-            ':performed_by' => $admin_id
-        ]);
-    }
+        if (!empty($changes)) {
+            $details = "Updated batch: " . implode(', ', $changes);
+            $historyStmt = $conn->prepare("INSERT INTO medicine_history (batch_id, action_type, details, performed_by) VALUES (:batch_id, 'update_batch', :details, :performed_by)");
+            $historyStmt->execute([
+                ':batch_id' => $batch_id,
+                ':details' => $details,
+                ':performed_by' => $admin_id
+            ]);
 
-    $conn->commit();
+            // Log in activity_logs
+            $logStmt = $conn->prepare("
+                INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) 
+                VALUES (:admin_id, 'update_batch', :details, :batch_id)
+            ");
+            $logDetails = "Updated batch (Lot: $batch_lot_number): " . implode('; ', $changes);
+            $logStmt->execute([
+                ':admin_id' => $admin_id,
+                ':details' => $logDetails,
+                ':batch_id' => $batch_id
+            ]);
+        }
 
-    echo json_encode(['success' => true, 'message' => 'Batch updated successfully']);
+        $conn->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Batch updated successfully']);
 } catch (PDOException $e) {
     $conn->rollBack();
     echo json_encode(['success' => false, 'message' => 'Error updating batch: ' . $e->getMessage()]);

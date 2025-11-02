@@ -1,4 +1,5 @@
 <?php
+//archived_requests.php
 session_start();
 require_once "config.php";
 
@@ -17,7 +18,7 @@ $requestsQuery = "SELECT mr.id, mr.request_id, mr.full_name,
                  DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date,
                  mr.request_status 
                  FROM medicine_requests mr 
-                 WHERE mr.request_status IN ('claimed', 'declined', 'cancelled')";
+                 WHERE mr.request_status IN ('claimed', 'declined', 'cancelled', 'unclaimed')";
 if (!empty($searchTerm)) {
     $requestsQuery .= " AND (mr.request_id LIKE :search OR mr.full_name LIKE :search)";
 }
@@ -82,6 +83,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         .status-cancelled {
             background-color: #6c757d;
         }
+        .status-unclaimed {
+            background-color: #b266ff; /* Light violet for unclaimed */
+        }
+
         /* Style for view modal */
         .medicine-status {
             display: inline-block;
@@ -294,8 +299,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
         function populateModal(data) {
             const modal = document.querySelector('.modal-content');
-            
-            // Create the HTML for the modal
             let modalHTML = `
                 <div class="modal-header">
                     <span class="close" onclick="closeModal()">&times;</span>
@@ -347,80 +350,80 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             </div>
                         </div>
                     </div>`;
-                    
-            // Add claim information section if it exists and the request was claimed or cancelled
-            if (data.request.request_status === 'claimed' && data.request.formatted_claim_date) {
+
+            // === CLAIM / UNCLAIMED INFO ===
+            if (['claimed', 'unclaimed', 'cancelled'].includes(data.request.request_status) && data.request.formatted_claim_date) {
                 modalHTML += `
                     <div class="form-row">
                         <div class="form-group">
                             <div class="date-claim-info">
-                                <h4>Claim Information</h4>
-                                <p><strong>Claim Date Range:</strong> ${data.request.formatted_claim_date} - ${data.request.formatted_until_date}</p>
-                                <p><strong>Actual Claimed Date:</strong> ${data.request.formatted_claimed_date || 'Not recorded'}</p>
-                            </div>
-                        </div>
-                    </div>`;
-            } else if (data.request.request_status === 'cancelled' && data.request.formatted_claim_date) {
+                                <h4>Scheduled Claim Period</h4>
+                                <p><strong>Claim From:</strong> ${data.request.formatted_claim_date}</p>
+                                <p><strong>Claim Until:</strong> ${data.request.formatted_until_date}</p>`;
+                
+                if (data.request.request_status === 'claimed') {
+                    modalHTML += `<p><strong>Claimed On:</strong> ${data.request.formatted_claimed_date}</p>`;
+                } else if (data.request.request_status === 'unclaimed') {
+                    modalHTML += `<p><strong>Status:</strong> <span>Unclaimed & Returned</span></p>`;
+                }
+                
                 modalHTML += `
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="date-claim-info">
-                                <h4>Scheduled Claim Information</h4>
-                                <p><strong>Scheduled Claim Date Range:</strong> ${data.request.formatted_claim_date} - ${data.request.formatted_until_date}</p>
-                                <p><strong>Status:</strong> Cancelled</p>
                             </div>
                         </div>
                     </div>`;
             }
-            
+
             modalHTML += `</div>
-                
                 <h3>Requested Medicines</h3>
                 <div class="requested-medicines">`;
-            
-            // Add each requested medicine with status and distribution information
+
             data.medicines.forEach((medicine) => {
                 let statusBadge = '';
-                if (medicine.status === 'approved' && data.request.request_status === 'claimed') {
-                    statusBadge = `<div class="medicine-status status-claimed">Approved & Claimed</div>`;
-                } else if (medicine.status === 'approved' && data.request.request_status === 'cancelled') {
-                    statusBadge = `<div class="medicine-status status-returned">Approved & Returned</div>`;
+                let distributionInfo = '';
+
+                if (medicine.status === 'approved') {
+                    if (data.request.request_status === 'claimed') {
+                        statusBadge = `<div class="medicine-status status-claimed">Approved & Claimed</div>`;
+                    } else if (['unclaimed', 'cancelled'].includes(data.request.request_status)) {
+                        statusBadge = `<div class="medicine-status status-returned">Approved & Returned</div>`;
+                    }
                 } else if (medicine.status === 'declined') {
                     statusBadge = `<div class="medicine-status status-declined">Declined</div>`;
-                } else if (medicine.status === 'requested' && data.request.request_status === 'cancelled') {
-                    statusBadge = `<div class="medicine-status status-returned">Cancelled</div>`;
                 }
-                
-                let distributionInfo = '';
-                if (medicine.distribution && data.request.request_status === 'claimed') {
-                    distributionInfo = `
-                        <div class="distribution-info">
-                            <p><strong>Provided Medicine:</strong> ${medicine.distribution.medicine_name}</p>
-                            <p><strong>Quantity Provided:</strong> ${medicine.distribution.quantity}</p>
-                        </div>`;
-                } else if (medicine.distribution && data.request.request_status === 'cancelled') {
-                    distributionInfo = `
-                        <div class="distribution-info">
-                            <p><strong>Reserved Medicine:</strong> ${medicine.distribution.medicine_name}</p>
-                            <p><strong>Quantity Reserved:</strong> ${medicine.distribution.quantity}</p>
-                            <p><strong>Status:</strong> Returned to Inventory</p>
-                        </div>`;
+
+                if (medicine.distribution) {
+                    const dist = medicine.distribution;
+                    const batchInfo = dist.batch_lot_number ? ` (Batch #${dist.batch_lot_number})` : '';
+                    if (data.request.request_status === 'claimed') {
+                        distributionInfo = `
+                            <div class="distribution-info">
+                                <p><strong>Provided:</strong> ${dist.medicine_name}${batchInfo}</p>
+                                <p><strong>Qty:</strong> ${dist.quantity}</p>
+                            </div>`;
+                    } else {
+                        distributionInfo = `
+                            <div class="distribution-info">
+                                <p><strong>Reserved:</strong> ${dist.medicine_name}${batchInfo}</p>
+                                <p><strong>Qty:</strong> ${dist.quantity}</p>
+                                <p><strong>Status:</strong> Returned to Inventory</p>
+                            </div>`;
+                    }
                 }
-                
+
                 modalHTML += `
                     <div class="medicine-item">
                         <div class="medicine-details">
                             <div class="form-row">
                                 <div class="form-group third">
-                                    <label>Medicine Name <span class="sub-label">(Pangalan ng Gamot)</span></label>
+                                    <label>Medicine Name</label>
                                     <div class="detail-box">${medicine.medicine_name}</div>
                                 </div>
                                 <div class="form-group third">
-                                    <label>Dosage <span class="sub-label">(Dosis)</span></label>
+                                    <label>Dosage</label>
                                     <div class="detail-box">${medicine.dosage}</div>
                                 </div>
                                 <div class="form-group third">
-                                    <label>Quantity <span class="sub-label">(Bilang)</span></label>
+                                    <label>Quantity</label>
                                     <div class="detail-box">${medicine.quantity}</div>
                                 </div>
                             </div>
@@ -429,14 +432,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         </div>
                     </div>`;
             });
-            
+
             modalHTML += `
                 </div>
-                
                 <div class="button-group">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>
                 </div>`;
-            
+
             modal.innerHTML = modalHTML;
         }
     </script>

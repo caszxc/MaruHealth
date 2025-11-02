@@ -1,4 +1,5 @@
 <?php
+//delete_medicine.php
 session_start();
 require_once "config.php";
 
@@ -42,6 +43,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':catalog_id' => $id,
             ':details' => $details,
             ':performed_by' => $admin_id
+        ]);
+
+        // Log in activity_logs
+        $logStmt = $conn->prepare("
+            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) 
+            VALUES (:admin_id, 'delete_medicine', :details, :medicine_id)
+        ");
+        $logDetails = "Deleted medicine: {$medicine['generic_name']}" . ($medicine['brand_name'] ? " ({$medicine['brand_name']})" : "") . ", Dosage: {$medicine['dosage']} {$medicine['dosage_form']}";
+        $logStmt->execute([
+            ':admin_id' => $admin_id,
+            ':details' => $logDetails,
+            ':medicine_id' => $id
         ]);
 
         // Delete from medicines_catalog

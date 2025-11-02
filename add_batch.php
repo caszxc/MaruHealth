@@ -104,6 +104,18 @@ try {
         ':performed_by' => $admin_id
     ]);
 
+    // Log in activity_logs
+    $logStmt = $conn->prepare("
+        INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) 
+        VALUES (:admin_id, 'add_batch', :details, :batch_id)
+    ");
+    $logDetails = "Added batch (Lot: $batch_lot_number, Stocks: $stocks, Expiry: $expiration_date)" . ($source ? ", Source: $source" : "");
+    $logStmt->execute([
+        ':admin_id' => $admin_id,
+        ':details' => $logDetails,
+        ':batch_id' => $batch_id
+    ]);
+
     $conn->commit();
 
     header("Location: view_batches.php?catalog_id=" . urlencode($catalog_id));

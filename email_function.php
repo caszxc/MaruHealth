@@ -19,7 +19,7 @@ function sendEmail($recipientEmail, $recipientName, $subject, $message) {
         $mail->Port = 465;
 
         // Recipients
-        $mail->setFrom('_mainaccount@maruhealth.site', 'Maru-Health');
+        $mail->setFrom('_mainaccount@maruhealth.site', 'MaruHealth');
         $mail->addAddress($recipientEmail, $recipientName);
 
         // Content

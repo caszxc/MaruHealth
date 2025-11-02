@@ -78,13 +78,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Get the inserted catalog ID
             $catalog_id = $conn->lastInsertId();
 
-            // Log the action in medicine_history
+            // Log in medicine_history
             $details = "Added medicine: $generic_name" . ($brand_name ? " ($brand_name)" : "") . ", Dosage: $dosage $dosage_form, Unit: $unit, Min Stock: $min_stock";
             $historyStmt = $conn->prepare("INSERT INTO medicine_history (catalog_id, action_type, details, performed_by) VALUES (:catalog_id, 'add_catalog', :details, :performed_by)");
             $historyStmt->execute([
                 ':catalog_id' => $catalog_id,
                 ':details' => $details,
                 ':performed_by' => $_SESSION['admin_id']
+            ]);
+
+            // Log in activity_logs
+            $logStmt = $conn->prepare("INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) VALUES (:admin_id, 'add_medicine', :details, :catalog_id)");
+            $logDetails = "Added medicine to catalog: $generic_name" . ($brand_name ? " ($brand_name)" : "") . ", Dosage: $dosage $dosage_form";
+            $logStmt->execute([
+                ':admin_id' => $_SESSION['admin_id'],
+                ':details' => $logDetails,
+                ':catalog_id' => $catalog_id
             ]);
 
             $conn->commit();

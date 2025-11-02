@@ -1,5 +1,5 @@
 <?php
-//archive_patient.php
+// archive_patient.php
 session_start();
 require_once "config.php";
 
@@ -18,17 +18,53 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $patientId = (int)$_GET['id'];
 
 try {
-    // Update patient status to archived
-    $stmt = $conn->prepare("UPDATE patients SET status = 'archived' WHERE id = :id");
-    $stmt->bindParam(':id', $patientId, PDO::PARAM_INT);
-    $stmt->execute();
+    $conn->beginTransaction();
 
-    // Redirect back to patient management with success message
+    // Get patient name for log details
+    $stmt = $conn->prepare("SELECT first_name, middle_name, last_name, family_number FROM patients WHERE id = :id AND status = 'active'");
+    $stmt->execute([':id' => $patientId]);
+    $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$patient) {
+        $conn->rollBack();
+        header("Location: patient_management.php?error=Patient not found or already archived");
+        exit();
+    }
+
+    $fullName = trim("{$patient['first_name']} {$patient['middle_name']} {$patient['last_name']}");
+
+    // Update patient status to archived
+    $updateStmt = $conn->prepare("UPDATE patients SET status = 'archived' WHERE id = :id");
+    $updateStmt->execute([':id' => $patientId]);
+
+    // === LOG THE ARCHIVE ACTION ===
+    $logStmt = $conn->prepare("
+        INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+        VALUES (:admin_id, 'archive_patient', :details, :target_id)
+    ");
+
+    $logStmt->execute([
+        ':admin_id'    => $_SESSION['admin_id'],
+        ':details'     => "Archived patient: {$fullName}",
+        ':target_id'   => $patientId
+    ]);
+    // === END LOG ===
+
+    $conn->commit();
+
+    // Redirect with success
     header("Location: patient_management.php?message=Patient archived successfully");
     exit();
-} catch (PDOException $e) {
-    // Redirect back with error message
-    header("Location: patient_management.php?error=Failed to archive patient: " . $e->getMessage());
+
+} catch (Exception $e) {
+    if ($conn->inTransaction()) {
+        $conn->rollBack();
+    }
+
+    // Optional: log error to file
+    error_log("Archive patient error (ID: $patientId): " . $e->getMessage());
+
+    header("Location: patient_management.php?error=Failed to archive patient");
     exit();
 }
 ?>

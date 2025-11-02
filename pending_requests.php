@@ -100,7 +100,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             background-color: #dc3545;
         }
         .date-claim-info {
-            background-color: #f8f9fa;
+            background-color: #fff;
             padding: 10px;
             border-radius: 5px;
             margin-top: 10px;
@@ -113,12 +113,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         .action-buttons {
             display: flex;
             gap: 10px;
-        }
-        .btn-claim {
-            background-color: #28a745;
-        }
-        .btn-return {
-            background-color: #6c757d;
         }
     </style>
 </head>
@@ -285,71 +279,69 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         function populateModal(data) {
             const modal = document.querySelector('.modal-content');
             let modalHTML = `
-                <div class="modal-header">
-                    <span class="close" onclick="closeModal()">×</span>
-                    <h2 class="title">Medicine Request Details - Request ID: ${data.request.request_id}</h2>
-                </div>
-                <div class="patient-details">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Patient's Full Name <span class="sub-label">(Buong Pangalan ng Pasyente)</span></label>
-                            <div class="detail-box">${data.request.full_name}</div>
+                <h2 class="title">Medicine Request Details - Request ID: ${data.request.request_id}</h2>
+                <div class="patient-scroll">
+                    <div class="patient-details">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Patient's Full Name <span class="sub-label">(Buong Pangalan ng Pasyente)</span></label>
+                                <div class="detail-box">${data.request.full_name}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group half">
-                            <label>Gender <span class="sub-label">(Kasarian)</span></label>
-                            <div class="detail-box">${data.request.gender}</div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label>Gender <span class="sub-label">(Kasarian)</span></label>
+                                <div class="detail-box">${data.request.gender}</div>
+                            </div>
+                            <div class="form-group half">
+                                <label>Birthdate <span class="sub-label">(Araw ng Kapanganakan)</span></label>
+                                <div class="detail-box">${data.request.birthdate}</div>
+                            </div>
                         </div>
-                        <div class="form-group half">
-                            <label>Birthdate <span class="sub-label">(Araw ng Kapanganakan)</span></label>
-                            <div class="detail-box">${data.request.birthdate}</div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
+                                <div class="detail-box">${data.request.address}</div>
+                            </div>
+                            <div class="form-group half">
+                                <label>Contact Number <span class="sub-label">(Numero ng Telepono)</span></label>
+                                <div class="detail-box">${data.request.phone}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group half">
-                            <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
-                            <div class="detail-box">${data.request.address}</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
+                                <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
+                            </div>
                         </div>
-                        <div class="form-group half">
-                            <label>Contact Number <span class="sub-label">(Numero ng Telepono)</span></label>
-                            <div class="detail-box">${data.request.phone}</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Prescription <span class="sub-label">(Reseta)</span></label>
+                                <div class="prescription-image">
+                                    <img src="${data.request.prescription}" alt="Prescription">
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
-                            <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
+                        ${data.request.note && data.request.note.trim() !== '' ? `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Note <span class="sub-label">(Mensahe/Nota para sa Residente)</span></label>
+                                <div class="detail-box">${data.request.note}</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Prescription <span class="sub-label">(Reseta)</span></label>
-                            <div class="prescription-image">
-                                <img src="${data.request.prescription}" alt="Prescription">
+                        ` : ''}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="date-claim-info">
+                                    <h4>Claim Information</h4>
+                                    <p><strong>Claim Date:</strong> ${data.request.formatted_claim_date}</p>
+                                    <p><strong>Until:</strong> ${data.request.formatted_until_date}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    ${data.request.note && data.request.note.trim() !== '' ? `
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Note <span class="sub-label">(Mensahe/Nota para sa Residente)</span></label>
-                            <div class="detail-box">${data.request.note}</div>
-                        </div>
-                    </div>
-                    ` : ''}
-                    <div class="form-row">
-                        <div class="form-group">
-                            <div class="date-claim-info">
-                                <h4>Claim Information</h4>
-                                <p><strong>Claim Date:</strong> ${data.request.formatted_claim_date}</p>
-                                <p><strong>Until:</strong> ${data.request.formatted_until_date}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <h3>Requested Medicines</h3>
-                <div class="requested-medicines">`;
+                    <h3>Requested Medicines</h3>
+                    <div class="requested-medicines">`;
             
             data.medicines.forEach((medicine) => {
                 let statusBadge = '';
@@ -390,6 +382,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             });
             
             modalHTML += `
+                </div>
                 </div>
                 <div class="button-group">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>

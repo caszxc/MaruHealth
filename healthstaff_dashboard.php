@@ -374,7 +374,7 @@ $medEmailLogs = $conn->query("
                                     // ICON MAP: action_type → [icon, color]
                                     $iconMap = [
                                         // MEDICINE CATALOG
-                                        'add_medicine'        => ['icon' => 'med_icon.png',           'color' => '#27ae60'], // Green - Add
+                                        'add_medicine'        => ['icon' => 'dashboard/add_medicine_icon.png',           'color' => '#27ae60'], // Green - Add
                                         'update_medicine'     => ['icon' => 'edit_icon.png',          'color' => '#f39c12'], // Orange - Edit
                                         'delete_medicine'     => ['icon' => 'delete_icon.png',        'color' => '#e74c3c'], // Red - Delete
 

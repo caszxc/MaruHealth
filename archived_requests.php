@@ -300,56 +300,53 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         function populateModal(data) {
             const modal = document.querySelector('.modal-content');
             let modalHTML = `
-                <div class="modal-header">
-                    <span class="close" onclick="closeModal()">&times;</span>
-                    <h2 class="title">Medicine Request Details - Request ID: ${data.request.request_id}</h2>
-                </div>
-                
-                <div class="patient-details">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Patient's Full Name <span class="sub-label">(Buong Pangalan ng Pasyente)</span></label>
-                            <div class="detail-box">${data.request.full_name}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group half">
-                            <label>Gender <span class="sub-label">(Kasarian)</span></label>
-                            <div class="detail-box">${data.request.gender}</div>
-                        </div>
-                        <div class="form-group half">
-                            <label>Birthdate <span class="sub-label">(Araw ng Kapanganakan)</span></label>
-                            <div class="detail-box">${data.request.birthdate}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group half">
-                            <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
-                            <div class="detail-box">${data.request.address}</div>
-                        </div>
-                        <div class="form-group half">
-                            <label>Contact Number <span class="sub-label">(Numero ng Telepono)</span></label>
-                            <div class="detail-box">${data.request.phone}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
-                            <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Prescription <span class="sub-label">(Reseta)</span></label>
-                            <div class="prescription-image">
-                                <img src="${data.request.prescription}" alt="Prescription">
+                <h2 class="title">Medicine Request Details - Request ID: ${data.request.request_id}</h2>    
+                <div class="patient-scroll">            
+                    <div class="patient-details">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Patient's Full Name <span class="sub-label">(Buong Pangalan ng Pasyente)</span></label>
+                                <div class="detail-box">${data.request.full_name}</div>
                             </div>
                         </div>
-                    </div>`;
+                        
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label>Gender <span class="sub-label">(Kasarian)</span></label>
+                                <div class="detail-box">${data.request.gender}</div>
+                            </div>
+                            <div class="form-group half">
+                                <label>Birthdate <span class="sub-label">(Araw ng Kapanganakan)</span></label>
+                                <div class="detail-box">${data.request.birthdate}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label>Complete Address <span class="sub-label">(Kompletong Address)</span></label>
+                                <div class="detail-box">${data.request.address}</div>
+                            </div>
+                            <div class="form-group half">
+                                <label>Contact Number <span class="sub-label">(Numero ng Telepono)</span></label>
+                                <div class="detail-box">${data.request.phone}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Reason for Request <span class="sub-label">(Rason ng Paghingi)</span></label>
+                                <div class="detail-box">${data.request.reason || 'No reason provided'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Prescription <span class="sub-label">(Reseta)</span></label>
+                                <div class="prescription-image">
+                                    <img src="${data.request.prescription}" alt="Prescription">
+                                </div>
+                            </div>
+                        </div>`;
 
             // === CLAIM / UNCLAIMED INFO ===
             if (['claimed', 'unclaimed', 'cancelled'].includes(data.request.request_status) && data.request.formatted_claim_date) {
@@ -434,6 +431,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             });
 
             modalHTML += `
+                </div>
                 </div>
                 <div class="button-group">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>

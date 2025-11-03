@@ -65,7 +65,7 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Try to link the active user to a patient record (if existing)
 try {
-    $patientLookup = $conn->prepare("SELECT * FROM patients WHERE first_name = :fn AND last_name = :ln AND birthdate = :bd ORDER BY id DESC LIMIT 1");
+    $patientLookup = $conn->prepare("SELECT * FROM patients WHERE first_name = :fn AND last_name = :ln AND birthdate = :bd AND status = 'active' ORDER BY id DESC LIMIT 1");
     $patientLookup->execute([
         ':fn' => $user['first_name'],
         ':ln' => $user['last_name'],

@@ -43,19 +43,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
 
-        // Validate family number exists in families table
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM families WHERE family_number = :family_number");
-        $stmt->execute([':family_number' => $family_number]);
-        if ($stmt->fetchColumn() == 0) {
-            header('Content-Type: application/json');
-            echo json_encode(['status' => 'error', 'message' => 'Invalid family number']);
-            exit();
-        }
-
         // Validate BMI status if provided
         if ($bmi_status && !in_array($bmi_status, ['Underweight', 'Normal', 'Overweight', 'Obese'])) {
             header('Content-Type: application/json');
             echo json_encode(['status' => 'error', 'message' => 'Invalid BMI status']);
+            exit();
+        }
+
+        // === BEGIN TRANSACTION ===
+        $conn->beginTransaction();
+
+        // Validate family number exists
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM families WHERE family_number = :family_number FOR UPDATE");
+        $stmt->execute([':family_number' => $family_number]);
+        if ($stmt->fetchColumn() == 0) {
+            $conn->rollBack();
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid family number']);
             exit();
         }
 
@@ -84,15 +88,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ':status' => $status
         ]);
 
+        // Get the newly inserted patient ID
+        $patientId = $conn->lastInsertId();
+
         // Update family member count
         $stmt = $conn->prepare("UPDATE families SET member_count = member_count + 1 WHERE family_number = :family_number");
         $stmt->execute([':family_number' => $family_number]);
 
+        // === LOG ACTIVITY: add_family_member ===
+        $logStmt = $conn->prepare("
+            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+            VALUES (:admin_id, 'add_family_member', :details, :target_id)
+        ");
+
+        $fullName = trim("{$first_name} {$middle_name} {$last_name}");
+        $logStmt->execute([
+            ':admin_id'   => $_SESSION['admin_id'],
+            ':details'    => "Added family member: {$fullName} (Family #{$family_number})",
+            ':target_id'  => $patientId
+        ]);
+
+        // === COMMIT TRANSACTION ===
+        $conn->commit();
+
         header('Content-Type: application/json');
-        echo json_encode(['status' => 'success', 'message' => 'Patient successfully added!']);
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Family member successfully added!',
+            'patient_id' => $patientId
+        ]);
+
     } catch (PDOException $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        error_log("Add family member error: " . $e->getMessage());
         header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
+        echo json_encode(['status' => 'error', 'message' => 'Database error. Please try again.']);
     }
 } else {
     header('Content-Type: application/json');

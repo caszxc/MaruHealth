@@ -118,10 +118,11 @@
     margin-left: 250px;
     padding: 20px;
     width: calc(100% - 250px);
-    min-height: calc(100vh - 80px);
+    height: calc(100vh - 80px);
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
+    overflow: hidden;
 }
 
 /* Title Section */
@@ -134,7 +135,6 @@
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
 }
 
 .title-con h2 {
@@ -161,124 +161,45 @@
     background-color: #6b0000;
 }
 
-.metrics {
+.stats-container{
+    flex: 1;
     display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.metric-card {
-    background: #f9f9f9;
-    border-radius: 8px;
+    flex-direction: column;
+    gap: 15px;
+    overflow: hidden;
+    background-color: #ffffff;
+    border-radius: 12px;
     padding: 20px;
-    flex: 1 1 200px;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.metric-card h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-
-.metric-value {
-    font-size: 32px;
-    color: #007bff;
-    margin: 10px 0;
-}
-
-.metric-link, .action-btn {
-    display: inline-block;
-    padding: 8px 16px;
-    background: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-}
-
-.metric-link:hover, .action-btn:hover {
-    background: #0056b3;
-}
-
-.user-admin-management, .system-health, .analytics, .medicine-inventory, 
-.requests-management, .consultation-summary, .events-announcements, 
-.patients-families, .todays-agenda, .medicine-request-queue, 
-.consultation-panel, .patient-management, .sms-notifications {
-    margin-bottom: 30px;
-}
-
-h3 {
-    font-size: 20px;
-    margin-bottom: 15px;
-}
-
-h4 {
-    font-size: 16px;
-    margin: 10px 0;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 8px;
+.stats-con{
+    display: flex;
+    background-color: #ffffff; /* WHITE as requested */
+    flex: 1;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     overflow: hidden;
 }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-th {
-    background: #007bff;
-    color: white;
-}
-
-.no-data {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-}
-
-.view-btn {
-    padding: 8px 16px;
-    background: #28a745;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-}
-
-.view-btn:hover {
-    background: #218838;
-}
-
-.action-buttons {
+.stats-wrapper{
+    overflow-y: auto;
+    scrollbar-width: thin;
+    flex: 1;
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    flex-direction: column;
+    gap: 28px;
 }
 
-.chart-placeholder {
-    background: #f0f0f0;
-    padding: 20px;
-    text-align: center;
-    border-radius: 8px;
-}
-
-.services-table, .sms-stats {
-    margin-top: 20px;
-}
-
-/*statistics */
 .stats-header {
     display: flex;
-    justify-content: flex-end;
     align-items: center;
-    margin-bottom: 20px;
-    width: 100%;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stats-actions {
@@ -289,11 +210,8 @@ th {
     display: flex;
     align-items: center;
     gap: 15px;
-    background: #FFFFFF;
-    padding: 15px;
     border-radius: 8px;
     flex-wrap: wrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .filter-form label {

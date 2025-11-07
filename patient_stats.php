@@ -51,50 +51,61 @@ switch ($period) {
         break;
 }
 
-// Function to count patients
-function countPatients($conn, $startDate = '', $endDate = '') {
-    try {
-        $sql = "SELECT COUNT(*) as count FROM patients";
-        $params = [];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " WHERE created_at BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate . ' 00:00:00';
-            $params[':end_date'] = $endDate . ' 23:59:59';
-        }
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-    } catch (PDOException $e) {
-        return 0;
+/** Total patients (active + archived) in the selected period */
+function countTotalPatients($conn, $start = '', $end = '') {
+    $sql = "SELECT COUNT(*) AS count FROM patients";
+    $params = [];
+    if ($start && $end) {
+        $sql .= " WHERE created_at BETWEEN :s AND :e";
+        $params = [':s' => "$start 00:00:00", ':e' => "$end 23:59:59"];
     }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
 }
 
-// Function to count consultations
-function countConsultations($conn, $startDate = '', $endDate = '') {
-    try {
-        $sql = "SELECT COUNT(*) as count FROM consultations";
-        $params = [];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " WHERE consultation_date BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate;
-            $params[':end_date'] = $endDate;
-        }
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-    } catch (PDOException $e) {
-        return 0;
+/** Active patients only */
+function countActivePatients($conn, $start = '', $end = '') {
+    $sql = "SELECT COUNT(*) AS count FROM patients WHERE status = 'active'";
+    $params = [];
+    if ($start && $end) {
+        $sql .= " AND created_at BETWEEN :s AND :e";
+        $params = [':s' => "$start 00:00:00", ':e' => "$end 23:59:59"];
     }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
+}
+
+/** Archived patients */
+function countArchivedPatients($conn, $start = '', $end = '') {
+    $sql = "SELECT COUNT(*) AS count FROM patients WHERE status = 'archived'";
+    $params = [];
+    if ($start && $end) {
+        $sql .= " AND created_at BETWEEN :s AND :e";
+        $params = [':s' => "$start 00:00:00", ':e' => "$end 23:59:59"];
+    }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
+}
+
+/** Families */
+function countFamilies($conn) {
+    return (int)$conn->query("SELECT COUNT(*) FROM families")->fetchColumn();
+}
+
+/** Consultations */
+function countConsultations($conn, $start = '', $end = '') {
+    $sql = "SELECT COUNT(*) FROM consultations";
+    $params = [];
+    if ($start && $end) {
+        $sql .= " WHERE consultation_date BETWEEN :s AND :e";
+        $params = [':s' => $start, ':e' => $end];
+    }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute($params);
+    return (int)$stmt->fetchColumn();
 }
 
 // Function to get gender distribution
@@ -254,12 +265,17 @@ function getPatientList($conn, $startDate = '', $endDate = '', $limit = 10, $off
 }
 
 // Get statistics
-$totalPatients = countPatients($conn, $startDate, $endDate);
+$totalPatients      = countTotalPatients($conn, $startDate, $endDate);
+$activePatients     = countActivePatients($conn, $startDate, $endDate);
+$archivedPatients   = countArchivedPatients($conn, $startDate, $endDate);
+$totalFamilies      = countFamilies($conn);
 $totalConsultations = countConsultations($conn, $startDate, $endDate);
 $genderDistribution = getGenderDistribution($conn, $startDate, $endDate);
 $bmiDistribution = getBmiDistribution($conn, $startDate, $endDate);
 $ageDistribution = getAgeDistribution($conn, $startDate, $endDate);
 $monthlyConsultations = getMonthlyConsultations($conn);
+$totalFamilies = countFamilies($conn);
+$archivedPatients = countArchivedPatients($conn, $startDate, $endDate);
 
 // Process gender distribution for chart
 $genderLabels = [];
@@ -345,7 +361,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Statistics - Admin Dashboard</title>
-    <link rel="stylesheet" href="css/admin_dashboard.css">
+    <link rel="stylesheet" href="css/stats.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -453,74 +469,92 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
     <div class="dashboard-content">
         <div class="title-con">
             <div style="display: flex; gap: 15px; align-items: center;">
-                <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+                <a href="healthstaff_dashboard.php" class="back-button">← Back</a>
                 <h2>Patient Statistics</h2>
             </div>
-            <div class="stats-actions">
-                <a href="?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="export-btn">
-                    Export to Excel
-                </a>
-            </div>
         </div>
-        
-        <div class="stats-header">
-            <div class="filter-form">
-                <form id="periodForm" method="GET" action="">
-                    <label for="period">Time Period:</label>
-                    <select name="period" id="period" onchange="toggleCustomDate()">
-                        <option value="all" <?= $period == 'all' ? 'selected' : '' ?>>All Time</option>
-                        <option value="today" <?= $period == 'today' ? 'selected' : '' ?>>Today</option>
-                        <option value="this_week" <?= $period == 'this_week' ? 'selected' : '' ?>>This Week</option>
-                        <option value="this_month" <?= $period == 'this_month' ? 'selected' : '' ?>>This Month</option>
-                        <option value="this_year" <?= $period == 'this_year' ? 'selected' : '' ?>>This Year</option>
-                        <option value="custom" <?= $period == 'custom' ? 'selected' : '' ?>>Custom Date Range</option>
-                    </select>
+        <div class="stats-container">
+            <div class="stats-header">
+                <div class="filter-form">
+                    <form id="periodForm" method="GET" action="">
+                        <label for="period">Time Period:</label>
+                        <select name="period" id="period" onchange="toggleCustomDate()">
+                            <option value="all" <?= $period == 'all' ? 'selected' : '' ?>>All Time</option>
+                            <option value="today" <?= $period == 'today' ? 'selected' : '' ?>>Today</option>
+                            <option value="this_week" <?= $period == 'this_week' ? 'selected' : '' ?>>This Week</option>
+                            <option value="this_month" <?= $period == 'this_month' ? 'selected' : '' ?>>This Month</option>
+                            <option value="this_year" <?= $period == 'this_year' ? 'selected' : '' ?>>This Year</option>
+                            <option value="custom" <?= $period == 'custom' ? 'selected' : '' ?>>Custom Date Range</option>
+                        </select>
+                        
+                        <div id="custom-date-container" style="<?= $period == 'custom' ? 'display: flex;' : '' ?> display: none;">
+                            <input type="date" name="start_date" value="<?= htmlspecialchars($startDate) ?>">
+                            <span>-</span>
+                            <input type="date" name="end_date" value="<?= htmlspecialchars($endDate) ?>">
+                        </div>
+                        
+                        <button type="submit" class="generate-btn">Apply Filter</button>
+                    </form>
+                </div>
+                <div class="stats-actions">
+                    <a href="?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="export-btn">
+                        Export to Excel
+                    </a>
+                </div>
+            </div>
+            <div class="stats-con">
+                <div class="stats-wrapper">
+                    <div class="summary-tiles">
+                        <div class="summary-tile">
+                            <h3>Total Patients</h3>
+                            <div class="number"><?= number_format($totalPatients) ?></div>
+                        </div>
+
+                        <div class="summary-tile">
+                            <h3>Active Patients</h3>
+                            <div class="number"><?= number_format($activePatients) ?></div>
+                        </div>
+
+                        <div class="summary-tile">
+                            <h3>Archived Patients</h3>
+                            <div class="number"><?= number_format($archivedPatients) ?></div>
+                        </div>
+
+                        <div class="summary-tile">
+                            <h3>Total Families</h3>
+                            <div class="number"><?= number_format($totalFamilies) ?></div>
+                        </div>
+
+                        <div class="summary-tile">
+                            <h3>Total Consultations</h3>
+                            <div class="number"><?= number_format($totalConsultations) ?></div>
+                        </div>
+                        </div>
                     
-                    <div id="custom-date-container" style="<?= $period == 'custom' ? 'display: flex;' : '' ?> display: none;">
-                        <input type="date" name="start_date" value="<?= htmlspecialchars($startDate) ?>">
-                        <span>-</span>
-                        <input type="date" name="end_date" value="<?= htmlspecialchars($endDate) ?>">
+                    <div class="chart-row">
+                        <div class="chart-container">
+                            <h3>Gender Distribution</h3>
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Age Distribution</h3>
+                            <canvas id="ageChart"></canvas>
+                        </div>
                     </div>
                     
-                    <button type="submit" class="generate-btn">Apply Filter</button>
-                </form>
+                    <div class="chart-row">
+                        <div class="chart-container">
+                            <h3>BMI Status Distribution</h3>
+                            <canvas id="bmiChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Monthly Consultations (<?= date('Y') ?>)</h3>
+                            <canvas id="consultationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="summary-tiles">
-            <div class="summary-tile">
-                <h3>Total Patients</h3>
-                <div class="number"><?= number_format($totalPatients) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Total Consultations</h3>
-                <div class="number"><?= number_format($totalConsultations) ?></div>
-            </div>
-        </div>
-        
-        <div class="chart-row">
-            <div class="chart-container">
-                <h3>Gender Distribution</h3>
-                <canvas id="genderChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Age Distribution</h3>
-                <canvas id="ageChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="chart-row">
-            <div class="chart-container">
-                <h3>BMI Status Distribution</h3>
-                <canvas id="bmiChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Monthly Consultations (<?= date('Y') ?>)</h3>
-                <canvas id="consultationChart"></canvas>
-            </div>
-        </div>
-        
-        
     </div>
 
     <script>

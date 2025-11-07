@@ -256,6 +256,19 @@ foreach ($ageDistribution as $item) {
     $ageData[] = (int)$item['count'];
 }
 
+// Add this function
+function getGrowthRate($current, $previous) {
+    if ($previous == 0) return $current > 0 ? 100 : 0;
+    return round((($current - $previous) / $previous) * 100, 1);
+}
+
+// Calculate previous period count
+$previousStart = date('Y-m-d', strtotime('-60 days'));
+$previousEnd = date('Y-m-d', strtotime('-31 days'));
+$previousUsers = countUsers($conn, $previousStart, $previousEnd);
+$growthRate = getGrowthRate($totalUsers, $previousUsers);
+$growthClass = $growthRate >= 0 ? 'growth-positive' : 'growth-negative';
+$arrow = $growthRate >= 0 ? 'Up' : 'Down';
 
 // Handle Excel export
 if (isset($_GET['export']) && $_GET['export'] == 'excel') {
@@ -316,6 +329,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta http-equiv="refresh" content="30">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Statistics</title>
@@ -427,85 +441,94 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
     <div class="dashboard-content">
         <div class="title-con">
             <div style="display: flex; gap: 15px; align-items: center;">
-                <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+                <?php
+                    $backUrl = ($adminRole === 'super_admin') ? 'superadmin_dashboard.php' : 'admin_dashboard.php';
+                ?>
+                <a href="<?= htmlspecialchars($backUrl) ?>" class="back-button">← Back</a>
                 <h2>User Statistics</h2>
             </div>
-            <div class="stats-actions">
-                <a href="?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="export-btn">
-                    Export to Excel
-                </a>
-            </div>
         </div>
-                
-        <div class="stats-header">
-            <div class="filter-form">
-                <form id="periodForm" method="GET" action="">
-                    <label for="period">Time Period:</label>
-                    <select name="period" id="period" onchange="toggleCustomDate()">
-                        <option value="all" <?= $period == 'all' ? 'selected' : '' ?>>All Time</option>
-                        <option value="today" <?= $period == 'today' ? 'selected' : '' ?>>Today</option>
-                        <option value="this_week" <?= $period == 'this_week' ? 'selected' : '' ?>>This Week</option>
-                        <option value="this_month" <?= $period == 'this_month' ? 'selected' : '' ?>>This Month</option>
-                        <option value="this_year" <?= $period == 'this_year' ? 'selected' : '' ?>>This Year</option>
-                        <option value="custom" <?= $period == 'custom' ? 'selected' : '' ?>>Custom Date Range</option>
-                    </select>
-                    
-                    <div id="custom-date-container" style="<?= $period == 'custom' ? 'display: flex;' : '' ?> display: none;">
-                        <input type="date" name="start_date" value="<?= htmlspecialchars($startDate) ?>">
-                        <span>-</span>
-                        <input type="date" name="end_date" value="<?= htmlspecialchars($endDate) ?>">
+        <div class="stats-container">
+            <div class="stats-header">
+                <div class="filter-form">
+                    <form id="periodForm" method="GET" action="">
+                        <label for="period">Time Period:</label>
+                        <select name="period" id="period" onchange="toggleCustomDate()">
+                            <option value="all" <?= $period == 'all' ? 'selected' : '' ?>>All Time</option>
+                            <option value="today" <?= $period == 'today' ? 'selected' : '' ?>>Today</option>
+                            <option value="this_week" <?= $period == 'this_week' ? 'selected' : '' ?>>This Week</option>
+                            <option value="this_month" <?= $period == 'this_month' ? 'selected' : '' ?>>This Month</option>
+                            <option value="this_year" <?= $period == 'this_year' ? 'selected' : '' ?>>This Year</option>
+                            <option value="custom" <?= $period == 'custom' ? 'selected' : '' ?>>Custom Date Range</option>
+                        </select>
+                        
+                        <div id="custom-date-container" style="<?= $period == 'custom' ? 'display: flex;' : '' ?> display: none;">
+                            <input type="date" name="start_date" value="<?= htmlspecialchars($startDate) ?>">
+                            <span>-</span>
+                            <input type="date" name="end_date" value="<?= htmlspecialchars($endDate) ?>">
+                        </div>
+                        
+                        <button type="submit" class="generate-btn">Apply Filter</button>
+                    </form>
+                </div>
+                <div class="stats-actions">
+                    <a href="?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="export-btn">
+                        Export to Excel
+                    </a>
+                </div>
+            </div>
+            <div class="stats-con">
+                <div class="stats-wrapper">
+                    <div class="summary-tiles">
+                        <div class="summary-tile">
+                            <h3>Registered Users</h3>
+                            <div class="number"><?= number_format($totalUsers) ?></div>
+                            <div class="growth <?= $growthClass ?>">
+                                <?= $arrow ?> <?= abs($growthRate) ?>% from last month
+                            </div>
+                        </div>
+                        <div class="summary-tile">
+                            <h3>Pending Users</h3>
+                            <div class="number"><?= number_format($pendingUsers) ?></div>
+                        </div>
+                        <div class="summary-tile">
+                            <h3>Total Users</h3>
+                            <div class="number"><?= number_format($totalUsers + $pendingUsers) ?></div>
+                        </div>
                     </div>
                     
-                    <button type="submit" class="generate-btn">Apply Filter</button>
-                </form>
+                    <div class="chart-row">
+                        <div class="chart-container">
+                            <h3>Gender Distribution</h3>
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Age Distribution</h3>
+                            <canvas id="ageChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Monthly User Registrations (<?= date('Y') ?>)</h3>
+                        <canvas id="registrationChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="summary-tiles">
-            <div class="summary-tile">
-                <h3>Registered Users</h3>
-                <div class="number"><?= number_format($totalUsers) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Pending Users</h3>
-                <div class="number"><?= number_format($pendingUsers) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Total Users</h3>
-                <div class="number"><?= number_format($totalUsers + $pendingUsers) ?></div>
-            </div>
-        </div>
-        
-        <div class="chart-row">
-            <div class="chart-container">
-                <h3>Gender Distribution</h3>
-                <canvas id="genderChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Age Distribution</h3>
-                <canvas id="ageChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="chart-container">
-            <h3>Monthly User Registrations (<?= date('Y') ?>)</h3>
-            <canvas id="registrationChart"></canvas>
-        </div>
-        
     </div>
 
     <script>
         // Toggle custom date inputs
-    function toggleCustomDate() {
-        const periodSelect = document.getElementById('period');
-        const customDateContainer = document.getElementById('custom-date-container');
-        
-        if (periodSelect.value === 'custom') {
-            customDateContainer.style.display = 'flex';
-        } else {
-            customDateContainer.style.display = 'none';
+        function toggleCustomDate() {
+            const periodSelect = document.getElementById('period');
+            const customDateContainer = document.getElementById('custom-date-container');
+            
+            if (periodSelect.value === 'custom') {
+                customDateContainer.style.display = 'flex';
+            } else {
+                customDateContainer.style.display = 'none';
+            }
         }
-    }
     
     // Initialize charts
     document.addEventListener('DOMContentLoaded', function() {

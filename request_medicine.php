@@ -1,5 +1,4 @@
 <?php
-//request_medicine.php
 session_start();
 require 'config.php'; // Include your DB connection
 
@@ -25,6 +24,18 @@ if (isset($_SESSION['user_id'])) {
     $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+// Fetch available medicines for the dropdown
+$medicinesQuery = "SELECT mc.id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form, SUM(mb.stocks) as stocks 
+                  FROM medicines_catalog mc 
+                  JOIN medicine_batches mb ON mc.id = mb.catalog_id
+                  WHERE mb.stocks > 0 
+                  AND mb.stock_status IN ('In Stock', 'Low Stock') 
+                  AND mb.expiry_status != 'Expired'
+                  GROUP BY mc.id, mc.generic_name, mc.brand_name, mc.dosage, mc.dosage_form
+                  ORDER BY mc.generic_name ASC";
+$medicinesStmt = $conn->prepare($medicinesQuery);
+$medicinesStmt->execute();
+$availableMedicines = $medicinesStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <html lang="en">
@@ -154,7 +165,6 @@ if (isset($_SESSION['user_id'])) {
                         </div>
                     </div>
                     
-                    
                     <div class="row">
                         <div>
                             <label>Upload Prescription</label>
@@ -186,9 +196,12 @@ if (isset($_SESSION['user_id'])) {
             const clone = entry.cloneNode(true);
 
             // Clear inputs
-            clone.querySelectorAll('input').forEach(input => input.value = '');
+            clone.querySelector('select').value = '';
+            clone.querySelector('input[name="dosage[]"]').value = '';
+            clone.querySelector('input[name="quantity[]"]').value = '';
 
             container.appendChild(clone);
+            updateDosageFields();
         });
 
         // Remove entry when clicking 🗑
@@ -203,6 +216,21 @@ if (isset($_SESSION['user_id'])) {
             }
         });
 
+        // Update dosage field based on selected medicine
+        function updateDosageFields() {
+            document.querySelectorAll('.medicine-entry select[name="medicine_id[]"]').forEach(select => {
+                select.addEventListener('change', function () {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const dosageInput = this.closest('.medicine-entry').querySelector('input[name="dosage[]"]');
+                    if (selectedOption && selectedOption.value) {
+                        dosageInput.value = selectedOption.dataset.dosage + ' ' + selectedOption.dataset.dosageForm;
+                    } else {
+                        dosageInput.value = '';
+                    }
+                });
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const fileInput = document.getElementById('file-upload');
             const fileNameSpan = document.getElementById('file-name');
@@ -214,8 +242,9 @@ if (isset($_SESSION['user_id'])) {
                     fileNameSpan.textContent = 'No file chosen';
                 }
             });
+
+            updateDosageFields();
         });
     </script>
-
 </body>
 </html>

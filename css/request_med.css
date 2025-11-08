@@ -1,5 +1,45 @@
 body::-webkit-scrollbar{
     display: none; /* For Chrome, Safari, and Opera */
+    
+}
+
+/* Hide scrollbar on the root element as well to cover all cases */
+html::-webkit-scrollbar{
+    display: none;
+}
+
+body {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+    background: linear-gradient(
+        135deg,
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    );
+    background-attachment: fixed;
+}
+
+html{
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+/* 1. FORM BOX — appears FIRST */
+
+
+/* 2. POPUP & SUCCESS — appear 600ms AFTER form */
+@keyframes popUp {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+
+
+ 
+ .modal-content {
+    animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) 600ms both;
 }
 
 .container {
@@ -10,28 +50,32 @@ body::-webkit-scrollbar{
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    
 }
 
 .form-desc{
-    color: white;
+    color: black;
     text-align: center;
-    width: 70%;
-    padding: 20px;
+    font-size: 14px;
+    margin-bottom: 15px;
+        margin-top: 15px;
+
 }
 
 .form-box {
     background: white;
     padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
     width: 70%;
 }
 
 h1 {
-    color: #7b0000;
+    color: #800000;
     font-size: 24px;
     text-align: center;
+    margin-bottom: 5px;
+    border-bottom: rgb(0, 0, 0,0.3) 1px solid;
 }
 
 .form-container{
@@ -44,6 +88,7 @@ h1 {
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    font-size: 15px;
 }
 
 .row > div {
@@ -58,7 +103,7 @@ h1 {
     display: flex;
     align-items: center;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 5px;
     padding: 10px;
     width: 100%;
     gap: 10px;
@@ -77,7 +122,7 @@ textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 6px;
+    border-radius: 5px;
     font-size: 16px;
 }
 
@@ -87,12 +132,12 @@ input[type="file"] {
 
 .custom-file-upload {
     display: inline-block;
-    background-color: #3399cc;
+    background-color: #3691B8;
     color: white;
     padding: 10px 20px;
     font-size: 14px;
-    font-weight: 600;
-    border-radius: 6px;
+    font-weight: normal;
+    border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
@@ -106,7 +151,7 @@ input[type="file"] {
 }
 
 .custom-file-upload:hover {
-    background-color: #2b7da5;
+    background-color: #287095;
 }
   
 
@@ -116,34 +161,38 @@ textarea {
 
 .add-medicine-btn,
 input[type="file"]::file-selector-button {
-    background-color: #3498db;
+    background-color: #3691B8;
     color: white;
     border: none;
     padding: 8px 14px;
     font-size: 14px;
-    border-radius: 4px;
+    border-radius: 5px;
     margin-top: 8px;
     cursor: pointer;
+        transition: background-color 0.3s !important;
+
 }
 
 .add-medicine-btn:hover,
 input[type="file"]::file-selector-button:hover {
-    background-color: #2c80b4;
+    background-color: #287095;
 }
 
 .remove-medicine-btn {
-    background: #e74c3c;
+    background: red;
     border: none;
     color: white;
     padding: 8px;
-    font-size: 16px;
-    border-radius: 6px;
+    font-size: 18px;
+    border-radius: 5px;
     cursor: pointer;
     height: fit-content;
+        transition: background-color 0.3s !important;
+
 }
 
 .remove-medicine-btn:hover {
-    background: #c0392b;
+    background: #6a0101;
 }
 
 .checkbox-label {
@@ -160,20 +209,20 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .submit-btn {
-    background-color: #7D0000;
+    background-color: #800000;
     color: white;
     border: none;
     padding: 12px 30px;
     font-size: 18px;
-    font-weight: bold;
-    border-radius: 6px;
+    font-weight: normal;
+    border-radius: 5px;
     width: 100%;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
 .submit-btn:hover {
-    background-color: #5a0000;
+    background-color: #6a0101;
 }
 
 
@@ -194,29 +243,37 @@ input[type="file"]::file-selector-button:hover {
 #popupModal .modal-content  {
     background-color: #fff;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 5px;
     text-align: center;
     width: 20%;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
 }
 
-.modal-content h2 {
-    color: #d9534f;
+#popupModal .modal-content h2 {
+    color: #800000 !important;
+    border-bottom: rgb(0, 0, 0,0.1) 1px solid;
+    margin-bottom: 20px;
 }
 
-.modal-content button {
+#popupModal .modal-content p {
+font-size: 15px;
+margin-bottom: 10px;
+}
+
+#popupModal .modal-content button {
     margin-top: 10px;
     padding: 8px 16px;
     border: none;
-    background-color: #d9534f;
+    background-color: #800000!important;
     color: white;
-    font-size: 16px;
+    font-size: 15px;
     border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
 
-.modal-content button:hover {
-    background-color: #c9302c;
+#popupModal .modal-content button:hover {
+    background-color: #6a0101 !important;
 }
 
 
@@ -224,11 +281,39 @@ input[type="file"]::file-selector-button:hover {
 #successModal .modal-content{
     background-color: #fff;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 5px;
     text-align: center;
     max-width: 1900px;
     width: 30%;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
+}
+ #successModal .modal .modal-content h2 {
+    color: black !important;
+}
+
+.success-icon {
+    font-size: 80px;
+    color: #13b613;
+}
+
+  .modal .modal-content button     {
+   
+
+     margin-top: 10px;
+    padding: 8px 16px;
+    border: none;
+    background-color: #13b613!important;
+    color: white;
+    font-size: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+
+}
+
+  .modal .modal-content button:hover{
+    background-color: #047B0E !important;
 }
 
 .error-message {
@@ -258,6 +343,8 @@ input[type="file"]::file-selector-button:hover {
 
 /* ====== Small Devices (≤600px) ====== */
 @media (max-width: 600px) {
+
+    
     .container{
         margin-top: 70px;
         padding: 0;
@@ -271,6 +358,7 @@ input[type="file"]::file-selector-button:hover {
     .form-box {
         width: 100%;
         padding: 20px;
+        border-radius: 0;
     }
 
     label{

@@ -440,6 +440,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
     <title>Medicine Request Statistics - Admin Dashboard</title>
     <link rel="stylesheet" href="css/admin_dashboard.css">
     <link rel="stylesheet" href="css/nav_footer.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
@@ -584,8 +585,10 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+               <h1>
+                <span class="maru-health">Maru-Health</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
             </div>
         </div>
     </nav>

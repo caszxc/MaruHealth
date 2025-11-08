@@ -1,15 +1,57 @@
 body::-webkit-scrollbar{
     display: none; /* For Chrome, Safari, and Opera */
 }
+body {
+        background-color: white;
+
+}
+
+
+.banner .title {
+    color: white;
+    padding: 0;
+    line-height: 30px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.banner .title p {
+    line-height: 1px;
+}
+.logo-container h1 {
+    margin: 0;
+    font-family: 'Istok Web', Arial, sans-serif;
+    display: flex;
+    flex-direction: column; /* Stack spans vertically */
+    align-items: flex-start; /* Align text to the left (adjust as needed) */
+}
+
+.logo-container .maru-health {
+    font-size: 32px; /* Font size for Maru-Health */
+    font-weight: bold;
+    color: #ffffff; /* Adjust color as needed */
+    line-height: 1.1; /* Maintain existing line height for Maru-Health */
+}
+
+.logo-container .barangay-title {
+    font-size: 11px; /* Different font size for Barangay title */
+    font-weight: 400;
+    color: #ffffff; /* Adjust color as needed */
+    line-height: 8px; /* Specified line height */
+}
+
 
 .container {
     display: flex;
-    justify-content: flex-start ;
+    justify-content: flex-start;
     align-items: center;
     flex-direction: column;
     margin-top: 80px;
     min-height: calc(100vh - 80px);
-    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    background: linear-gradient(180deg, #800000 15%, #be0404 40%, #d12a2a 100%);
 }
 
 .announcements{
@@ -30,6 +72,10 @@ body::-webkit-scrollbar{
     text-decoration: none;
 }
 
+.announcements .breadcrumb a:hover{
+    text-decoration: underline;
+}
+
 .announcements .title{
     text-align: center;
     color: white;
@@ -44,7 +90,6 @@ body::-webkit-scrollbar{
     flex-grow: 1;
     background-color: white;
     padding: 20px;
-    border-radius: 5px;
 }
 
 .announcement-container {
@@ -59,8 +104,8 @@ body::-webkit-scrollbar{
 .announcement-card {
     width: 400px;
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 5px;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -69,7 +114,7 @@ body::-webkit-scrollbar{
 
 .announcement-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.50);
 }
 
 .announcement-img img {
@@ -82,7 +127,7 @@ body::-webkit-scrollbar{
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     flex-grow: 1;
 }
 
@@ -99,18 +144,19 @@ body::-webkit-scrollbar{
 
 .announcement-info p {
     font-size: 0.95rem;
-    color: #333;
+    color: black;
     line-height: 1.4;
     flex-grow: 1;
 }
 
 .read-more {
     color: #800000;
-    font-weight: bold;
+    font-weight: normal;
     font-size: 0.9rem;
     align-self: flex-end;
     text-decoration: none;
     margin-top: auto;
+    margin-right: 5px;
 }
 
 .read-more:hover {
@@ -151,6 +197,15 @@ body::-webkit-scrollbar{
 
 /* ===== Small Screens (phones ≤600px) ===== */
 @media (max-width: 600px) {
+
+   .logo-container .maru-health {
+    font-size: 26px; 
+   
+}
+.logo-container .barangay-title {
+    font-size: 9px; 
+    
+}
     .address-contact p {
         font-size: 10px;
     }
@@ -180,7 +235,7 @@ body::-webkit-scrollbar{
 
     .announcement-content {
         padding: 15px;
-        border-radius: 10px;
+        border-radius: 0px;
     }
 
     .announcement-container {

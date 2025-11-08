@@ -45,6 +45,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="stylesheet" href="css/request_med.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
@@ -56,8 +57,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+               <h1>
+                <span class="maru-health">Maru-Health</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
             </div>
         </div>
 
@@ -74,9 +77,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
 
                 <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
-                    <li>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
                 <?php elseif (!isset($_SESSION['admin_id'])): ?>
@@ -87,12 +91,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
     </nav>
 
     <div class="container">
-        <div class="form-desc">
-            <p>Please fill out the form carefully. Your request will still need to be validated. Kindly check your SMS or email for updates on your request status.</p>
-        </div>
+        
 
         <div class="form-box">
             <h1>Medicine Request Form</h1>
+            <div class="form-desc">
+            <p>Please fill out the form carefully. Your request will still need to be validated. Kindly check your SMS or email for updates on your request status.</p>
+        </div>
 
             <?php if (!isset($_SESSION['user_id'])): ?>
                 <!-- Pop-up Modal -->
@@ -100,7 +105,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                     <div class="modal-content">
                         <h2>Note</h2>
                         <p>To request a medicine, you need to log in first.</p>
-                        <button id="closeModal" onclick="redirectToLogin()">OK</button>
+                        <button id="closeModal" onclick="redirectToLogin()">Go to Login</button>
                     </div>
                 </div>
 
@@ -118,6 +123,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
             <!-- Success Modal -->
             <div id="successModal" class="modal">
                 <div class="modal-content">
+                      <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
                     <h2>Success</h2>
                     <p id="successMessage"></p>
                     <button id="closeSuccessModal">OK</button>

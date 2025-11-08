@@ -2,6 +2,67 @@ body::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
 
+.banner .title p {
+    line-height: 1px;
+}
+
+
+body{
+background-color: #EEEEEE;
+
+}
+
+
+
+
+@keyframes popUp {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.profile-img {
+    animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+
+.profile-info {
+    animation: popUp 700ms cubic-bezier(0.18, 0.89, 0.32, 1.28) 300ms both;
+}
+
+.modal .modal-content {
+        animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+
+}
+
+
+
+
+
+
+
+.logo-container h1 {
+    margin: 0;
+    font-family: 'Istok Web', Arial, sans-serif;
+    display: flex;
+    flex-direction: column; /* Stack spans vertically */
+    align-items: flex-start; /* Align text to the left (adjust as needed) */
+}
+
+.logo-container .maru-health {
+    font-size: 32px; /* Font size for Maru-Health */
+    font-weight: bold;
+    color: #ffffff; /* Adjust color as needed */
+    line-height: 1.1; /* Maintain existing line height for Maru-Health */
+}
+
+.logo-container .barangay-title {
+    font-size: 11px; /* Different font size for Barangay title */
+    font-weight: 400;
+    color: #ffffff; /* Adjust color as needed */
+    line-height: 8px; /* Specified line height */
+}
+
+
+
 .nav-profile-pic {
     border: 3px solid white;
 }
@@ -9,7 +70,7 @@ body::-webkit-scrollbar {
 .profile-container {
     margin-top: 80px;
     min-height: calc(100vh - 80px);
-    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    background: #EEEEEE;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -23,12 +84,13 @@ body::-webkit-scrollbar {
 }
 
 .profile-box {
-    background-color: #800000;
+    background-color: #EEEEEE;
     display: flex;
-    width: 90%;
+    width: 96%;
     justify-content: center;
     gap: 10px;
-    height: 70vh;
+    height: 80vh;
+
 }
 
 .profile-img {
@@ -36,16 +98,25 @@ body::-webkit-scrollbar {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: #f7f7f7;
-    width: 29%;
+     background: linear-gradient(
+        135deg, /* Angle for top-left to bottom-right */
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    );     
+    display: flex;
+    width: 20%;
     border-right: solid 1px #800000;
     gap: 10px;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
+
 }
 
 .profile-pic-wrapper {
     position: relative;
-    width: 200px;
-    height: 200px;
+    width: 150px;
+    height: 150px;
     cursor: pointer;
 }
 
@@ -65,53 +136,96 @@ body::-webkit-scrollbar {
     border: none;
     border-radius: 100%;
     padding: 8px;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.3s ease-in-out;
     color: #800000;
 }
 
 .profile-pic-wrapper .icon-button:hover {
-    background-color: #f0f0f0;
+    background-color: #8d8d8d;
 }
 
 .profile-img .full-name {
-    font-weight: bold;
-    font-size: 20px;
+    font-weight: normal;
+    color: white;
+    font-size: 15px;
+    margin-bottom: 50px;
 }
 
-.profile-img .buttons-profile{
+.profile-img .buttons-profile {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 0;
+    width: 100%; /* 100% of .profile-img */
 }
 
-.profile-img .edit-profile-btn, .profile-img .change-password-btn, .profile-img .switch-acc-btn, .profile-img .logout-button{
-    border-radius: 5px;
-    padding: 5px;
-}
-
-.profile-img .edit-profile-btn, .profile-img .change-password-btn, .switch-acc-btn {
-    width: 100%;
-    background-color: white;
-    color: #8B0000;
-    border: 2px solid #8B0000;
-    border-radius: 5px;
-}
-
-.profile-img .switch-acc-btn{
+.profile-img .buttons-profile button,
+.profile-img .buttons-profile a,
+.profile-img .buttons-profile .logout-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;                    /* Full width */
+    padding: 12px 0;
+    background-color: transparent;
+    color: white;
+    border: none;
+    border-bottom: 1px solid rgba(255, 97, 97, 0.5);
     text-decoration: none;
     font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.profile-img .buttons-profile .edit-profile-btn {
+    border-top: 1px solid rgba(255, 97, 97, 0.5);
+}
+
+.profile-img .edit-profile-btn,
+.profile-img .change-password-btn,
+.profile-img .switch-acc-btn,
+.profile-img .logout-button {
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+    
+}
+
+.profile-img .edit-profile-btn,
+.profile-img .change-password-btn,
+.profile-img .switch-acc-btn,
+.profile-img .logout-button {
+    background-color: transparent;
+    color: white;
+    border: none;
+}
+
+.profile-img .edit-profile-btn:hover,
+.profile-img .change-password-btn:hover,
+.profile-img .switch-acc-btn:hover,
+.profile-img .logout-button:hover {
+    background-color: #6a0101;
+}
+
+.profile-img .switch-acc-btn {
+    text-decoration: none;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .profile-img .logout-button {
-    background-color: #800000;
+    
+    background-color: transparent;
     color: white;
     border: none;
     width: 100px;
@@ -123,34 +237,59 @@ body::-webkit-scrollbar {
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
-    background-color: #f7f7f7;
-}
+    background-color: #FFFFFF;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
 
- .profile-info .tab-buttons {
-    background-color: #800000;
+}
+.profile-info .tab-buttons {
+    background: linear-gradient(
+        135deg,
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    );
     width: 100%;
     height: 15%;
+    display: flex;                    /* Flexbox to remove gaps */
+    padding: 0;
+    margin: 0;
+    overflow: hidden;                 /* Prevent any overflow */
+    box-sizing: border-box;
 }
 
- .tab-buttons .tab-button {
-    background-color: #800000;
+/* Tab buttons – full width, no gaps */
+.tab-buttons .tab-button {
+    flex: 1;                          /* Equal width */
+    background-color: transparent;
     color: white;
     border: none;
     padding: 10px 16px;
     cursor: pointer;
     height: 100%;
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 18px;
+    font-weight: normal;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    box-sizing: border-box;
+    margin: 0;                        /* Remove any default margin */
 }
 
+/* Hover (only non-active) */
+.tab-buttons .tab-button:hover:not(.active) {
+    background-color: #6a0101;
+}
+
+/* Active tab */
 .tab-button.active {
-    background-color: #f7f7f7;
+    background-color: #FFFFFF;
     color: #800000;
+    cursor: default;
 }
 
 /* Tab Content */
 .profile-info .content-wrapper {
-    background-color: #f7f7f7;
+    background-color: #FFFFFF;
     padding: 20px;
     flex: 1;
     width: 100%;
@@ -160,7 +299,7 @@ body::-webkit-scrollbar {
 
 #details, #request-history, #patient-record, #dependents {
     width: 100%;
-    gap: 20px;
+    gap: 10px;
     flex-direction: column;
     justify-content: flex-start;
     overflow-y: auto;
@@ -170,23 +309,27 @@ body::-webkit-scrollbar {
 
 /* Details Tab */
 #details .title {
-    color: #800000;
+     color: rgb(128, 0, 0, 0.7);
+    font-size: 14px;
+    font-weight: normal;
+    border-bottom: 1px solid rgb(0, 0, 0, 0.1);
+    
 }
 
 #details .group-row {
-    padding: 10px;
+    padding: 5px;
 }
 
 #details .row {
     display: flex;
     width: 100%;
-    border-bottom: solid 1px #800000;
-    padding: 5px;
+    padding: 4px;
+    border: none;
 }
 
 #details .label {
-    width: 200px;
-    font-weight: bold;
+    width: 170px;
+    font-weight: normal;
 }
 
 /* Request History Tab */
@@ -200,6 +343,8 @@ body::-webkit-scrollbar {
     overflow-y: auto;
     scrollbar-width: thin;
     background-color: #fff;
+
+    
 }
 
 #request-history .table-wrapper table{
@@ -212,94 +357,142 @@ body::-webkit-scrollbar {
     position: sticky;
     top: 0;
     background-color: #800000;
-    color: #fff;
-    font-size: 15px;
+    color: #fff;    
+    font-size: 14px;
     z-index: 10;
-    border-bottom: 1px solid #e5e7eb;
+    font-weight: normal;
 }
 
 #request-history .table-wrapper table td{
     padding: 10px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid rgb(0, 0, 0, 0.1);
     text-align: center;
+    font-size: 15px;
 }
 
-#request-history .status-badge{
+#request-history .status-badge {
     padding: 6px 12px;
     border-radius: 5px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    display: flex;
+    font-weight: normal;
+    font-size: 0.8rem;
+    display: inline-flex;
     justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    
+    /* Fixed uniform size */
+    width: 100px;           /* All badges same width */
+    height: 32px;           /* All badges same height */
+    
+    box-sizing: border-box;
+    text-align: center;
+    
+    /* Optional: truncate long text with ellipsis */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #request-history .button-container{
     display: flex;
-    justify-content: center;
+    justify-content: right;
     gap: 10px;
 }
 
 #request-history .button-container .view-btn,#request-history .button-container .cancel-request-btn{
     color: white;
     padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: bold;
+    border-radius: 5px;
+    font-weight: normal;
     text-decoration: none;
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
     border: none
 }
 
 #request-history .button-container .view-btn{
-    background-color: #4b66c1;
+    background-color: #3F4FA0;
+    transition: background 0.3s ease;
+
+}
+
+#request-history .button-container .view-btn:hover{
+    background-color: #2e3a75;
 }
 
 #request-history .button-container .cancel-request-btn{
-    background-color: #dc3545;
+    background-color: #CF0606;
+    transition: background 0.3s ease;
+
+}
+
+#request-history .button-container .cancel-request-btn:hover{
+    background-color: #6a0101;
 }
 
 /* Patient Record Tab */
-#patient-record .patient-con{
+#patient-record .patient-con {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;          /* ← NEW: side-by-side layout */
+    gap: 30px;                    /* space between left & right */
     height: 100%;
-    gap: 10px;
     overflow: hidden;
 }
 
-#patient-record .title{
-    color: #800000;
+
+#patient-record .anthro-con .metrics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
 }
 
-#patient-record .anthro-con .metrics-grid{
+#patient-record .anthro-con {
+    flex: 0 0 380px;              /* fixed width, doesn’t grow */
     display: flex;
-    width: 100%;
-    justify-content: space-around;
+    flex-direction: column;
 }
 
 #patient-record .metric-card {
+    align-items: flex-start; /* This is key: aligns everything to the left */
     display: flex;
-    flex-direction: column;
+    width: 100%;
+    text-align: left;
+    font-weight: normal;
+    font-size: 16px;
+    color: #000000;
+    padding: 8px;
+    margin-bottom: -2px ;
+
 }
 
-#patient-record .metric-value {
-    background-color: #D9D9D9;
-    padding: 10px 20px;
+#patient-record .metric-label {
+    width: 178px;
+   
 }
+
 
 #patient-record .consultation-con {
+    flex: 1;                      /* take available space on left */
     display: flex;
     flex-direction: column;
-    flex: 1;
     overflow: hidden;
+    margin-top: 0;                /* remove top margin – now side-by-side */
 }
 
+#patient-record .consultation-con .title, .patient-con .title {
+  color: rgb(128, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    font-weight: normal;
+    margin-bottom: 5px;
+
+}
 #patient-record .table-container {
     display: flex;
     flex-direction: column;
     flex: 1;
     overflow: auto;
     scrollbar-width: thin;
-    background-color: #fff;
+    background-color: #fff; 
+    
 }
 
 #patient-record .table-container table{
@@ -311,29 +504,39 @@ body::-webkit-scrollbar {
 #patient-record .table-container table th{
     padding: 10px;
     position: sticky;
+    font-weight: normal;
     top: 0;
     background-color: #800000;
     color: #fff;
-    font-size: 15px;
+    font-size: 14px;
     z-index: 10;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid rgb(0, 0, 0,0.1);
 }
 
 #patient-record .table-container table td{
     padding: 10px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid rgb(0, 0, 0,0.1);
     text-align: center;
+    font-size: 15px;
+
 }
 
 #patient-record .table-container .view-btn{
+
+
     color: white;
     padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: bold;
+    border-radius: 5px;
+    font-weight: normal;
     text-decoration: none;
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
     border: none;
-    background-color: #4b66c1;
+    background-color: #3F4FA0;
+    transition: background 0.3s ease;   
+
+}
+
+#patient-record .table-container .view-btn:hover{
+    background-color: #2e3a75;
 }
 
 /* Dependents Tab */
@@ -352,12 +555,24 @@ body::-webkit-scrollbar {
     gap: 10px;
 }
 
+#dependents .dependents-header p{
+    font-size: 13px;
+    text-align: center;
+    color: #000000;
+    margin-bottom: -5px;
+
+}
 #dependents .dependents-header .add-dependent-btn{
     background-color: #800000;
     color: white;
     border: none;
     border-radius: 5px;
-    padding: 5px;
+    padding: 8px 16px;
+    transition: background-color 0.3s ease;
+}
+
+#dependents .dependents-header .add-dependent-btn:hover{
+    background-color: #6a0101;
 }
 
 #dependents .table-container{
@@ -378,6 +593,7 @@ body::-webkit-scrollbar {
     border-collapse: collapse;
     background-color: #fff;
     width: 100%;
+    font-size: 14px;
 }
 
 #dependents .table-container table th{
@@ -386,14 +602,15 @@ body::-webkit-scrollbar {
     top: 0;
     background-color: #800000;
     color: #fff;
-    font-size: 15px;
+    font-size: 14px;
     z-index: 10;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid rgb(0, 0, 0, 0.1);
+    font-weight: normal;
 }
 
 #dependents .table-container table td{
     padding: 10px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid rgb(0, 0, 0, 0.1);
     text-align: center;
 }
 
@@ -401,34 +618,54 @@ body::-webkit-scrollbar {
  {
     padding: 6px 12px;
     border-radius: 5px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    display: flex;
+    font-weight: normal;
+    font-size: 0.8rem;
+    display: inline-flex;
     justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    
+    /* Fixed uniform size */
+    width: 100px;           /* All badges same width */
+    height: 32px;           /* All badges same height */
+    
+    box-sizing: border-box;
+    text-align: center;
+    
+    /* Optional: truncate long text with ellipsis */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
  #dependents .button-container .switch-account-btn{
     color: white;
     padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: bold;
+    border-radius: 5px;
+    font-weight: normal;
     text-decoration: none;
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
     border: none;
-    background-color: #17a2b8;
+    background-color: #3691B8;
+        transition: background 0.3s ease;
+
+}
+
+#dependents .button-container .switch-account-btn:hover{
+    background-color: #225c75;  
 }
 
 #dependents .button-container .cancel-dependent-btn{
     color: white;
     padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: bold;
+    border-radius: 5px;
+    font-weight: normal;
     text-decoration: none;
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
     border: none;
-    background-color: #dc3545;
-}
- 
+    background-color: #CF0606;
+    transition: background 0.3s ease;
+    }
+ #dependents .button-container .cancel-dependent-btn:hover{
+    background-color: #6a0101;
+ }
 
 /* MODALS */
 .modal {
@@ -458,8 +695,8 @@ body::-webkit-scrollbar {
     padding: 20px;
     max-height: 90vh;
     min-width: 50%;
-    border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
     position: relative;
     overflow-y: auto;
     scrollbar-width: none;
@@ -469,6 +706,20 @@ body::-webkit-scrollbar {
     overflow: hidden;
 }
 
+.modal .modal-content .modal-confirmation h2{
+   text-align: center;
+    color: #800000;
+    font-weight: bold;
+    border-bottom: rgb(0, 0, 0,0.1) 1px solid;
+}
+
+.modal .modal-content .modal-confirmation p{
+   text-align: center;
+    color: #000000;
+    font-weight: normal;
+}
+
+
 #cancelRequestModal .modal-content, #cancelDependentModal .modal-content, #logoutConfirmModal .modal-content, #switchAccountConfirmModal .modal-content{
     min-width: 30%;
     text-align: center;
@@ -476,16 +727,32 @@ body::-webkit-scrollbar {
 
 #cancelRequestModal .modal-content p, #cancelDependentModal .modal-content p, #logoutConfirmModal .modal-content p, #switchAccountConfirmModal .modal-content p{
     padding: 20px 5px;
+    font-size: 15px;
+
+
+}
+.modal .modal-content .modal-title-bar{
+    background: linear-gradient(
+        135deg,
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    );
+    padding: 10px 20px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    margin: -20px -20px 10px -20px;
 }
 
 .modal-content h2 {
-    font-size: 28px;
-    font-weight: bold;
-    color: #800000;
+    font-size: 20px;
+    font-weight: normal;
+    color: #ffffff;
     text-align: center;
-    border-bottom: 2px solid #800000;
     padding-bottom: 10px;
     flex-shrink: 0;
+    margin-top: 10px;
 }
 
 /* Edit Profile Modal, Add Dependent Modal and Change Password Modal Forms */
@@ -495,8 +762,36 @@ body::-webkit-scrollbar {
     overflow-y: auto;
     padding: 20px;
     scrollbar-width: thin;
-    background-color: rgb(245, 245, 245);
+    background-color: #ffffff;
+    width: 100%;
 }
+
+.modal-content .form-scroll #editProfileForm .group-col {
+    font-size: 13px;
+}
+
+.modal-content #addDependentForm .group-col label {
+    font-size: 13px;
+}
+    .modal-content form .checkbox-label {
+        display: inline-flex;       /* keep checkbox and text on one line */
+        align-items: center;        /* vertically center checkbox with text */
+        gap: 8px;                   /* slightly reduced space between checkbox and text */
+        cursor: pointer;
+        user-select: none;
+        justify-content: flex-start; /* ensure left alignment */
+        font-size: 14px;
+        color: #000;
+    }
+    .modal-content form .checkbox-label input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+        margin: 0;                  /* remove default margins */
+        box-sizing: border-box;
+        vertical-align: middle;
+        /* accent-color works on modern browsers to tint the checkbox */
+        accent-color: #800000;
+    }
 
  .modal-content form {
     display: flex;
@@ -521,12 +816,85 @@ body::-webkit-scrollbar {
     color: #FF0000;
 }
 
-.modal-content form input, .modal-content form select {
+.modal-content form input {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 13px;
     width: 100%;
+}
+
+.modal-content form .select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.modal-content form .select-wrapper::after {
+    content: "\f107";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: #000000;
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.modal-content form .select-wrapper select {
+    width: 100%;
+    padding: 10px;
+    padding-right: 40px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+    font-size: 13px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Arrow up when dropdown is open */
+.modal-content form .select-wrapper.open::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Arrow down by default and after selection */
+.modal-content form .select-wrapper::after {
+    transform: translateY(-50%) rotate(0deg);
+}
+
+/* Apply select wrapper to all select elements in modal forms */
+.modal-content form select {
+    width: 100%;
+
+    padding: 10px;
+    padding-right: 40px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+    font-size: 13px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Ensure all select fields have wrapper */
+.modal-content form select#dep_gender,
+.modal-content form select#dep_relationship {
+    width: 100%;
+
+}
+#addDependentModal .group-col .select-wrapper select {
+        right: 13px;
+}
+.modal-content form .select-wrapper select {
+    color: #333;
 }
 
 .modal-content form .field-hint {
@@ -542,15 +910,21 @@ body::-webkit-scrollbar {
     gap: 10px;
     border: 1px solid #ccc;
     padding: 10px;
-    border-radius: 8px;
+    border-radius: 5px;
 }
 .modal-content .file-upload label {
-    background-color: #8B0000;
+    background-color: #3691B8;
     color: white;
     padding: 8px 15px;
     border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
+
+.modal-content .file-upload label:hover {
+    background-color: #287095;
+}
+
 .modal-content .file-upload input[type="file"] {
     display: none;
 }
@@ -568,14 +942,21 @@ body::-webkit-scrollbar {
 
 .toggle-password {
     position: absolute;
-    right: 10px;
+    right: 20px;
     cursor: pointer;
-    color: #800000;
-    font-size: 1.1rem;
+    color: rgb(0, 0, 0, 0.5);
+    font-size: 13px;
+    transition: all 0.3s ease;
+    transform-origin: center;
 }
 
 .toggle-password:hover {
-    opacity: 0.7; 
+    opacity: 0.7;
+    transform: scale(1.1);
+}
+
+#changePasswordModal .modal-content form .group-col {
+    font-size: 13px;
 }
 
 /* Change Profile Modal Specific CSS */
@@ -594,6 +975,8 @@ body::-webkit-scrollbar {
 }
 
 /* Request Medicine Details Modal */
+
+
 #viewRequestModal .modal-container {
     display: flex;
     flex-direction: column;
@@ -602,7 +985,7 @@ body::-webkit-scrollbar {
 
 #viewRequestModal .modal-container .group-row {
     display: flex;
-    gap: 10px;
+    gap: 10px;  
 }
 
 #viewRequestModal .modal-container .group-col{
@@ -610,14 +993,31 @@ body::-webkit-scrollbar {
     display: flex;
     gap: 5px;
     flex-direction: column;
+    font-size: 13px;
+
 }
+
+#viewRequestModal .modal-container .group-col label{
+    font-size: 13px;
+}   
 
 #viewRequestModal .modal-container #medicine-group{
     flex: 1;
     display: flex;
     gap: 5px;
     flex-direction: column;
+    font-size: 13px;
 }
+
+#viewRequestModal .modal-container #medicine-group .medicine-container {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 13px;
+    width: 100%;
+}
+
+
 
 #viewRequestModal .modal-container .medicine-container{
     display: flex;
@@ -659,6 +1059,7 @@ body::-webkit-scrollbar {
     display: flex;
     gap: 5px;
     flex-direction: column;
+    font-size: 13px;
 }
 
 #viewConsultationModal .group-col input {
@@ -677,205 +1078,263 @@ body::-webkit-scrollbar {
 /* Modal Footer */
 .modal-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     padding: 10px;
-    gap: 10px;
+    gap: 15px;
     flex-shrink: 0;
 }
 
 .modal-footer .cancel-btn,
-.modal-footer .save-btn, .modal-footer .confirm-btn {
-    padding: 10px 20px;
+.modal-footer .save-btn,
+.modal-footer .confirm-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 24px;
     border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 16px;
+    border-radius: 5px;
+    font-weight: normal;
+    font-size: 14px;
     cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease;
 }
 
 .modal-footer .cancel-btn {
-    flex: 1;
     background-color: #ccc;
-    color: #333;
+    color: #000000;
 }
 
-.modal-footer .save-btn, .modal-footer .confirm-btn {
-    flex: 1;
+.modal-footer .cancel-btn:hover {
+    background-color: #8d8d8d;
+}
+
+.modal-footer .save-btn,
+.modal-footer .confirm-btn {
     background-color: #800000;
     color: white;
 }
 
+.modal-footer .save-btn:hover,
+.modal-footer .confirm-btn:hover {
+    background-color: #6a0101;
+}
 
 /* ============================= */
 /* RESPONSIVE STYLES */
 /* ============================= */
 
 /* ===== Small devices: phones (≤600px) ===== */
-@media (max-width: 600px) {
-    .profile-container{
-        margin-top: 70px;
-    }
-    .page-title {
-        font-size: 2rem;
-        text-align: center;
-        padding: 15px;
-    }
+    @media (max-width: 600px) {
 
-    .profile-box {
-        flex-direction: column;
-        align-items: center;
-        height: auto;
-        gap: 0;
-        width: 95%;
-    }
-
-    .profile-img {
-        width: 100%;
-        border-right: none;
-        border-bottom: 2px solid #800000;
-        padding: 15px 0;
-    }
-
-    .profile-pic-wrapper {
-        width: 140px;
-        height: 140px;
-    }
-
-    .profile-img .edit-profile-btn,
-    .profile-img .change-password-btn,
-    .profile-img .switch-acc-btn,
-    .profile-img .logout-button {
-        font-size: 14px;
-    }
-
-    .profile-info {
-        width: 100%;
-    }
-
-    .profile-info .tab-buttons {
-        flex-wrap: wrap;
-        height: auto;
-    }
-
-    .tab-buttons .tab-button {
-        flex: 1 1 50%;
-        font-size: 16px;
-        padding: 10px;
-    }
-
-    .profile-info .content-wrapper {
-        padding: 10px;
-    }
-
-    #details .label{
-        font-size: 11px;
-        flex: 1;
-    }
-
-    #details .value{
-        font-size: 11px;
-        flex: 2;
-    }
-
-    /* Tables */
-    #patient-record .table-container, #request-history .table-container, #dependents .table-container {
-        max-height: 400px;
-    }
-
-    #request-history .table-wrapper table th,
-    #request-history .table-wrapper table td {
-        font-size: 0.60rem;
-        padding: 8px;
-    }
-
-    #request-history .status-badge{
-        font-size: 0.75rem;
-        padding: 5px;
-    }
-
-    #request-history .button-container {
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    #request-history .button-container .view-btn,
-    #request-history .button-container .cancel-request-btn {
-        font-size: 0.75rem;
-        padding: 5px 10px;
-    }
-
-    #patient-record .table-container table th,
-    #patient-record .table-container table td {
-        font-size: 0.75rem;
-        padding: 8px;
-    }
-
-    #patient-record .table-container .view-btn {
-        font-size: 0.75rem;
-        padding: 5px 10px;
-    }
-
-    #dependents .dependents-header p{
-        font-size: 0.8rem;
-    }
-
-    #dependents .table-wrapper table th,
-    #dependents .table-wrapper table td {
-        font-size: 0.60rem;
-        padding: 5px;
-    }
-
-    #dependents .button-container .switch-account-btn,
-    #dependents .button-container .cancel-dependent-btn {
-        font-size: 0.75rem;
-        padding: 5px 10px;
-    }
-
-    #dependents .status-badge{
-        font-size: 0.75rem;
-        padding: 5px 10px;
-    }
-
-    /* Modals */
-    .modal .modal-content {
-        width: 95%;
-        min-width: unset;
-        max-height: 85vh;
-        padding: 15px;
-    }
-
-    #cancelRequestModal .modal-content, #cancelDependentModal .modal-content, #logoutConfirmModal .modal-content, #switchAccountConfirmModal .modal-content{
-        width: 85%;
-    }
-
-    .modal-content h2 {
-        font-size: 22px;
-    }
-
-    .modal-content form {
-        padding: 10px;
-        gap: 10px;
-    }
-
-    .modal-content form .group-row {
-        flex-direction: column;
-    }
-
-    #viewRequestModal .modal-container .medicine-entry {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    #viewRequestModal .modal-container .medicine-entry > div {
-        flex-wrap: wrap;
-    }
-    .modal-footer .save-btn, .modal-footer .confirm-btn, .modal-footer .cancel-btn{
-        flex: 1;
-        text-wrap: nowrap;
-    }
+.logo-container .maru-health {
+    font-size: 26px; 
+   
 }
+.logo-container .barangay-title {
+    font-size: 9px; 
+    
+}
+
+        .profile-container{
+            margin-top: 70px;
+        }
+        .page-title {
+            font-size: 2rem;
+            text-align: center;
+            padding: 15px;
+        }
+
+        .profile-box {
+            flex-direction: column;
+            align-items: center;
+            height: auto;
+            gap: 0;
+            width: 95%;
+        }
+
+        .profile-img {
+            width: 100%;
+            border-right: none;
+            border-bottom: 2px solid #800000;
+            padding: 15px 0;
+        }
+
+        .profile-pic-wrapper {
+            width: 140px;
+            height: 140px;
+        }
+
+        .profile-img .edit-profile-btn,
+        .profile-img .change-password-btn,
+        .profile-img .switch-acc-btn,
+        .profile-img .logout-button {
+            font-size: 14px;
+        }
+
+        .profile-info {
+            width: 100%;
+        }
+
+        .profile-info .tab-buttons {
+            flex-wrap: wrap;
+            height: auto;
+        }
+
+        .tab-buttons .tab-button {
+            flex: 1 1 50%;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        .profile-info .content-wrapper {
+            padding: 10px;
+        }
+
+        #details .label{
+            font-size: 13px;
+            flex: 1;
+        }
+
+        #details .value{
+            font-size: 13px;
+            flex: 2;
+        }
+
+        /* Tables */
+        #patient-record .table-container, #request-history .table-container, #dependents .table-container {
+            max-height: 400px;
+        }
+
+        #request-history .table-wrapper table th,
+        #request-history .table-wrapper table td {
+            font-size: 11px;
+            padding: 8px;
+        }
+
+        #request-history .status-badge{
+            font-size: 11px;
+            padding: 5px;
+        }
+
+        #request-history .button-container {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        #request-history .button-container .view-btn,
+        #request-history .button-container .cancel-request-btn {
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+    #patient-record .patient-con {
+        flex-direction: column;      /* ← stack vertically */
+        gap: 15px;                   /* space between sections */
+    }
+
+    #patient-record .anthro-con {
+        flex: none;                  /* remove fixed width */
+        width: 100%;
+    }
+
+    #patient-record .consultation-con {
+        flex: 1;
+        margin-top: 0;               /* no extra top gap */
+    }
+
+    /* Optional: make metrics wrap cleanly in column */
+    #patient-record .anthro-con .metrics-grid {
+        flex-direction: column;
+    }
+
+    #patient-record .metric-card {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+     #patient-record .metric-card {
+        font-size: 13px;
+    }
+
+    /* Ensure table is scrollable and visible */
+    #patient-record .table-container {
+        max-height: 350px;           /* limit height + enable scroll */
+        overflow-y: auto;
+    }
+
+
+        #patient-record .table-container table th,
+        #patient-record .table-container table td {
+            font-size: 11px;
+            padding: 8px;
+        }
+
+        #patient-record .table-container .view-btn {
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+        #dependents .dependents-header p{
+            font-size: 11px;
+        }
+
+        #dependents .table-wrapper table th,
+        #dependents .table-wrapper table td {
+            font-size: 11px;
+            padding: 5px;
+        }
+
+        #dependents .button-container .switch-account-btn,
+        #dependents .button-container .cancel-dependent-btn {
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+        #dependents .status-badge{
+            font-size: 11px;
+            padding: 5px 10px;
+        }
+
+        /* Modals */
+        .modal .modal-content {
+            width: 95%;
+            min-width: unset;
+            max-height: 85vh;
+            padding: 15px;
+        }
+
+        #cancelRequestModal .modal-content, #cancelDependentModal .modal-content, #logoutConfirmModal .modal-content, #switchAccountConfirmModal .modal-content{
+            width: 85%;
+        }
+
+        .modal-content h2 {
+            font-size: 18px;
+        }
+
+        .modal-content form {
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .modal-content form .group-row {
+            flex-direction: column;
+        }
+
+        #viewRequestModal .modal-container .medicine-entry {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        #viewRequestModal .modal-container .medicine-entry > div {
+            flex-wrap: wrap;
+        }
+        .modal-footer .save-btn, .modal-footer .confirm-btn, .modal-footer .cancel-btn{
+            flex: 1;
+            text-wrap: nowrap;
+        }
+    }
 
 /* ===== Medium devices: tablets (601px–1024px) ===== */
 @media (min-width: 601px) and (max-width: 1024px) {
@@ -913,7 +1372,7 @@ body::-webkit-scrollbar {
     }
 
     .tab-buttons .tab-button {
-        font-size: 18px;
+        font-size: 14px;
         padding: 10px;
     }
 
@@ -935,6 +1394,32 @@ body::-webkit-scrollbar {
 
     .modal-content form .group-row {
         flex-wrap: wrap;
+    }
+
+    
+    #patient-record .patient-con {
+        flex-direction: column;      /* ← stack vertically */
+        gap: 15px;                   /* space between sections */
+    }
+
+    #patient-record .anthro-con {
+        flex: none;                  /* remove fixed width */
+        width: 100%;
+    }
+
+    #patient-record .consultation-con {
+        flex: 1;
+        margin-top: 0;               /* no extra top gap */
+    }
+
+    /* Optional: make metrics wrap cleanly in column */
+    #patient-record .anthro-con .metrics-grid {
+        flex-direction: column;
+    }
+
+    #patient-record .metric-card {
+        width: 100%;
+        justify-content: flex-start;
     }
 }
 

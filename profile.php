@@ -18,8 +18,8 @@ $dependents = []; // dependents list
 $pending_dependents = [];
 
 // Fetch user details for the active user (primary or dependent)
-$sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture, family_number, primary_user_id 
-        FROM users WHERE id = :active_user_id";
+$sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture, family_number, date_registered, primary_user_id 
+    FROM users WHERE id = :active_user_id";
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
 $stmt->execute();
@@ -103,8 +103,10 @@ try {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                <span class="maru-health">Maru-Health</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
             </div>
         </div>
 
@@ -121,9 +123,10 @@ try {
                 <li><a href="about_us.php">ABOUT US</a></li>
                 <?php if (isset($_SESSION['user_id'])): ?>
                 <?php if ($_SESSION['role'] === 'user'): ?>
-                    <li>
-                        <a href="profile.php">
+                    <li class="profile-nav">
+                        <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>
                     </li>
                 <?php endif; ?>
@@ -135,7 +138,7 @@ try {
     </nav>
 
     <div class="profile-container">
-        <h2 class="page-title">Profile</h2>
+        <h2 class="page-title"></h2>
         <div class="profile-box">
             <div class="profile-img">
                 <div class="profile-pic-wrapper" onclick="openProfilePicModal()">
@@ -144,7 +147,6 @@ try {
                         <i class="fas fa-pen"></i>
                     </button>
                 </div>
-                <p class="full-name"><?php echo htmlspecialchars($user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']); ?></p>
                 <div class="buttons-profile">
                     <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
                     <?php if ($is_dependent): ?>
@@ -174,42 +176,37 @@ try {
                         <div class="content-con">
                             <h3 class="title">General Information</h3>
                             <div class="group-row">
-                                <?php if (!empty($user['family_number'])): ?>
+                               
                                 <div class="row">
-                                    <p class="label">Family Number</p>
-                                    <p class="value"><?php echo htmlspecialchars($user['family_number']); ?></p>
-                                </div>
-                                <?php endif; ?>
-                                <div class="row">
-                                    <p class="label">Last Name</p>
+                                    <p class="label">Last Name:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['last_name']); ?></p>
                                 </div>
                                 <div class="row">
-                                    <p class="label">First Name</p>
+                                    <p class="label">First Name:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['first_name']); ?></p>
                                 </div>
                                 <div class="row">
-                                    <p class="label">Middle Name</p>
+                                    <p class="label">Middle Name:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['middle_name']); ?></p>
                                 </div>
                                 <div class="row">
-                                    <p class="label">Gender</p>
+                                    <p class="label">Gender:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['gender']); ?></p>
                                 </div>
                                 <div class="row">
-                                    <p class="label">Date of Birth</p>
+                                    <p class="label">Date of Birth:</p>
                                     <p class="value"> <?php 
                                         $birthdate = date("F j, Y", strtotime($user['birthday'])); 
                                         echo htmlspecialchars($birthdate);
                                     ?></p>
                                 </div>
                                 <div class="row">
-                                    <p class="label">Address</p>
+                                    <p class="label">Address:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['address']); ?></p>
                                 </div>
                                 <?php if ($is_dependent): ?>
                                 <div class="row">
-                                    <p class="label">Relationship</p>
+                                    <p class="label">Relationship:</p>
                                     <p class="value"><?php 
                                         $stmt = $conn->prepare("SELECT relationship FROM dependent_relationships WHERE dependent_user_id = :active_user_id AND primary_user_id = :primary_user_id");
                                         $stmt->execute([':active_user_id' => $active_user_id, ':primary_user_id' => $primary_user_id]);
@@ -225,11 +222,11 @@ try {
                             <h3 class="title">Contact Information</h3>
                             <div class="group-row">
                                 <div class="row">
-                                    <p class="label">Phone Number</p>
+                                    <p class="label">Phone Number:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['phone_number']); ?></p>
                                 </div>
                                 <div class="row">
-                                    <p class="label">Email Address</p>
+                                    <p class="label">Email Address:</p>
                                     <p class="value"><?php echo htmlspecialchars($user['email']); ?></p>
                                 </div>
                             </div>
@@ -257,11 +254,11 @@ try {
                                         <?php else: ?>
                                             <?php
                                                 $statusColors = [
-                                                    'claimed' => 'style="background-color: #28a745; color: white;"',
-                                                    'pending' => 'style="background-color: #ffc107; color: white;"',
-                                                    'declined' => 'style="background-color: #dc3545; color: white;"',
-                                                    'to be claimed' => 'style="background-color: #17a2b8; color: white;"',
-                                                    'cancelled' => 'style="background-color: #6c757d; color: white;"'
+                                                    'claimed' => 'style="background-color: #13b613; color: white;"',
+                                                    'pending' => 'style="background-color: #FF9E2F; color: white;"',
+                                                    'declined' => 'style="background-color: #ff0019; color: white;"',
+                                                    'to be claimed' => 'style="background-color: #005281; color: white;"',
+                                                    'cancelled' => 'style="background-color: #878787ff; color: white;"'
                                                 ];
                                             ?>
                                             <?php foreach ($requests as $request): ?>
@@ -296,9 +293,21 @@ try {
                     <div id="patient-record" class="tab-content" style="display: none;">
                         <div class="patient-con">
                             <div class="anthro-con">
-                                <h3 class="title">Anthropometric Measurement</h3>
-                                <?php if ($patient): ?>
+                                <h3 class="title">Basic Information</h3>
+                                    
+                                    <?php if ($patient): ?>
                                 <div class="metrics-grid">
+                                         
+                                    <div class="metric-card">
+                                        <div class="metric-label">Date Registered: </div>
+                                        <div class="metric-value"><?php echo !empty($user['date_registered']) ? htmlspecialchars(date("F j, Y", strtotime($user['date_registered']))) : 'N/A'; ?></div>
+                                    </div>
+                                    
+                                    <div class="metric-card">
+                                        <div class="metric-label">Family Number: </div>
+                                        <div class="metric-value"><?= htmlspecialchars($user['family_number'] ?? 'N/A') ?></div>
+                                    </div>
+
                                     <div class="metric-card">
                                         <div class="metric-label">Height:</div>
                                         <div class="metric-value"><?= htmlspecialchars($patient['height'] ?? 'N/A') ?></div>
@@ -387,7 +396,7 @@ try {
                                                         <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
                                                         <td><?= htmlspecialchars($dependent['relationship']) ?></td>
                                                         <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
-                                                        <td><span class="status-badge" style="background-color: #28a745; color: white;">Approved</span></td>
+                                                        <td><span class="status-badge" style="background-color: #13b613; color: white;">Approved</span></td>
                                                         <td>
                                                             <div class="button-container">
                                                                 <button class="switch-account-btn" onclick="openSwitchAccountConfirmModal(<?= $dependent['id'] ?>)">Switch</button>
@@ -401,7 +410,7 @@ try {
                                                         <td><?= htmlspecialchars($pending_dependent['first_name'] . ' ' . $pending_dependent['middle_name'] . ' ' . $pending_dependent['last_name']) ?></td>
                                                         <td><?= htmlspecialchars($pending_dependent['relationship']) ?></td>
                                                         <td><?= htmlspecialchars(date('F j, Y', strtotime($pending_dependent['birthday']))) ?></td>
-                                                        <td><span class="status-badge" style="background-color: #ffc107; color: white;">Pending</span></td>
+                                                        <td><span class="status-badge" style="background-color: #FF9E2F; color: white;">Pending</span></td>
                                                         <td>
                                                             <div class="button-container">
                                                                 <button class="cancel-dependent-btn" data-id="<?= $pending_dependent['id'] ?>" onclick="openCancelDependentModal(this)">Cancel</button>
@@ -425,7 +434,9 @@ try {
     <!-- Profile Picture Modal -->
     <div id="changeProfileModal" class="modal">
         <div class="modal-content">
+             <div class="modal-title-bar">
             <h2>Change Profile Picture</h2>
+        </div>
             <form id="profilePicForm" action="upload_profilePic.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="active_user_id" value="<?= htmlspecialchars($active_user_id) ?>">
                 <div class="image-preview">
@@ -449,7 +460,9 @@ try {
     <!-- Edit Profile Modal -->
     <div id="editProfileModal" class="modal">
         <div class="modal-content">
+              <div class="modal-title-bar">
             <h2>Edit Profile</h2>
+        </div>
             <div class="error-message" id="editProfileError"></div>
             <div class="form-scroll">
                 <form id="editProfileForm" action="update_profile.php" method="POST">
@@ -471,10 +484,12 @@ try {
                         </div>
                         <div class="group-col">
                             <label for="gender">Gender <span class="required">*</span></label>
-                            <select id="gender" name="gender" required>
-                                <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-                                <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
-                            </select>
+                            <div class="select-wrapper">
+                                <select id="gender" name="gender" required>
+                                    <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                    <option value="Female" <?= $user['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="group-col">
@@ -510,8 +525,9 @@ try {
     <?php if (!$is_dependent): ?>
     <div id="changePasswordModal" class="modal">
         <div class="modal-content">
+  <div class="modal-title-bar">
             <h2>Change Password</h2>
-            <div class="error-message" id="changePasswordError"></div>
+        </div>            <div class="error-message" id="changePasswordError"></div>
 
             <form id="changePasswordForm" action="change_password.php" method="POST" novalidate>
                 <!-- Current Password -->
@@ -551,13 +567,18 @@ try {
             </form>
         </div>
     </div>
+
+
+    
     <?php endif; ?>
 
     <!-- Add Dependent Modal (Only for Primary User) -->
     <?php if (!$is_dependent): ?>
     <div id="addDependentModal" class="modal">
         <div class="modal-content">
+              <div class="modal-title-bar">
             <h2>Add Dependent</h2>
+        </div>
             <div class="error-message" id="addDependentError"></div>
             <div class="form-scroll">
                 <form id="addDependentForm" action="add_dependent.php" method="POST" enctype="multipart/form-data">
@@ -578,11 +599,13 @@ try {
                         </div>
                         <div class="group-col">
                             <label for="dep_gender">Gender <span class="required">*</span></label>
-                            <select id="dep_gender" name="gender" required>
-                                <option value="" disabled selected>Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
+                            <div class="select-wrapper">
+                                <select id="dep_gender" name="gender" required>
+                                    <option value="" disabled selected>Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="group-col">
@@ -595,18 +618,20 @@ try {
                     </div>
                     <div class="group-col">
                         <label for="dep_relationship">Relationship to You <span class="required">*</span></label>
-                        <select id="dep_relationship" name="relationship" required>
-                            <option value="" disabled selected>Select Relationship</option>
-                            <option value="Child">Child</option>
-                            <option value="Parent">Parent</option>
-                            <option value="Grandparent">Grandparent</option>
-                            <option value="Sibling">Sibling</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <div class="select-wrapper">
+                            <select id="dep_relationship" name="relationship" required>
+                                <option value="" disabled selected>Select Relationship</option>
+                                <option value="Child">Child</option>
+                                <option value="Parent">Parent</option>
+                                <option value="Grandparent">Grandparent</option>
+                                <option value="Sibling">Sibling</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="group-col">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="dep_hasFamilyNumber" name="hasFamilyNumber">
+                        <label class="checkbox-label" style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="dep_hasFamilyNumber" name="hasFamilyNumber" style="margin:0;">
                             I know their family number
                         </label>
                     </div>
@@ -637,7 +662,9 @@ try {
     <!-- View Consultation Modal -->
     <div id="viewConsultationModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Consultation Details</h2>
+              <div class="modal-title-bar">
+            <h2>Consultation Details</h2>
+        </div>
             <div class="form-scroll">
                 <div class="consultation-container">
                     <div class="group-row">
@@ -703,8 +730,12 @@ try {
     <!-- View Request Modal -->
     <div id="viewRequestModal" class="modal"> 
         <div class="modal-content">
+           
+        <div class="modal-title-bar">
             <h2>Request Medicine Details</h2>
-            <div class="form-scroll">
+        </div>
+        
+        <div class="form-scroll">
                 <div class="modal-container">
                     <div class="group-row">
                         <div class="group-col">
@@ -790,7 +821,10 @@ try {
     <!-- Cancel Request Confirmation Modal -->
     <div id="cancelRequestModal" class="modal">
         <div class="modal-content">
+                          <div class="modal-confirmation">
+
             <h2>Confirm Cancellation</h2>
+            </div>
             <p>Are you sure you want to cancel this medicine request?</p>
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeCancelRequestModal()">Cancel</button>
@@ -802,7 +836,10 @@ try {
     <!-- Cancel Dependent Confirmation Modal -->
     <div id="cancelDependentModal" class="modal">
         <div class="modal-content">
+                          <div class="modal-confirmation">
+
             <h2>Confirm Cancellation</h2>
+                          </div>
             <p>Are you sure you want to cancel this pending dependent account?</p>
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeCancelDependentModal()">Cancel</button>
@@ -814,7 +851,9 @@ try {
     <!-- Logout Confirmation Modal -->
     <div id="logoutConfirmModal" class="modal">
         <div class="modal-content">
+              <div class="modal-confirmation">
             <h2>Confirm Logout</h2>
+        </div>
             <p>Are you sure you want to log out?</p>
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeLogoutConfirmModal()">Cancel</button>
@@ -826,7 +865,10 @@ try {
     <!-- Switch Account Confirmation Modal -->
     <div id="switchAccountConfirmModal" class="modal">
         <div class="modal-content">
+                          <div class="modal-confirmation">
+
             <h2>Confirm Account Switch</h2>
+            </div>  
             <p>Are you sure you want to switch to this account?</p>
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeSwitchAccountConfirmModal()">Cancel</button>
@@ -835,6 +877,8 @@ try {
         </div>
     </div>
 
+
+    
     <script>
         function openProfilePicModal(e) {
             if (e) e.stopPropagation();
@@ -996,7 +1040,7 @@ try {
                 errorDiv.textContent = data.message;
                 
                 if (data.success) {
-                    errorDiv.style.color = "#28a745"; // Green for success
+                    errorDiv.style.color = "#13b613"; // Green for success
                     setTimeout(() => {
                         location.reload(); // Reload to reflect new dependent
                     }, 1700);
@@ -1045,7 +1089,7 @@ try {
                 errorDiv.textContent = data.message;
                 
                 if (data.success) {
-                    errorDiv.style.color = "#28a745"; // Green for success
+                    errorDiv.style.color = "#13b613"; // Green for success
                     setTimeout(() => {
                         closeChangePasswordModal();
                     }, 1700);
@@ -1084,7 +1128,7 @@ try {
                 errorDiv.textContent = data.message;
                 
                 if (data.success) {
-                    errorDiv.style.color = "#28a745"; // Green for success
+                    errorDiv.style.color = "#13b613"; // Green for success
                     setTimeout(() => {
                         location.reload(); // Reload to reflect updated profile data
                     }, 1700);
@@ -1129,7 +1173,7 @@ try {
                 errorDiv.textContent = data.message;
                 
                 if (data.success) {
-                    errorDiv.style.color = "#28a745"; // Green for success
+                    errorDiv.style.color = "#13b613"; // Green for success
                     setTimeout(() => {
                         location.reload(); // Reload to reflect updated profile picture
                     }, 1700);
@@ -1180,20 +1224,34 @@ try {
                     const container = document.createElement('div');
                     container.classList.add('medicine-container');
 
-                    // loop through medicines and append rows into the container
-                    data.medicines.forEach(med => {
-                        const row = document.createElement('div');
-                        row.classList.add('row', 'medicine-entry');
-                        row.innerHTML = `
-                            <div><label>Medicine Name</label><span>${med.medicine_name}</span></div>
-                            <div><label>Dosage</label><span>${med.dosage || 'N/A'}</span></div>
-                            <div><label>Quantity</label><span>${med.quantity}</span></div>
-                            <div><label>Status</label><span class="status-badge status-${med.status}">
-                                ${med.status.charAt(0).toUpperCase() + med.status.slice(1)}
-                            </span></div>
-                        `;
-                        container.appendChild(row);
-                    });
+                        // loop through medicines and append rows into the container
+                        data.medicines.forEach(med => {
+                            const row = document.createElement('div');
+                            row.classList.add('row', 'medicine-entry');
+
+                            // determine display text and color for status
+                            const rawStatus = (med.status || '').toString();
+                            const statusText = rawStatus ? rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1) : 'N/A';
+                            let statusColor = '';
+                            const s = rawStatus.toLowerCase();
+                            if (s === 'approved') {
+                                statusColor = '#13b613';
+                            } else if (s === 'declined') {
+                                statusColor = '#ff0019';
+                            } else if (s === 'requested') {
+                                statusColor = '#005281';
+                            }
+
+                            row.innerHTML = `
+                                <div><label>Medicine Name: </label><span>${med.medicine_name}</span></div>
+                                <div><label>Dosage: </label><span>${med.dosage || 'N/A'}</span></div>
+                                <div><label>Quantity: </label><span>${med.quantity}</span></div>
+                                <div><label>Status: </label><span class="status-badge status-${med.status}" style="${statusColor ? 'color: ' + statusColor + ';' : ''}">
+                                    ${statusText}
+                                </span></div>
+                            `;
+                            container.appendChild(row);
+                        });
 
                     medicineGroup.appendChild(container);
 
@@ -1371,7 +1429,42 @@ try {
         
     </script>
 
+    <script src="js/form-controls.js"></script>
     <script>
+        // Handle gender select field state
+        document.getElementById('gender').addEventListener('mousedown', function(e) {
+            const wrapper = this.closest('.select-wrapper');
+            const currentValue = this.value;
+            
+            if (wrapper.classList.contains('open')) {
+                // Check if clicking on the same option (Male or Female)
+                const clickedOption = e.target.value;
+                if (clickedOption === currentValue) {
+                    wrapper.classList.remove('open');
+                    this.blur();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            wrapper.classList.toggle('open');
+            this.dataset.previousValue = currentValue;
+        });
+
+        document.getElementById('gender').addEventListener('change', function(e) {
+            // When either Male or Female is selected
+            const wrapper = this.closest('.select-wrapper');
+            wrapper.classList.remove('open');
+            // Always close dropdown when selecting any option
+            if (this.value === this.dataset.previousValue) {
+                wrapper.classList.remove('open');
+            }
+        });
+
+        document.getElementById('gender').addEventListener('blur', function(e) {
+            const wrapper = this.closest('.select-wrapper');
+            wrapper.classList.remove('open');
+        });
+
         // Select the hamburger toggle and navigation links container
         const menuToggle = document.getElementById('menu-toggle');
         const navLinks = document.querySelector('.nav-links');
@@ -1399,6 +1492,43 @@ try {
                     const icon = menuToggle.querySelector('i');
                     icon.classList.replace('fa-times', 'fa-bars');
                 }
+            });
+        });
+
+        // Add dependent form select fields behavior
+        ['dep_gender', 'dep_relationship'].forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            
+            select.addEventListener('mousedown', function(e) {
+                const wrapper = this.closest('.select-wrapper');
+                const currentValue = this.value;
+                
+                if (wrapper.classList.contains('open')) {
+                    // Check if clicking on the same option
+                    if (this.value === currentValue && this.value !== "") {
+                        wrapper.classList.remove('open');
+                        this.blur();
+                        e.preventDefault();
+                        return;
+                    }
+                }
+                wrapper.classList.toggle('open');
+                this.dataset.previousValue = currentValue;
+            });
+
+            select.addEventListener('change', function(e) {
+                const wrapper = this.closest('.select-wrapper');
+                wrapper.classList.remove('open');
+                // Always close dropdown when selecting any option
+                if (this.value === this.dataset.previousValue) {
+                    wrapper.classList.remove('open');
+                }
+            });
+
+            select.addEventListener('blur', function(e) {
+                const wrapper = this.closest('.select-wrapper');
+                wrapper.classList.remove('open');
             });
         });
     </script>

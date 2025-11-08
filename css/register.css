@@ -5,6 +5,24 @@
     font-family: "Istok Web";
 }
 
+@keyframes popUp {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.success-content{
+
+        animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) 600ms both;
+
+}
+
+
+ 
+ .modal-content {
+    animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) 600ms both;
+}
+
+
 nav {
     background-color: transparent;
     display: flex;
@@ -45,10 +63,13 @@ nav {
 
 .register-container {
     position: relative;
-    background: linear-gradient(
-      rgba(220, 0, 0, 0.8),  /* top: strong red with opacity */
-      rgba(220, 0, 0, 0.6)   /* bottom: lighter red with opacity */
-    ), url("../images/calendar-banner.jpg") center/cover no-repeat;    
+     background: linear-gradient(
+        135deg, /* Angle for top-left to bottom-right */
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    ); 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -65,8 +86,8 @@ nav {
 .register-box {
     background: white;
     padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
     width: 350px;
     text-align: center;
     z-index: 2;
@@ -74,13 +95,13 @@ nav {
 }
 
 .register-box h2 {
-    color: #8B0000;
+    color: #800000;
 }
 
 .register-box hr {
     border: none;
     height: 1px;
-    background-color: #8B0000;
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
 .register-box p {
@@ -136,39 +157,39 @@ nav {
     align-items: center;
     margin-bottom: 6px;
     font-weight: bold;
-    color: #8B0000;
-    border: 2px solid #8B0000;
+    color: #800000;
+    border: 2px solid #800000;
 }
 
 .stepper-item .step-name {
     font-size: 14px;
-    color: #8B0000;
+    color: #800000;
 }
 
 .stepper-item.active .step-counter {
-    background-color: #8B0000;
+    background-color: #800000;
     color: white;
 }
 
 .stepper-item.completed .step-counter {
-    background-color: #8B0000;
+    background-color: #800000;
     color: white;
 }
 
 .stepper-item.completed::after {
-    border-color: #8B0000;
+    border-color: #800000;
 }  
 
 .stepper-item.completed::after {
-    border-bottom-color: #8B0000;
+    border-bottom-color: #800000;
 }
   
 .stepper-item.completed::before {
-    border-bottom-color: #8B0000;
+    border-bottom-color: #800000;
 }
   
 .stepper-item.active::before {
-    border-bottom-color: #8B0000;
+    border-bottom-color: #800000;
 }
 
 /* Form Steps */
@@ -202,9 +223,32 @@ nav {
     font-size: 13px;
 }
 
+.register-form .select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.register-form .select-wrapper::after {
+    content: "\f107";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: #000000;
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.register-form .select-wrapper:focus-within::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
 .register-form select {
     width: 100%;
     padding: 8px;
+    padding-right: 40px;
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: white;
@@ -216,17 +260,8 @@ nav {
     cursor: pointer;
 }
 
-.register-form select:after {
-    content: "▼";
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-}
-
 .register-form select:focus {
-    border-color: #8B0000;
+    border-color: #800000;
     outline: none;
     box-shadow: 0 0 5px rgba(139, 0, 0, 0.5);
 }
@@ -252,22 +287,27 @@ nav {
 
 .toggle-password {
     position: absolute;
-    right: 10px;
+    right: 20px;
     cursor: pointer;
-    color: #800000;
-    font-size: 1.1rem;
+    color: rgb(0, 0, 0, 0.5);
+    font-size: 13px;
+    transition: all 0.3s ease;
+    transform-origin: center;
 }
 
 .toggle-password:hover {
-    opacity: 0.7; 
+    opacity: 0.7;
+}
+
+.toggle-password.show {
+    transform: scale(1.1);
 }
 
 /* Hide default file input */
 .file-upload{
     display: flex;
     align-items: center;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 5px;
     padding: 10px;
     width: 100%;
     gap: 10px;
@@ -278,16 +318,16 @@ input[type="file"] {
 }
 
 #file-name{
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .custom-file-upload {
   display: inline-block;
-  background-color: #3399cc;
+  background-color: #3691B8;
   color: white;
   padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: normal;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -298,7 +338,7 @@ input[type="file"] {
 }
 
 .custom-file-upload:hover {
-  background-color: #2b7da5;
+  background-color: #287095;
 }
 
 
@@ -347,53 +387,76 @@ input[type="file"] {
 }
 
 .prev-step {
-    background: white;
-    color: #8B0000;
-    border: 2px solid #8B0000;
+    background: #ccc;
+    color: #000000;
     padding: 10px 20px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: normal;
     border-radius: 5px;
     cursor: pointer;
     flex: 1;
+    border: none;
     transition: 0.3s ease-in-out;
 }
 
 .prev-step:hover {
-    background: #8B0000;
-    color: white;
+    background: #8d8d8d;
 }
 
 .submit-button, .next-step {
-    background: #8B0000;
+    background: #800000;
     color: white;
-    border: 2px solid #8B0000;
+    border: 2px solid #800000;
     padding: 10px 20px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: normal;
     border-radius: 5px;
     cursor: pointer;
     flex: 1;
     transition: 0.3s ease-in-out;
 }
 
-#signUpBtn:disabled {
-    pointer-events: none; /* Prevent any hover/active events */
-    opacity: 0.6;
+.submit-button, .next-step {
+    background: #800000 !important;
+    transition: 0.3s ease-in-out;
+    opacity: 1;
 }
 
-.submit-button:hover {
-    background: #600000;
+/* Make the Sign Up button semi-transparent when the terms checkbox is not checked */
+#termsCheckbox:not(:checked) ~ .button-container #signUpBtn,
+.submit-button[disabled] {
+    opacity: 0.5 !important;
+    cursor: not-allowed;
+}
+
+/* When the terms checkbox is checked, make the Sign Up button fully opaque */
+#termsCheckbox:checked ~ .button-container #signUpBtn {
+    opacity: 1 !important;
+    cursor: pointer;
+}
+
+.submit-button.disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed;
+}
+
+.submit-button:hover:not(.disabled), .next-step:hover {
+    background: #6a0101 !important;
 }
 
 .policy_terms{
     width: auto;
 }
 
+.policy_terms .checkbox-label span {
+    display: inline;
+}
+
 .checkbox-label{
     display: flex;
     width: 100%;
     align-items: center;
+    font-weight: normal;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -403,10 +466,14 @@ input[type="file"] {
 }
 
 .checkbox-label a {
-    color: maroon;
-    font-weight: bold;
+    color: #800000;
+    font-weight: normal;
     text-decoration: none;
     margin: 5px;
+}
+
+.checkbox-label a:hover {
+    text-decoration: underline !important; 
 }
 
 /* Modal Styles */
@@ -439,21 +506,38 @@ input[type="file"] {
     width: 90%; /* Adjust width for responsiveness */
     max-width: 1900px; /* Set a max width */
     max-height: 90vh; /* Set a max height relative to the viewport */
-    border-radius: 8px;
+    border-radius: 5px;
     position: relative;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
     overflow-y: auto; /* Enable vertical scrolling */
     scrollbar-width: none; /* Hides scrollbar in Firefox */
     -ms-overflow-style: none;
 }
 
+.modal-content .policy-content h3{
+    border-bottom: rgb(0, 0, 0,0.1) 1px solid;
+    margin-bottom: 10px;
+}
+
+
+
+
+
 .modal-content .close {
     position: absolute;
     right: 15px;
     top: 10px;
-    font-size: 40px;
-    font-weight: bold;
+    font-size: 35px;
+    font-weight: normal;
     cursor: pointer;
+    margin-right: 20px;
+    margin-top: 10px;
+    transition: color 0.3s ease;
+
+}
+
+.modal-content .close:hover {
+    color: #800000;
 }
 
 /* success modal */
@@ -464,7 +548,7 @@ input[type="file"] {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -477,51 +561,53 @@ input[type="file"] {
 .success-content {
     background-color: white;
     padding: 30px;
-    border-radius: 8px;
+    border-radius: 5px;
     text-align: center;
     max-width: 500px;
     width: 90%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
 }
 
 .success-icon {
-    font-size: 60px;
-    color: #4CAF50;
-    margin-bottom: 20px;
+    font-size: 80px;
+    color: #13b613;
+    margin-bottom: 10px;
 }
 
 .success-title {
     font-size: 22px;
     font-weight: bold;
     margin-bottom: 15px;
-    color: #333;
+    color: #13b613;
+    border-bottom: rgb(0, 0, 0, 0.1) 0.1px solid;
 }
 
 .success-message {
-    font-size: 16px;
+    font-size: 15px;
     margin-bottom: 25px;
-    color: #555;
+    color: black;
     line-height: 1.5;
+    margin-top: 10px;
 }
 
 .success-button {
-    background-color: #8B0000;
+    background-color: #13b613;
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s;
 }
 
 .success-button:hover {
-    background-color: #a52a2a;
+    background-color: #047B0E;
 }
 
 /* Required field indicator */
 .required {
-    color: #FF0000;
+    color: red;
 }
 
 /* Field hints */
@@ -541,7 +627,7 @@ input[type="file"] {
     border-radius: 5px;
     padding: 15px;
     margin-bottom: 20px;
-    color: #B71C1C;
+    color: red; 
 }
 
 .error-summary ul {
@@ -600,6 +686,10 @@ input[type="file"] {
 
   .custom-file-upload {
     text-align: center;
+    font-size: 10px;    
+  }
+  #file-name{
+    font-size: 9px;
   }
 
   .modal-content {
@@ -611,40 +701,75 @@ input[type="file"] {
     width: 90%;
     padding: 20px;
   }
+
+  .policy_terms{
+    font-size: 10px;
+    text-align: left;
+  }
+  .policy_terms .checkbox-label span {
+    text-align: left;
+    display: inline;
+  }
+    .policy_terms {
+        text-align: left;
+    }
 }
 
 /* === MEDIUM SCREENS (Tablets: 601px–1024px) === */
 @media (min-width: 601px) and (max-width: 1024px) {
-  .register-container {
-    padding: 60px;
+    .register-container {
+    padding: 80px 0 0;
+    background-position: center;
+  }
+
+  .register-content{
+    padding: 0;
   }
 
   .register-box {
-    width: 70%;
-    padding: 25px;
+    width: 100%;
+    border-radius: 0;
+    padding: 20px;
+  }
+
+  .register-box h2 {
+    font-size: 20px;
   }
 
   .register-form .group-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .stepper-wrapper {
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    gap: 5px;
   }
 
   .button-container {
-    gap: 10px;
+    flex-direction: column;
+    width: 100%;
   }
 
+  .prev-step,
+  .next-step,
+  .submit-button {
+    width: 100%;
+  }
+
+  .id-preview img {
+    max-width: 100%;
+  }
+
+  .custom-file-upload {
+    text-align: center;
+  }
+
+  
+
   .modal-content {
-    width: 80%;
+    width: 95%;
+    max-height: 85vh;
   }
 
   .success-content {
-    width: 70%;
+    width: 90%;
+    padding: 20px;
   }
 }
 

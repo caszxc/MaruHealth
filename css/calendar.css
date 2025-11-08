@@ -2,11 +2,54 @@ body::-webkit-scrollbar{
     display: none; /* For Chrome, Safari, and Opera */
 }
 
+body{
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+    background: linear-gradient(
+        250deg,
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    );
+    background-attachment: fixed;
+}
+
+html{
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+@keyframes fadeInSlideDown {
+    from { opacity: 1; transform: translateX(-500px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+#calendar {
+    animation: fadeInSlideDown 700ms ease both;
+}
+@keyframes fadeInSlideDown {
+    from { opacity: 0; transform: translateY(-100px); }
+    to   { opacity: 1; transform: translateY(0);     }
+}
+ .event-panel {
+    animation: fadeInSlideDown 1000ms ease both;
+}
+
+@keyframes popUp {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.event-card { animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both; }
+.event-card:nth-child(2) { animation-delay: 120ms; }
+.event-card:nth-child(3) { animation-delay: 180ms; }
+.event-card:nth-child(4) { animation-delay: 240ms; }
+
 .container {
     display: flex;
-    margin-top: 80px;
-    height: calc(100vh - 80px);
-    overflow: hidden;
+    flex-direction: column;
+    min-height: 100vh;               /* full viewport */
+    margin-top: 80px;                /* your header offset */
 }
 
 .calendar-container {
@@ -21,7 +64,7 @@ body::-webkit-scrollbar{
     flex-direction: column;
     height: 100%;
     width: 30%;
-    background: linear-gradient(to bottom, #8B0000, #C00000);
+    background-color: transparent;    
     padding: 30px;
     color: white;
     overflow: hidden;
@@ -31,7 +74,7 @@ body::-webkit-scrollbar{
     text-align: left;
     padding: 10px;
     font-size: 20px;
-    font-weight: 600;
+    font-weight: normal;
 }
 
 .event-container{
@@ -66,17 +109,18 @@ body::-webkit-scrollbar{
     align-items: center;
     background: white;
     color: black;
-    border-radius: 10px;
+    border-radius: 5px;
     padding: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
     gap: 10px;
 }
+
+
 
 .event-card img {
     width: 100px;
     height: 100px;
-    border-radius: 8px;
+    border-radius: 5px;
     object-fit: cover;
 }
 
@@ -89,37 +133,36 @@ body::-webkit-scrollbar{
 }
 
 .event-card .event-details strong {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 5px;
 }
 
 .event-card .event-details em {
-    font-style: italic;
-    color: #6b7280;
+    color: black;
 }
 
 #calendar {
-    flex: 1;
-    width: 70%;
+    flex: 1;                         /* take all remaining vertical space */
+    width: 70%;                      /* your original width */
     background: white;
     display: flex;
     flex-direction: column;
+    overflow: hidden;                /* keep scrollbars inside if needed */
 }
 
 #calendar .calendar-header {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    display: flex;
 }
 
 #calendar .calendar-body {
+    flex: 1;                         /* grow to fill */
+    display: flex;
+    flex-direction: column;
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    flex: 1;
-    display: flex;
 }
 
 #calendar tbody {
@@ -129,40 +172,37 @@ body::-webkit-scrollbar{
 }
 
 
-#calendar th {
-    flex: 1;
-    border: 1px solid #800000;
-    vertical-align: middle;
-    color: #8B0000;
-    font-weight: normal;
-    font-size: 18px;
-    box-sizing: border-box;
-    text-align: center;
-    padding: 0;
-    overflow: hidden;
-    white-space: nowrap;
-}
 
-#calendar tr{
-    display: flex;
-    flex: 1;
+#calendar th {
+    flex: 1;                         /* 1/7 of row width */
+    border: 1px solid #EEEEEE;
+    box-sizing: border-box;
+    position: relative;
+    padding: 5px;
+    text-align: center;
+    vertical-align: top;
+    overflow: hidden;
 }
 
 
 #calendar td {
-    /* width: 14.28%;
-    height: 110px; */
-    border: 1px solid #800000;
-    vertical-align: top;
+    flex: 1;                         /* 1/7 of row width */
+    border: 1px solid #EEEEEE;
+    box-sizing: border-box;
     position: relative;
     padding: 5px;
-    font-size: 14px;
     text-align: right;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-    box-sizing: border-box;
+    vertical-align: top;
     overflow: hidden;
-    flex: 1;
+}
+
+#calendar tr {
+    display: flex;
+    flex: 1;                         /* each week takes equal space */
+}
+
+#calendar td {
+    height: auto !important;         /* override any inline height */
 }
 
 
@@ -171,11 +211,10 @@ body::-webkit-scrollbar{
 }
 
 #calendar td.selected-day {
-    background-color: rgba(139, 0, 0, 0.2);
-}
+background-color: rgba(128, 0, 0, 0.5);}
 
 #calendar td.selected-day .day-number {
-    color: #8B0000;
+    color: white;
     font-weight: bold;
 }
 
@@ -191,12 +230,12 @@ body::-webkit-scrollbar{
 }
 
 .day-number {
-    font-weight: bold;
+    font-weight: normal;
     margin-bottom: 3px;
 }
 
 .faded-day {
-    color: rgba(0, 0, 0, 0.3);
+    color: rgba(0, 0, 0, 0.4);
 }
 
 .event-title {
@@ -205,7 +244,6 @@ body::-webkit-scrollbar{
     color: #ffffff;
     margin-top: 2px;
     padding: 1px 3px;
-    border-radius: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -218,7 +256,7 @@ body::-webkit-scrollbar{
 .event-indicator {
     width: 20px;
     height: 20px;
-    background: darkred;
+    background: #800000;
     border-radius: 50%;
     margin: auto;
     position: absolute;
@@ -234,33 +272,32 @@ body::-webkit-scrollbar{
     justify-content: center;
     gap: 20px;
     padding: 17px;
-    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 5px 5px rgba(0,5,5,0.25);
 }
 
 .month-navigation h2 {
     font-size: 24px;
     font-weight: bold;
-    color: #8B0000;
+    color: #800000;
     min-width: 200px;
     text-align: center;
 }
 
 .nav-btn {
-    width: 40px;
-    height: 40px;
-    border: 2px solid #8B0000;
-    background: white;
+    width: 35px;
+    height: 35px;
+    border: none;
+    background: #800000;
     border-radius: 50%;
     font-size: 20px;
-    color: #8B0000;
+    font-weight: bold;
+    color: #FFFFFF;
     cursor: pointer;
     transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
 }
 
 .nav-btn:hover {
-    background: #8B0000;
-    color: white;
-    transform: translateY(-1px);
+    background: #6a0101;
 }
 
 /* ============================= */
@@ -269,6 +306,8 @@ body::-webkit-scrollbar{
 
 /* ===== Small screens (phones ≤600px) ===== */
 @media (max-width: 600px) {
+
+
     .container {
         flex-direction: column-reverse;
         height: auto;
@@ -285,22 +324,22 @@ body::-webkit-scrollbar{
         width: 100%;
         order: 1;
         overflow-x: auto;
-        padding: 10px;
+        padding: 5px;
     }
 
     #calendar th {
-        font-size: 13px;
+        font-size: 15px;
         padding: 6px 2px;
     }
 
     #calendar td {
-        font-size: 12px;
+        font-size: 15px;
         height: 80px;
         padding: 4px;
     }
 
     .day-number {
-        font-size: 12px;
+        font-size: 15px;
     }
 
     .event-title {
@@ -389,7 +428,7 @@ body::-webkit-scrollbar{
     }
 
     #calendar td {
-        font-size: 13px;
+        font-size: 15px;
         height: 90px;
     }
 

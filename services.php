@@ -76,6 +76,7 @@ if ($service) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="stylesheet" href="css/services.css">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
@@ -162,9 +163,11 @@ if ($service) {
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
-            <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+           <div>
+                <h1>
+                <span class="maru-health">Maru-Health</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
             </div>
         </div>
 
@@ -180,9 +183,10 @@ if ($service) {
                 <li><a href="request_medicine.php" class="links">MEDICINE REQUEST</a></li>
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
                 <?php if (isset($active_user_id) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
-                    <li>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
                 <?php elseif (!isset($_SESSION['admin_id'])): ?>

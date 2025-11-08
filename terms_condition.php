@@ -66,9 +66,10 @@ $adminName = $admin ? $admin['first_name'] . ' ' . $admin['last_name'] : 'Admin'
 
                 <?php if (isset($_SESSION['user_id'])): ?>
                 <?php if ($_SESSION['role'] === 'user'): ?>
-                    <li>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
                 <?php endif; ?>

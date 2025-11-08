@@ -45,8 +45,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+              <h1>
+                <span class="maru-health">Maru-Health</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
             </div>
         </div>
 
@@ -63,9 +65,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
                 <li><a href="about_us.php">ABOUT US</a></li>
 
                 <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
-                    <li>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
                 <?php elseif (!isset($_SESSION['admin_id'])): ?>
@@ -131,27 +134,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         </div>
     </div>
 
-    <script>
-        const banner = document.querySelector('.banner');
-        const images = [
-            'images/about-banner.jpg',
-            'images/about-banner-2.jpg',
-            'images/about-banner-3.jpg'
-        ];
-
-        let currentIndex = 0;
-
-        // Show the first image immediately on load
-        banner.style.backgroundImage = `url('${images[currentIndex]}')`;
-
-        function changeBannerBackground() {
-            currentIndex = (currentIndex + 1) % images.length;
-            banner.style.backgroundImage = `url('${images[currentIndex]}')`;
-        }
-
-        // Change every 4 seconds
-        setInterval(changeBannerBackground, 4000);
-    </script>
+    
     <script>
         // Select the hamburger toggle and navigation links container
         const menuToggle = document.getElementById('menu-toggle');

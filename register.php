@@ -158,6 +158,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/register.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/policy_terms.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,8 +171,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+              
+            <h1>
+                <span class="maru-health">Maru-Health</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
             </div>
         </div>
     </nav>
@@ -227,11 +231,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="group-row">
                             <div class="group-col">
                                 <label>Gender <span class="required">*</span></label>
-                                <select name="gender" required>
-                                    <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
-                                    <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
-                                    <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
-                                </select>
+                                <div class="select-wrapper">
+                                    <select name="gender" required>
+                                        <option value="" disabled <?= empty($_POST['gender']) ? 'selected' : '' ?>>Select Gender</option>
+                                        <option value="Male" <?= isset($_POST['gender']) && $_POST['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                        <option value="Female" <?= isset($_POST['gender']) && $_POST['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
+                                    </select>
+                                </div>
                             </div>
                             
                             <div class="group-col">
@@ -357,9 +363,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="policy_terms">
                             <label class="checkbox-label">
                                 <input type="checkbox" name="terms" id="termsCheckbox" required>
-                                I have read and accept the 
-                                <a href="#" onclick="openModal('privacyModal')">Privacy Policy</a> and the
-                                <a href="#" onclick="openModal('termsModal')">Terms and Conditions</a>
+                                <span>I have read and accept the <a href="#" onclick="openModal('privacyModal')">Privacy Policy</a> and the <a href="#" onclick="openModal('termsModal')">Terms and Conditions</a></span>
                             </label>
                         </div>
 
@@ -370,7 +374,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </div>
                 </form>
                 <p style="text-align: center; margin-top: 20px;">
-                Already have an account? Go to <a href="login.php" style="color: #8B0000; font-weight: bold;">Log In</a>
+                Already have an account? Go to <a href="login.php" 
+   style="color: #800000; font-weight: normal; text-decoration: none;"
+   onmouseover="this.style.textDecoration='underline';"
+   onmouseout="this.style.textDecoration='none';">
+   Log In
+</a>
                 </p>
             </div>
         </div>
@@ -531,10 +540,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 input.type = "text";
                 icon.classList.remove("fa-eye-slash");
                 icon.classList.add("fa-eye");
+                icon.classList.add("show");
             } else {
                 input.type = "password";
                 icon.classList.remove("fa-eye");
                 icon.classList.add("fa-eye-slash");
+                icon.classList.remove("show");
             }
         }
 
@@ -990,6 +1001,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             // Initialize form
             updateStep(currentStep);
+
+            // Custom select behavior
+            const genderSelect = document.querySelector('select[name="gender"]');
+            let isOpen = false;
+
+            genderSelect.addEventListener('mousedown', function(e) {
+                if (isOpen) {
+                    e.preventDefault();
+                    this.blur();
+                    isOpen = false;
+                } else {
+                    isOpen = true;
+                }
+            });
+
+            genderSelect.addEventListener('change', function() {
+                this.blur();
+                isOpen = false;
+            });
+
+            genderSelect.addEventListener('blur', function() {
+                isOpen = false;
+            });
+
+            // Close select when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!genderSelect.contains(e.target)) {
+                    genderSelect.blur();
+                    isOpen = false;
+                }
+            });
         });
 
         // Modal functions

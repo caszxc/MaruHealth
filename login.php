@@ -89,13 +89,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>    
     <div class="main-login">
         <div class="login-con">
-            <div class="left-panel">
-                <img src="images/3s logo.png" alt="Logo">
-                <div>
-                    <h1>MaruHealth</h1>
-                    <p>Barangay Marulas 3S Health Station</p>
-                </div>
+           <div class="left-panel">
+            <img src="images/3s logo.png" alt="Logo">
+            <div>
+                <h1>Maru-Health</h1>
+                <p>Barangay Marulas 3S Health Station</p>
             </div>
+        </div>
 
             <div class="right-panel">
                 <div class="login-box">

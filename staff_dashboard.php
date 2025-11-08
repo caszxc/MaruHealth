@@ -1,4 +1,5 @@
 <?php
+//staff_dashboard.php
 session_start();
 require_once "config.php";
 
@@ -19,30 +20,27 @@ $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
 // Get expiring medicines (within next 60 days)
-$expiryDate = date('Y-m-d', strtotime('+60 days'));
-$expiringStmt = $conn->prepare("SELECT mc.id, mc.generic_name, mc.brand_name, mb.expiration_date, mb.stocks 
-                               FROM medicines_catalog mc
-                               JOIN medicine_batches mb ON mc.id = mb.catalog_id
-                               WHERE mb.expiration_date <= :expiryDate 
-                               AND mb.expiration_date >= CURDATE() 
-                               AND mb.stocks > 0
-                               ORDER BY mb.expiration_date ASC
+/* $expiryDate = date('Y-m-d', strtotime('+60 days'));
+$expiringStmt = $conn->prepare("SELECT id, generic_name, brand_name, expiration_date, stocks 
+                               FROM medicines 
+                               WHERE expiration_date <= :expiryDate 
+                               AND expiration_date >= CURDATE() 
+                               AND stocks > 0
+                               ORDER BY expiration_date ASC
                                LIMIT 5");
 $expiringStmt->bindParam(':expiryDate', $expiryDate);
 $expiringStmt->execute();
-$expiringMedicines = $expiringStmt->fetchAll(PDO::FETCH_ASSOC);
+$expiringMedicines = $expiringStmt->fetchAll(PDO::FETCH_ASSOC); */
 
 // Get low stock medicines (below min_stock level)
-$lowStockStmt = $conn->prepare("SELECT mc.id, mc.generic_name, mc.brand_name, SUM(mb.stocks) as stocks, mc.min_stock 
-                               FROM medicines_catalog mc
-                               JOIN medicine_batches mb ON mc.id = mb.catalog_id
-                               GROUP BY mc.id, mc.generic_name, mc.brand_name, mc.min_stock
-                               HAVING SUM(mb.stocks) <= mc.min_stock 
-                               AND SUM(mb.stocks) > 0
-                               ORDER BY (SUM(mb.stocks)/mc.min_stock) ASC
+/* $lowStockStmt = $conn->prepare("SELECT id, generic_name, brand_name, stocks, min_stock 
+                               FROM medicines 
+                               WHERE stocks <= min_stock 
+                               AND stocks > 0
+                               ORDER BY (stocks/min_stock) ASC
                                LIMIT 5");
 $lowStockStmt->execute();
-$lowStockMedicines = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
+$lowStockMedicines = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC); */
 
 // Get pending medicine requests
 $pendingRequestsStmt = $conn->prepare("SELECT mr.id, mr.full_name, mr.request_date, 
@@ -70,9 +68,9 @@ $recentConsultations = $recentConsultationsStmt->fetchAll(PDO::FETCH_ASSOC);
 $totalPatientsStmt = $conn->query("SELECT COUNT(*) FROM patients");
 $totalPatients = $totalPatientsStmt->fetchColumn();
 
-// Count total medicines (distinct medicines in catalog)
-$totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines_catalog");
-$totalMedicines = $totalMedicinesStmt->fetchColumn();
+// Count total medicines
+/* $totalMedicinesStmt = $conn->query("SELECT COUNT(*) FROM medicines");
+$totalMedicines = $totalMedicinesStmt->fetchColumn(); */
 
 // Count pending medicine requests
 $pendingReqCountStmt = $conn->query("SELECT COUNT(*) FROM medicine_requests WHERE request_status IN ('requested', 'pending')");

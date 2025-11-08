@@ -441,18 +441,13 @@ table th {
     justify-content: flex-end;
 }
 
-.edit-btn, .delete-btn, .viewBatch-btn {
+.edit-btn, .delete-btn {
     padding: 8px 8px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-}
-
-.viewBatch-btn{
-    background-color: green;
-    color: white;
 }
 
 .edit-btn {

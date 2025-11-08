@@ -248,7 +248,7 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="form-row">
                     <div class="form-group">
                         <label>Dosage</label>
-                        <input type="text" name="dosage" required autocomplete="off">
+                        <input type="text" name="dosage" required>
                     </div>
                     <div class="form-group">
                         <label>Unit</label>

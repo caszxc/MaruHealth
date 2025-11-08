@@ -3,62 +3,63 @@
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as super admin or admin
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
-    echo json_encode(["success" => false, "message" => "Unauthorized access"]);
+    echo json_encode(["success" => false, "message" => "Unauthorized"]);
     exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $title = htmlspecialchars($_POST['title'] ?? '');
-    $date = $_POST['date'] ?? '';
-    $start = $_POST['start'] ?? '';
-    $end = $_POST['end'] ?? '';
-    $venue = htmlspecialchars($_POST['venue'] ?? '');
-    $image = null;
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    echo json_encode(["success" => false, "message" => "Invalid request"]);
+    exit();
+}
 
-    // Validate date format
-    if (!DateTime::createFromFormat('Y-m-d', $date)) {
-        echo json_encode(["success" => false, "message" => "Invalid date format"]);
-        exit();
-    }
+$title = trim($_POST['title'] ?? '');
+$date  = $_POST['date'] ?? '';
+$start = $_POST['start'] ?? '';
+$end   = $_POST['end'] ?? '';
+$venue = trim($_POST['venue'] ?? '');
+$image = null;
 
-    // Handle image upload
-    if (!empty($_FILES["image"]["name"])) {
-        $targetDir = "images/uploads/event_images/";
-        $imageName = time() . "_" . basename($_FILES["image"]["name"]);
-        $targetFilePath = $targetDir . $imageName;
+if (!DateTime::createFromFormat('Y-m-d', $date)) {
+    echo json_encode(["success" => false, "message" => "Invalid date"]);
+    exit();
+}
 
-        if (move_uploaded_file($_FILES["image"]["tmp_name"], $targetFilePath)) {
-            $image = $imageName; // Save the image filename in DB
-        }
-    }
+if ($start >= $end) {
+    echo json_encode(["success" => false, "message" => "End time must be after start time"]);
+    exit();
+}
 
-    try {
-        // Insert into database
-        $stmt = $conn->prepare("INSERT INTO events (title, event_date, start, end, venue, created_at, image) VALUES (?, ?, ?, ?, ?, NOW(), ?)");
-        $stmt->execute([$title, $date, $start, $end, $venue, $image]);
+if (isset($_FILES["image"]) && $_FILES["image"]["error"] === UPLOAD_ERR_OK) {
+    $dir = "images/uploads/event_images/";
+    if (!is_dir($dir)) mkdir($dir, 0777, true);
+    $image = time() . "_" . basename($_FILES["image"]["name"]);
+    move_uploaded_file($_FILES["image"]["tmp_name"], $dir . $image);
+}
 
-        // Get the event ID
-        $eventId = $conn->lastInsertId();
+try {
+    $stmt = $conn->prepare("
+        INSERT INTO events (title, event_date, start, end, venue, image, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, NOW())
+    ");
+    $stmt->execute([$title, $date, $start, $end, $venue, $image]);
 
-        // Log the event creation
-        $logStmt = $conn->prepare("
-            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-            VALUES (:admin_id, 'event_create', :details, :target_id)
-        ");
-        $details = "Created event titled '{$title}'";
-        $logStmt->execute([
-            ':admin_id' => $_SESSION['admin_id'],
-            ':details' => $details,
-            ':target_id' => $eventId
-        ]);
+    $eventId = $conn->lastInsertId();
 
-        echo json_encode(["success" => true, "message" => "Event added successfully"]);
-    } catch (PDOException $e) {
-        echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
-    }
-} else {
-    echo json_encode(["success" => false, "message" => "Invalid request method"]);
+    $log = $conn->prepare("
+        INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+        VALUES (:admin_id, 'event_create', :details, :target_id)
+    ");
+    $log->execute([
+        ':admin_id'   => $_SESSION['admin_id'],
+        ':details'    => "Created event titled '{$title}'",
+        ':target_id'  => $eventId
+    ]);
+
+    $_SESSION['calendar_message'] = "Event added successfully.";
+    echo json_encode(["success" => true, "message" => "Event added successfully"]);
+} catch (Exception $e) {
+    $_SESSION['calendar_message'] = "Error: " . $e->getMessage();
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
 ?>

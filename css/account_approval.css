@@ -215,7 +215,7 @@
 }
 
 /* Sort Controls */
-.sort-controls {
+.sort-control {
     display: flex;
     align-items: center;
     justify-content: flex-end;

@@ -1,65 +1,50 @@
 <?php
+//toggle_announcement.php
 session_start();
 require 'config.php';
 
-if (isset($_GET['id']) && isset($_GET['action'])) {
+if (!isset($_GET['id'], $_GET['action'])) {
+    echo json_encode(['success'=>false, 'message'=>'Invalid request']);
+    exit();
+}
 
-    // --------------------------------------------------------------
-    // 1. Authorization
-    // --------------------------------------------------------------
-    if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
-        echo json_encode(["success" => false, "message" => "Unauthorized access"]);
-        exit();
-    }
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
+    echo json_encode(['success'=>false, 'message'=>'Unauthorized']);
+    exit();
+}
 
-    $id       = (int)$_GET['id'];
-    $action   = $_GET['action'];
-    $newStatus = ($action === 'unarchive') ? 'active' : 'archived';
-    $oldStatus = $newStatus === 'active' ? 'archived' : 'active';
+$id       = (int)$_GET['id'];
+$action   = $_GET['action'];
+$newStat  = ($action === 'unarchive') ? 'active' : 'archived';
+$oldStat  = $newStat === 'active' ? 'archived' : 'active';
 
-    try {
-        // --------------------------------------------------------------
-        // 2. Get the announcement title (once, before we change it)
-        // --------------------------------------------------------------
-        $titleStmt = $conn->prepare("SELECT title FROM announcements WHERE id = ?");
-        $titleStmt->execute([$id]);
-        $row   = $titleStmt->fetch(PDO::FETCH_ASSOC);
-        $title = $row['title'] ?? 'Untitled';
+try {
+    // title for log
+    $t = $conn->prepare("SELECT title FROM announcements WHERE id=?");
+    $t->execute([$id]);
+    $title = $t->fetchColumn() ?: 'Untitled';
 
-        // --------------------------------------------------------------
-        // 3. Toggle the status
-        // --------------------------------------------------------------
-        $toggleStmt = $conn->prepare("UPDATE announcements SET status = ? WHERE id = ?");
-        $toggleStmt->execute([$newStatus, $id]);
+    // toggle
+    $up = $conn->prepare("UPDATE announcements SET status=? WHERE id=?");
+    $up->execute([$newStat, $id]);
 
-        // --------------------------------------------------------------
-        // 4. Log the action – now with the **title**
-        // --------------------------------------------------------------
-        $logStmt = $conn->prepare("
-            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-            VALUES (:admin_id, 'announcement_toggle', :details, :target_id)
-        ");
+    // log
+    $log = $conn->prepare("
+        INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+        VALUES (:admin_id, 'announcement_toggle', :details, :target_id)
+    ");
+    $log->execute([
+        ':admin_id'   => $_SESSION['admin_id'],
+        ':details'    => "Changed announcement \"{$title}\" from {$oldStat} to {$newStat}.",
+        ':target_id'  => $id
+    ]);
 
-        $details = "Changed announcement \"{$title}\" from {$oldStatus} to {$newStatus}.";
-        $logStmt->execute([
-            ':admin_id'   => $_SESSION['admin_id'],
-            ':details'    => $details,
-            ':target_id'  => $id
-        ]);
+    // **set flash message for the UI**
+    $_SESSION['announcement_message'] = "Announcement {$action}d successfully.";
 
-        echo json_encode([
-            "success" => true,
-            "message" => "Announcement status updated successfully"
-        ]);
-
-    } catch (PDOException $e) {
-        echo json_encode([
-            "success" => false,
-            "message" => "Database error: " . $e->getMessage()
-        ]);
-    }
-
-} else {
-    echo json_encode(["success" => false, "message" => "Invalid request parameters"]);
+    echo json_encode(['success'=>true]);
+} catch (Exception $e) {
+    $_SESSION['announcement_message'] = "Failed: " . $e->getMessage();
+    echo json_encode(['success'=>false, 'message'=>$e->getMessage()]);
 }
 ?>

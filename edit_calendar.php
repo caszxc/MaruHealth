@@ -38,7 +38,18 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-
+    <style>
+        .message {
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: 500;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .message.success { background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; }
+        .message.error   { background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; }
+    </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const fileInput = document.getElementById('eventImage');
@@ -134,35 +145,22 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 }
 
         // Delete Event Function
-        function deleteEvent(eventId) {
+        function deleteEvent(id) {
             if (!confirm("Are you sure you want to delete this event?")) return;
 
             fetch("delete_event.php", {
                 method: "POST",
-                body: new URLSearchParams({ id: eventId })
+                body: new URLSearchParams({ id })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                alert(data.message);
+                // Use session flash message
                 if (data.success) {
-                    if (!selectedDate) {
-                        let today = new Date();
-                        selectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                    }
-
-                    let [year, month, day] = selectedDate.split('-');
-                    year = parseInt(year);
-                    month = parseInt(month);
-                    day = parseInt(day);
-
-                    // Refresh event list
-                    showEvents(year, month, day);
-
-                    // Refresh calendar
-                    loadCalendar(month, year);
+                    location.reload(); // Will show flash message from session
+                } else {
+                    alert(data.message);
                 }
-            })
-            .catch(error => console.error("Error deleting event:", error));
+            });
         }
 
 
@@ -210,52 +208,27 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
             document.getElementById("eventModal").classList.remove("show");
         }
 
-        function addEvent(event) {
-    event.preventDefault(); // Prevent default form submission
+        function addEvent(e) {
+            e.preventDefault();
+            const start = document.getElementById("startTime").value;
+            const end   = document.getElementById("endTime").value;
+            if (start && end && start >= end) {
+                alert("End time must be after start time.");
+                return;
+            }
 
-    // Get form inputs
-    const startTime = document.getElementById("startTime").value;
-    const endTime = document.getElementById("endTime").value;
-
-    // Validate that end time is after start time
-    if (startTime && endTime && startTime >= endTime) {
-        alert("End time must be after start time.");
-        return;
-    }
-
-    let formData = new FormData(document.getElementById("eventForm"));
-
-    fetch("add_event.php", {
-        method: "POST",
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        if (data.success) {
-            closeModal();
-
-            let eventDate = new Date(formData.get("date"));
-            let year = eventDate.getFullYear();
-            let month = eventDate.getMonth() + 1;
-            let day = eventDate.getDate();
-
-            // Refresh event list
-            showEvents(year, month, day);
-
-            // Refresh the calendar
-            loadCalendar(month, year);
-
-            // Clear form fields after successful submission
-            document.getElementById("eventForm").reset();
-            document.getElementById("file-name").textContent = "No file chosen"; // Reset file name display
+            const formData = new FormData(document.getElementById("eventForm"));
+            fetch("add_event.php", { method: "POST", body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        closeModal();
+                        location.reload(); // Flash message will appear
+                    } else {
+                        alert(data.message);
+                    }
+                });
         }
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        alert("An error occurred while adding the event.");
-    });
-}
 
         window.onload = function () {
             let date = new Date();
@@ -270,7 +243,16 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
             }, 100); // Delay to ensure DOM elements exist
         };
 
-
+        // Auto-hide flash message
+        document.addEventListener("DOMContentLoaded", () => {
+            const msg = document.querySelector(".message");
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = "0";
+                    setTimeout(() => msg.remove(), 600);
+                }, 3000);
+            }
+        });
     </script>
 
 </head>
@@ -376,6 +358,15 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
         <div class="container">
             <div class="calendar-container">
                 <aside class="event-panel">
+                    <!-- FLASH MESSAGE -->
+                    <?php if (isset($_SESSION['calendar_message'])): ?>
+                        <div class="message <?= strpos($_SESSION['calendar_message'], 'success') !== false || 
+                                            strpos($_SESSION['calendar_message'], 'added') !== false || 
+                                            strpos($_SESSION['calendar_message'], 'deleted') !== false ? 'success' : 'error' ?>">
+                            <?= htmlspecialchars($_SESSION['calendar_message']) ?>
+                        </div>
+                        <?php unset($_SESSION['calendar_message']); ?>
+                    <?php endif; ?>
                     <div class="event-header">
                         <h2 id="selectedDate" style="text-align: center;"></h2>
                         <hr>

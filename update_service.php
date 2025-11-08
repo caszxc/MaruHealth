@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // Validate required fields
     if (empty($serviceId) || empty($title) || empty($description)) {
-        $_SESSION['error'] = "Required fields are missing.";
+        $_SESSION['service_message'] = "Invalid request.";
         header("Location: service_management.php");
         exit();
     }
@@ -271,12 +271,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ':target_id' => $serviceId
         ]);
 
-        $_SESSION['success'] = "Service updated successfully!";
+        $_SESSION['service_message'] = "Service updated successfully.";
         header("Location: service_management.php");
         exit();
     } catch (Exception $e) {
         $conn->rollBack();
-        $_SESSION['error'] = "Update failed: " . $e->getMessage();
+        $_SESSION['service_message'] = "Update failed: " . $e->getMessage();
         header("Location: service_management.php");
         exit();
     }

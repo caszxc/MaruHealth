@@ -7,12 +7,14 @@ include 'config.php';
 // 1. AUTHORIZATION
 // ---------------------------------------------------------------------
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
+    $_SESSION['patient_message'] = "Unauthorized access.";
+    header("Location: view_patient.php?id=" . ($_POST['patient_id'] ?? ''));
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
+    $_SESSION['patient_message'] = "Invalid request method.";
+    header("Location: view_patient.php?id=" . ($_POST['patient_id'] ?? ''));
     exit();
 }
 
@@ -20,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // 2. INPUT
 // ---------------------------------------------------------------------
 $patient_id      = $_POST['patient_id'] ?? null;
-$first_name      = $_POST['first_name'] ?? null;
-$middle_name     = $_POST['middle_name'] ?? null;
-$last_name       = $_POST['last_name'] ?? null;
-$contact_number  = $_POST['contact_number'] ?? null;
-$address         = $_POST['address'] ?? null;
+$first_name      = trim($_POST['first_name'] ?? '');
+$middle_name     = trim($_POST['middle_name'] ?? '');
+$last_name       = trim($_POST['last_name'] ?? '');
+$contact_number  = trim($_POST['contact_number'] ?? '');
+$address         = trim($_POST['address'] ?? '');
 $weight          = $_POST['weight'] ? floatval($_POST['weight']) : null;
 $height          = $_POST['height'] ? floatval($_POST['height']) : null;
 $bmi             = $_POST['bmi'] ? floatval($_POST['bmi']) : null;
@@ -34,21 +36,27 @@ $new_family_num  = trim($_POST['family_number'] ?? '');
 // ---------------------------------------------------------------------
 // 3. BASIC VALIDATIONS
 // ---------------------------------------------------------------------
-if (!$patient_id) {
-    echo json_encode(['status' => 'error', 'message' => 'Patient ID is required']);
+if (!$patient_id || !is_numeric($patient_id)) {
+    $_SESSION['patient_message'] = "Invalid patient ID.";
+    header("Location: view_patient.php?id=$patient_id");
     exit();
 }
 
-if ($contact_number !== null && !preg_match('/^\d{10,11}$/', $contact_number)) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid contact number (10-11 digits)']);
+if ($contact_number !== '' && !preg_match('/^\d{10,11}$/', $contact_number)) {
+    $_SESSION['patient_message'] = "Invalid contact number (10-11 digits).";
+    header("Location: view_patient.php?id=$patient_id");
     exit();
 }
+
 if ($weight !== null && $weight <= 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Weight must be positive']);
+    $_SESSION['patient_message'] = "Weight must be positive.";
+    header("Location: view_patient.php?id=$patient_id");
     exit();
 }
+
 if ($height !== null && $height <= 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Height must be positive']);
+    $_SESSION['patient_message'] = "Height must be positive.";
+    header("Location: view_patient.php?id=$patient_id");
     exit();
 }
 
@@ -59,7 +67,7 @@ try {
     $conn->beginTransaction();
 
     // -----------------------------------------------------------------
-    // 4a. FETCH CURRENT PATIENT (including current family_number)
+    // 4a. FETCH CURRENT PATIENT
     // -----------------------------------------------------------------
     $stmt = $conn->prepare("SELECT family_number FROM patients WHERE id = :id FOR UPDATE");
     $stmt->execute([':id' => $patient_id]);
@@ -71,7 +79,7 @@ try {
     $old_family_num = $patient['family_number'] ?? null;
 
     // -----------------------------------------------------------------
-    // 4b. PREPARE UPDATE QUERY
+    // 4b. UPDATE PATIENT
     // -----------------------------------------------------------------
     $sql = "UPDATE patients SET
                 first_name      = :first_name,
@@ -146,16 +154,15 @@ try {
     }
 
     // -----------------------------------------------------------------
-    // 6. LOG THE ACTION (like add_patient_ajax.php)
+    // 6. LOG THE ACTION
     // -----------------------------------------------------------------
-    $fullName = trim("{$first_name} {$middle_name} {$last_name}");
-    $fullName = trim(str_replace('  ', ' ', $fullName)); // clean double spaces
+    $fullName = trim("{$first_name} " . ($middle_name ? $middle_name . ' ' : '') . $last_name);
+    $fullName = preg_replace('/\s+/', ' ', $fullName);
 
     $logStmt = $conn->prepare("
         INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
         VALUES (:admin_id, 'update_patient_record', :details, :target_id)
     ");
-
     $logStmt->execute([
         ':admin_id'   => $_SESSION['admin_id'],
         ':details'    => "Updated patient: {$fullName}",
@@ -163,14 +170,19 @@ try {
     ]);
 
     // -----------------------------------------------------------------
-    // 7. COMMIT
+    // 7. SUCCESS
     // -----------------------------------------------------------------
     $conn->commit();
+    $_SESSION['patient_message'] = "Patient **{$fullName}** updated successfully.";
 
-    echo json_encode(['status' => 'success', 'message' => 'Patient information updated successfully']);
-    
 } catch (Exception $e) {
     $conn->rollBack();
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    $_SESSION['patient_message'] = "Failed to update patient: " . $e->getMessage();
 }
+
+// ---------------------------------------------------------------------
+// 8. REDIRECT BACK TO view_patient.php
+// ---------------------------------------------------------------------
+header("Location: view_patient.php?id=$patient_id");
+exit();
 ?>

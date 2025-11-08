@@ -126,6 +126,7 @@ input[type="number"]::-webkit-inner-spin-button {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 80px);
+    gap: 10px;
     overflow: hidden;
 }
 
@@ -149,7 +150,6 @@ input[type="number"]::-webkit-inner-spin-button {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
 }
 
 .title{

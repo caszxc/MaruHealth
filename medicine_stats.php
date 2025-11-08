@@ -256,21 +256,60 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
             $dashboard_url = $adminRole === 'super_admin' ? 'superadmin_dashboard.php' : 'healthstaff_dashboard.php';
             ?>
             <p class="menu-header">ANALYTICS</p>
+
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/dashboard_icon_active.png" alt="">
-                <a href="<?= $dashboard_url ?>" class="<?= $current_page == 'medicine_stats.php' ? 'active' : '' ?>">Dashboard</a>
+                <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == 'medicine_stats.php' ? 'active' : '' ?>">Dashboard</a>
             </div>
+            
             <p class="menu-header">BASE</p>
+
+            <?php if ($adminRole == 'super_admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
+                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
+            </div>
+            
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
+                <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
+            </div>
+            
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
+            </div>
+
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
+            </div>
+            <?php endif; ?>
+
             <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
+                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
+            </div>
+            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/med_icon.png" alt="">
                 <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
             </div>
+            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
                 <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
+
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
@@ -282,7 +321,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'excel') {
     <div class="dashboard-content">
         <div class="title-con">
             <div style="display: flex; gap: 15px; align-items: center;">
-                <a href="<?= $dashboard_url ?>" class="back-button">Back</a>
+                <a href="<?= $dashboard_url ?>" class="back-button">← Back</a>
                 <h2>Medicine Statistics</h2>
             </div>
         </div>

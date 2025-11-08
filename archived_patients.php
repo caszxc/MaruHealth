@@ -53,6 +53,16 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <style>
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity .5s ease-in-out;
+        }
+        .message.success { background:#dff0d8; color:#3c763d; }
+        .message.error   { background:#f2dede; color:#a94442; }
+    </style>
 </head>
 <body>
 
@@ -167,6 +177,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     </form>
                 </div>
             </div>
+            <!-- ----- SUCCESS / ERROR MESSAGE ----- -->
+            <?php if (isset($_SESSION['patient_message'])): ?>
+                <div class="message <?= (strpos($_SESSION['patient_message'], 'successfully') !== false || strpos($_SESSION['patient_message'], 'restored') !== false) ? 'success' : 'error' ?>">
+                    <?= htmlspecialchars($_SESSION['patient_message']) ?>
+                </div>
+                <?php unset($_SESSION['patient_message']); ?>
+            <?php endif; ?>
             <div class="patient-table">
                 <div class="table-container">
                     <div class="table-wrapper">

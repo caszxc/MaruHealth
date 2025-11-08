@@ -85,6 +85,17 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .message.success { background-color: #dff0d8; color: #3c763d; }
+        .message.error   { background-color: #f2dede; color: #a94442; }
+    </style>
 </head>
 <body>
     <nav>
@@ -200,57 +211,69 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <button class="delete-btn" onclick="deleteService()">Delete</button>
                 </div>
             </div>
-
+            <!-- FLASH MESSAGE -->
+            <?php if (isset($_SESSION['service_message'])): ?>
+                <div class="message <?= stripos($_SESSION['service_message'], 'success') !== false || 
+                                    stripos($_SESSION['service_message'], 'added') !== false || 
+                                    stripos($_SESSION['service_message'], 'updated') !== false || 
+                                    stripos($_SESSION['service_message'], 'deleted') !== false ? 'success' : 'error' ?>">
+                    <?= htmlspecialchars($_SESSION['service_message']) ?>
+                </div>
+                <?php unset($_SESSION['service_message']); ?>
+            <?php endif; ?>
             <?php foreach ($services as $index => $service): ?>
                 <div id="tab<?= $service['id'] ?>" class="tab-content <?= $index == 0 ? 'active' : '' ?>">
-                    <!-- Service Card -->
-                    <div class="service-card-container">
-                        <div class="service-card">
-                            <img src="<?= htmlspecialchars($service['icon_path'] ?? 'images/uploads/service_images/icons/icon-placeholder.png') ?>" alt="<?= htmlspecialchars($service['name']) ?>">
-                            <h3><?= htmlspecialchars($service['name']) ?></h3>
-                            <p><?= htmlspecialchars($service['intro'] ?? 'No introduction available.') ?></p>
+                    <div class="service-wrapper">
+                        <!-- Service Card -->
+                        <div class="service-card-container">
+                            <div class="service-card">
+                                <img src="<?= htmlspecialchars($service['icon_path'] ?? 'images/uploads/service_images/icons/icon-placeholder.png') ?>" alt="<?= htmlspecialchars($service['name']) ?>">
+                                <h3><?= htmlspecialchars($service['name']) ?></h3>
+                                <p><?= htmlspecialchars($service['intro'] ?? 'No introduction available.') ?></p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="service-title"><?= htmlspecialchars($service['name']) ?></div>
-                    <p><?= nl2br(htmlspecialchars($service['description'])) ?></p>
+                        <div class="service-title"><?= htmlspecialchars($service['name']) ?></div>
+                        <p><?= nl2br(htmlspecialchars($service['description'])) ?></p>
 
-                    <div class="service-schedules">
-                        <h3>Service Schedules</h3>
-                        <table>
-                            <tr>
-                                <th>Name of Service</th>
-                                <th>Day(s) of Schedule</th>
-                                <th>Doctor</th>
-                            </tr>
-                            <?php if (!empty($subServices[$service['id']])): ?>
-                                <?php foreach ($subServices[$service['id']] as $sub): ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($sub['sub_service_name']) ?></td>
-                                        <td><?= htmlspecialchars($sub['days'] ?? 'No schedule') ?></td>
-                                        <td><?= htmlspecialchars($sub['doctor_name'] ?? 'No doctor assigned') ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
+                        <div class="service-schedules">
+                            <h3>Service Schedules</h3>
+                            <table>
                                 <tr>
-                                    <td colspan="3" style="text-align: center;">No schedules found.</td>
+                                    <th>Name of Service</th>
+                                    <th>Day(s) of Schedule</th>
+                                    <th>Doctor</th>
                                 </tr>
-                            <?php endif; ?>
-                        </table>
-                    </div>
+                                <?php if (!empty($subServices[$service['id']])): ?>
+                                    <?php foreach ($subServices[$service['id']] as $sub): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($sub['sub_service_name']) ?></td>
+                                            <td><?= htmlspecialchars($sub['days'] ?? 'No schedule') ?></td>
+                                            <td><?= htmlspecialchars($sub['doctor_name'] ?? 'No doctor assigned') ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="3" style="text-align: center;">No schedules found.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </table>
+                        </div>
 
-                    <div class="service-images-section">
-                        <h3>Service Images</h3>
-                        <div class="service-images">
-                            <?php if (!empty($serviceImages[$service['id']])): ?>
-                                <?php foreach ($serviceImages[$service['id']] as $image): ?>
-                                    <img src="<?= htmlspecialchars($image['image_path']) ?>" alt="Service Image">
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <p class="no-images">No images uploaded for this service.</p>
-                            <?php endif; ?>
+                        <div class="service-images-section">
+                            <h3>Service Images</h3>
+                            <div class="service-images">
+                                <?php if (!empty($serviceImages[$service['id']])): ?>
+                                    <?php foreach ($serviceImages[$service['id']] as $image): ?>
+                                        <img src="<?= htmlspecialchars($image['image_path']) ?>" alt="Service Image">
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="no-images">No images uploaded for this service.</p>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
+                    
                 </div>
             <?php endforeach; ?>
         </div>
@@ -259,130 +282,145 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <!-- Add Service Modal -->
     <div id="addServiceModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Add New Service</h2>
-            <form id="addServiceForm" action="add_service.php" method="POST" enctype="multipart/form-data">
-                <div class="form-container">
-                    <!-- Service Card Preview -->
-                    <div class="row">
-                        <label>Service Card Preview</label>
-                        <div class="service-card-container">
-                            <div class="service-card">
-                                <div class="icon-container">
-                                    <img id="newServiceIconPreview" src="images/uploads/service_images/icons/icon-placeholder.png" alt="Service Icon">
-                                    <i class="fas fa-pen edit-icon"></i>
-                                    <input type="file" id="newServiceIcon" name="serviceIcon" accept="image/*" style="display: none;">
+            <h2>Add New Service</h2>
+            <div class="form-scroll">
+                <form id="addServiceForm" action="add_service.php" method="POST" enctype="multipart/form-data">
+                    <div class="form-container">
+                        <!-- Service Card Preview -->
+                        <div class="row">
+                            <label>Service Card Preview</label>
+                            <div class="service-card-container">
+                                <div class="service-card">
+                                    <div class="icon-container">
+                                        <img id="newServiceIconPreview" src="images/uploads/service_images/icons/icon-placeholder.png" alt="Service Icon">
+                                        <i class="fas fa-pen edit-icon"></i>
+                                        <input type="file" id="newServiceIcon" name="serviceIcon" accept="image/*" style="display: none;">
+                                    </div>
+                                    <h3 id="newServiceTitlePreview">Service Title</h3>
+                                    <p id="newServiceIntroPreview">Enter intro text</p>
                                 </div>
-                                <h3 id="newServiceTitlePreview">Service Title</h3>
-                                <p id="newServiceIntroPreview">Enter intro text</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label for="newServiceTitle">Title</label>
+                            <input type="text" id="newServiceTitle" name="serviceTitle" autocomplete="off" required>
+                        </div>
+                        <div class="row">
+                            <label for="newServiceIntro">Intro</label>
+                            <input type="text" id="newServiceIntro" name="serviceIntro" autocomplete="off">
+                        </div>
+                        <div class="row">
+                            <label for="newServiceDescription">Description</label>
+                            <textarea id="newServiceDescription" name="serviceDescription" rows="6" required></textarea>
+                        </div>
+                        <div class="row">
+                            <label>Service Schedules</label>
+                            <div class="service-schedules-container">
+                                <div id="newServiceSchedulesContainer">
+                                    <div id="newNoScheduleMessage" style="text-align:center; color: gray; padding: 10px;">No Schedule</div>
+                                </div>
+                                <button type="button" class="add-service-btn" onclick="addNewService()">+ Add Service</button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label>Service Images</label>
+                            <div class="image-upload">
+                                <input type="file" id="newServiceImages" name="serviceImages[]" accept="image/*" multiple>
+                                <p class="help-text">Upload images for this service (JPG, PNG, GIF only, max 5MB per image)</p>
+                                <div id="newImagePreviewContainer" class="image-preview-container"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <label for="newServiceTitle">Title</label>
-                        <input type="text" id="newServiceTitle" name="serviceTitle" autocomplete="off" required>
-                    </div>
-                    <div class="row">
-                        <label for="newServiceIntro">Intro</label>
-                        <input type="text" id="newServiceIntro" name="serviceIntro" autocomplete="off">
-                    </div>
-                    <div class="row">
-                        <label for="newServiceDescription">Description</label>
-                        <textarea id="newServiceDescription" name="serviceDescription" rows="6" required></textarea>
-                    </div>
-                    <div class="row">
-                        <label>Service Schedules</label>
-                        <div class="service-schedules-container">
-                            <div id="newServiceSchedulesContainer">
-                                <div id="newNoScheduleMessage" style="text-align:center; color: gray; padding: 10px;">No Schedule</div>
-                            </div>
-                            <button type="button" class="add-service-btn" onclick="addNewService()">+ Add Service</button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <label>Service Images</label>
-                        <div class="image-upload">
-                            <input type="file" id="newServiceImages" name="serviceImages[]" accept="image/*" multiple>
-                            <p class="help-text">Upload images for this service (JPG, PNG, GIF only, max 5MB per image)</p>
-                            <div id="newImagePreviewContainer" class="image-preview-container"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="cancel-btn" onclick="closeAddServiceModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeAddServiceModal()">Cancel</button>
+                <button type="submit" form="addServiceForm" class="save-btn">Save</button>
+            </div>
         </div>
     </div>
 
     <!-- Edit Services Modal -->
     <div id="editServiceModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Edit Service</h2>
-            <form id="editServiceForm" action="update_service.php" method="POST" enctype="multipart/form-data">
-                <div class="form-container">
-                    <input type="hidden" name="serviceId" id="serviceId">
-                    <input type="hidden" id="imagesToDelete" name="imagesToDelete">
-                    <!-- Service Card Preview -->
-                    <div class="row">
-                        <label>Service Card Preview</label>
-                        <div class="service-card-container">
-                            <div class="service-card">
-                                <div class="icon-container">
-                                    <img id="serviceIconPreview" src="images/uploads/service_images/icons/icon-placeholder.png" alt="Service Icon">
-                                    <i class="fas fa-pen edit-icon"></i>
-                                    <input type="file" id="serviceIcon" name="serviceIcon" accept="image/*" style="display: none;">
+            <h2>Edit Service</h2>
+            <div class="form-scroll">
+               <form id="editServiceForm" action="update_service.php" method="POST" enctype="multipart/form-data">
+                    <div class="form-container">
+                        <input type="hidden" name="serviceId" id="serviceId">
+                        <input type="hidden" id="imagesToDelete" name="imagesToDelete">
+                        <!-- Service Card Preview -->
+                        <div class="row">
+                            <label>Service Card Preview</label>
+                            <div class="service-card-container">
+                                <div class="service-card">
+                                    <div class="icon-container">
+                                        <img id="serviceIconPreview" src="images/uploads/service_images/icons/icon-placeholder.png" alt="Service Icon">
+                                        <i class="fas fa-pen edit-icon"></i>
+                                        <input type="file" id="serviceIcon" name="serviceIcon" accept="image/*" style="display: none;">
+                                    </div>
+                                    <h3 id="serviceTitlePreview"></h3>
+                                    <p id="serviceIntroPreview">Intro Text</p>
                                 </div>
-                                <h3 id="serviceTitlePreview"></h3>
-                                <p id="serviceIntroPreview">Intro Text</p>
                             </div>
                         </div>
-                    </div>
-                        
-                    <div class="row">
-                        <label for="serviceTitle">Title</label>
-                        <input type="text" id="serviceTitle" name="serviceTitle" autocomplete="off" required>
-                    </div>
-                    <div class="row">
-                        <label for="serviceIntro">Intro</label>
-                        <input type="text" id="serviceIntro" name="serviceIntro" autocomplete="off">
-                    </div>
-                    <div class="row">
-                        <label for="serviceDescription">Description</label>
-                        <textarea id="serviceDescription" name="serviceDescription" rows="6" required></textarea>
-                    </div>
-                    <div class="row">
-                        <label>Service Schedules</label>
-                        <div class="service-schedules-container">
-                            <div id="serviceSchedulesContainer">
-                                <div id="noScheduleMessage" style="text-align:center; color: gray; padding: 10px;">No Schedule</div>
-                            </div>
-                            <button type="button" class="add-service-btn" onclick="addService()">+ Add Service</button>
-                        </div>
-                    </div>
-
-                    <!-- Image Upload -->
-                    <div class="row">
-                        <label>Service Images</label>
-                        <div class="image-upload">
-                            <input type="file" id="serviceImages" name="serviceImages[]" accept="image/*" multiple>
-                            <p class="help-text">Upload new images for this service (JPG, PNG, GIF only, max 5MB per image)</p>
                             
-                            <!-- Image Preview Container -->
-                            <div id="imagePreviewContainer" class="image-preview-container"></div>
+                        <div class="row">
+                            <label for="serviceTitle">Title</label>
+                            <input type="text" id="serviceTitle" name="serviceTitle" autocomplete="off" required>
+                        </div>
+                        <div class="row">
+                            <label for="serviceIntro">Intro</label>
+                            <input type="text" id="serviceIntro" name="serviceIntro" autocomplete="off">
+                        </div>
+                        <div class="row">
+                            <label for="serviceDescription">Description</label>
+                            <textarea id="serviceDescription" name="serviceDescription" rows="6" required></textarea>
+                        </div>
+                        <div class="row">
+                            <label>Service Schedules</label>
+                            <div class="service-schedules-container">
+                                <div id="serviceSchedulesContainer">
+                                    <div id="noScheduleMessage" style="text-align:center; color: gray; padding: 10px;">No Schedule</div>
+                                </div>
+                                <button type="button" class="add-service-btn" onclick="addService()">+ Add Service</button>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="row">
+                            <label>Service Images</label>
+                            <div class="image-upload">
+                                <input type="file" id="serviceImages" name="serviceImages[]" accept="image/*" multiple>
+                                <p class="help-text">Upload new images for this service (JPG, PNG, GIF only, max 5MB per image)</p>
+                                
+                                <!-- Image Preview Container -->
+                                <div id="imagePreviewContainer" class="image-preview-container"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <!-- Modal Action Buttons -->
-                <div class="modal-actions">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
-                </div>
-            </form>
+                </form> 
+            </div>
+            <!-- Modal Action Buttons -->
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button type="submit" form="editServiceForm" class="save-btn">Save</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // === FLASH MESSAGE AUTO-HIDE ===
+        document.addEventListener("DOMContentLoaded", () => {
+            const msg = document.querySelector(".message");
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = "0";
+                    setTimeout(() => msg.remove(), 600);
+                }, 3000);
+            }
+        });
+
         // Cache DOM elements and initialize variables
         let addServiceFiles = []; // For Add Service modal
         let editServiceFiles = []; // For Edit Service modal
@@ -1015,31 +1053,26 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         function deleteService() {
             const activeTab = document.querySelector('.tab-content.active');
-            if (!activeTab) {
-                alert('Please select a service to delete.');
-                return;
-            }
+            if (!activeTab) return alert('Please select a service to delete.');
 
             const serviceId = activeTab.id.replace('tab', '');
             const serviceName = activeTab.querySelector('.service-title').innerText;
 
-            if (confirm(`Are you sure you want to delete the service "${serviceName}"? This will also delete all associated sub-services, schedules, and images.`)) {
+            if (confirm(`Delete "${serviceName}"? This will remove all sub-services, schedules, and images.`)) {
                 fetch('delete_service.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'serviceId=' + encodeURIComponent(serviceId)
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'serviceId=' + serviceId
                 })
-                .then(response => response.text())
+                .then(r => r.json())
                 .then(data => {
-                    alert(data);
-                    location.reload(); // Reload to update the service list
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
                 })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while deleting the service.');
-                });
+                .catch(() => alert('Error deleting service.'));
             }
         }
 

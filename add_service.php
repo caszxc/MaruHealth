@@ -1,174 +1,120 @@
 <?php
-// add_service.php
+//add_service.php
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as super admin or admin
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
-    header("Location: admin_dashboard.php");
+    $_SESSION['service_message'] = "Unauthorized access.";
+    header("Location: service_management.php");
     exit();
 }
 
-// Validate form data
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $serviceTitle = trim($_POST['serviceTitle'] ?? '');
-    $serviceDescription = trim($_POST['serviceDescription'] ?? '');
-    $serviceIntro = trim($_POST['serviceIntro'] ?? '');
-    $serviceNames = $_POST['serviceName'] ?? [];
-    $scheduleDays = $_POST['scheduleDay'] ?? [];
-    $doctorNames = $_POST['doctorName'] ?? [];
-    $images = $_FILES['serviceImages'] ?? [];
-    $serviceIcon = $_FILES['serviceIcon'] ?? null;
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    $_SESSION['service_message'] = "Invalid request.";
+    header("Location: service_management.php");
+    exit();
+}
 
-    if (empty($serviceTitle) || empty($serviceDescription)) {
-        $_SESSION['error'] = "Title and description are required.";
-        header("Location: service_management.php");
-        exit();
+$serviceTitle       = trim($_POST['serviceTitle'] ?? '');
+$serviceDescription = trim($_POST['serviceDescription'] ?? '');
+$serviceIntro       = trim($_POST['serviceIntro'] ?? '');
+$serviceNames       = $_POST['serviceName'] ?? [];
+$scheduleDays       = $_POST['scheduleDay'] ?? [];
+$doctorNames        = $_POST['doctorName'] ?? [];
+$images             = $_FILES['serviceImages'] ?? [];
+$serviceIcon        = $_FILES['serviceIcon'] ?? null;
+
+if (empty($serviceTitle) || empty($serviceDescription)) {
+    $_SESSION['service_message'] = "Title and description are required.";
+    header("Location: service_management.php");
+    exit();
+}
+
+try {
+    $conn->beginTransaction();
+
+    // --- Icon upload ---
+    $iconPath = 'images/uploads/service_images/icons/icon-placeholder.png';
+    if ($serviceIcon && $serviceIcon['error'] === UPLOAD_ERR_OK) {
+        $dir = "images/uploads/service_images/icons/";
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $ext = strtolower(pathinfo($serviceIcon['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg','jpeg','png','gif'];
+        if (in_array($ext, $allowed) && $serviceIcon['size'] <= 5*1024*1024) {
+            $file = uniqid() . '.' . $ext;
+            if (move_uploaded_file($serviceIcon['tmp_name'], $dir . $file)) {
+                $iconPath = $dir . $file;
+            }
+        }
     }
 
-    try {
-        // Begin transaction
-        $conn->beginTransaction();
+    // --- Insert service ---
+    $stmt = $conn->prepare("INSERT INTO services (name, description, icon_path, intro) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$serviceTitle, $serviceDescription, $iconPath, $serviceIntro]);
+    $serviceId = $conn->lastInsertId();
 
-        // Handle service icon upload
-        $iconPath = 'images/uploads/service_images/icons/icon-placeholder.png'; // Default icon path
-        if ($serviceIcon && $serviceIcon['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = "images/uploads/service_images/icons/";
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
+    // --- Sub-services & schedules ---
+    $hasSub = false;
+    $announcement = "Dear Barangay Marulas Residents,\n\nWe have added new schedules for **{$serviceTitle}**:\n\n";
+    foreach ($serviceNames as $i => $name) {
+        if (empty(trim($name))) continue;
+        $hasSub = true;
+        $doc = !empty($doctorNames[$i]) ? trim($doctorNames[$i]) : null;
+        $subStmt = $conn->prepare("INSERT INTO sub_services (service_id, name, doctor_name) VALUES (?, ?, ?)");
+        $subStmt->execute([$serviceId, $name, $doc]);
+        $subId = $conn->lastInsertId();
 
-            $fileType = strtolower(pathinfo($serviceIcon['name'], PATHINFO_EXTENSION));
-            $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
-            $maxSize = 5 * 1024 * 1024; // 5MB
-
-            if (in_array($fileType, $allowedTypes) && $serviceIcon['size'] <= $maxSize) {
-                $fileName = uniqid() . '.' . $fileType;
-                $filePath = $uploadDir . $fileName;
-
-                if (move_uploaded_file($serviceIcon['tmp_name'], $filePath)) {
-                    $iconPath = $filePath;
+        $days = [];
+        if (!empty($scheduleDays[$i]) && is_array($scheduleDays[$i])) {
+            foreach ($scheduleDays[$i] as $day) {
+                if (trim($day) !== '') {
+                    $sched = $conn->prepare("INSERT INTO schedules (sub_service_id, day_of_schedule) VALUES (?, ?)");
+                    $sched->execute([$subId, $day]);
+                    $days[] = $day;
                 }
             }
         }
-
-        // Insert new service
-        $stmt = $conn->prepare("INSERT INTO services (name, description, icon_path, intro) VALUES (:name, :description, :icon_path, :intro)");
-        $stmt->bindParam(':name', $serviceTitle);
-        $stmt->bindParam(':description', $serviceDescription);
-        $stmt->bindParam(':icon_path', $iconPath);
-        $stmt->bindParam(':intro', $serviceIntro);
-        $stmt->execute();
-        $serviceId = $conn->lastInsertId();
-
-        // Initialize announcement content only if sub-services exist
-        $hasSubServices = false;
-        $announcementContent = "Dear Barangay Marulas Residents,\n\n";
-        $announcementContent .= "We are committed to providing the best healthcare services at the 3S Health Station. To better serve you, we have made some updates to our {$serviceTitle} service schedules. These changes include new or revised sub-services, updated availability days, and assigned doctors to ensure smoother access to medical care.\n\n";
-        $announcementContent .= "Here are the details of the updates:\n\n";
-
-        // Insert sub-services and schedules
-        foreach ($serviceNames as $index => $serviceName) {
-            if (!empty($serviceName)) {
-                $hasSubServices = true; // Mark that we have at least one valid sub-service
-                // Insert sub-service with doctor_name
-                $doctorName = !empty($doctorNames[$index]) ? trim($doctorNames[$index]) : null;
-                $subStmt = $conn->prepare("INSERT INTO sub_services (service_id, name, doctor_name) VALUES (:service_id, :name, :doctor_name)");
-                $subStmt->bindParam(':service_id', $serviceId);
-                $subStmt->bindParam(':name', $serviceName);
-                $subStmt->bindParam(':doctor_name', $doctorName, PDO::PARAM_STR | PDO::PARAM_NULL);
-                $subStmt->execute();
-                $subServiceId = $conn->lastInsertId();
-
-                // Collect schedule days
-                $days = [];
-                if (!empty($scheduleDays[$index])) {
-                    foreach ($scheduleDays[$index] as $day) {
-                        if (!empty($day)) {
-                            $scheduleStmt = $conn->prepare("INSERT INTO schedules (sub_service_id, day_of_schedule) VALUES (:sub_service_id, :day)");
-                            $scheduleStmt->bindParam(':sub_service_id', $subServiceId);
-                            $scheduleStmt->bindParam(':day', $day);
-                            $scheduleStmt->execute();
-                            $days[] = $day;
-                        }
-                    }
-                }
-
-                // Add sub-service details to announcement
-                $daysList = !empty($days) ? implode(', ', $days) : 'TBD';
-                $doctor = $doctorName ?? 'TBD';
-                $announcementContent .= "Sub-Service: {$serviceName}\n";
-                $announcementContent .= "Doctor: {$doctor}\n";
-                $announcementContent .= "Schedule: {$daysList}\n";
-                $announcementContent .= "Notes: Available for general consultations and minor illnesses. Walk-ins welcome from 8:00 AM to 4:00 PM.\n\n";
-            }
-        }
-
-        // Insert announcement into announcements table only if sub-services exist
-        if ($hasSubServices) {
-            $announcementTitle = "New {$serviceTitle} Service Schedules";
-            $adminId = $_SESSION['admin_id'];
-            $announcementStmt = $conn->prepare("INSERT INTO announcements (title, content, admin_id, status) VALUES (:title, :content, :admin_id, 'active')");
-            $announcementStmt->bindParam(':title', $announcementTitle);
-            $announcementStmt->bindParam(':content', $announcementContent);
-            $announcementStmt->bindParam(':admin_id', $adminId);
-            $announcementStmt->execute();
-        }
-
-        // Handle image uploads
-        if (!empty($images['name'][0])) {
-            $uploadDir = 'images/uploads/service_images/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-
-            foreach ($images['name'] as $key => $name) {
-                if ($images['error'][$key] === UPLOAD_ERR_OK) {
-                    $fileType = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-                    $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
-                    $maxSize = 5 * 1024 * 1024; // 5MB
-
-                    if (in_array($fileType, $allowedTypes) && $images['size'][$key] <= $maxSize) {
-                        $fileName = uniqid() . '.' . $fileType;
-                        $filePath = $uploadDir . $fileName;
-
-                        if (move_uploaded_file($images['tmp_name'][$key], $filePath)) {
-                            $imageStmt = $conn->prepare("INSERT INTO service_images (service_id, image_path) VALUES (:service_id, :image_path)");
-                            $imageStmt->bindParam(':service_id', $serviceId);
-                            $imageStmt->bindParam(':image_path', $filePath);
-                            $imageStmt->execute();
-                        }
-                    }
-                }
-            }
-        }
-
-        // Commit transaction
-        $conn->commit();
-
-        // Log the service creation
-        $logStmt = $conn->prepare("
-            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-            VALUES (:admin_id, 'service_create', :details, :target_id)
-        ");
-        $details = "Created service titled '{$serviceTitle}'";
-        $logStmt->execute([
-            ':admin_id' => $_SESSION['admin_id'],
-            ':details' => $details,
-            ':target_id' => $serviceId
-        ]);
-
-        $_SESSION['success'] = "Service added successfully.";
-        header("Location: service_management.php");
-        exit();
-
-    } catch (Exception $e) {
-        $conn->rollBack();
-        $_SESSION['error'] = "Error adding service: " . $e->getMessage();
-        header("Location: service_management.php");
-        exit();
+        $announcement .= "- **{$name}** (Dr. {$doc}): " . (!empty($days) ? implode(', ', $days) : 'TBD') . "\n";
     }
-} else {
+
+    // --- Announcement ---
+    if ($hasSub) {
+        $annTitle = "New {$serviceTitle} Service";
+        $annStmt = $conn->prepare("INSERT INTO announcements (title, content, admin_id, status) VALUES (?, ?, ?, 'active')");
+        $annStmt->execute([$annTitle, $announcement, $_SESSION['admin_id']]);
+    }
+
+    // --- Images ---
+    if (!empty($images['name'][0])) {
+        $dir = "images/uploads/service_images/";
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        foreach ($images['name'] as $k => $name) {
+            if ($images['error'][$k] !== UPLOAD_ERR_OK) continue;
+            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            $allowed = ['jpg','jpeg','png','gif'];
+            if (in_array($ext, $allowed) && $images['size'][$k] <= 5*1024*1024) {
+                $file = uniqid() . '.' . $ext;
+                if (move_uploaded_file($images['tmp_name'][$k], $dir . $file)) {
+                    $imgStmt = $conn->prepare("INSERT INTO service_images (service_id, image_path) VALUES (?, ?)");
+                    $imgStmt->execute([$serviceId, $dir . $file]);
+                }
+            }
+        }
+    }
+
+    $conn->commit();
+
+    // --- Log ---
+    $log = $conn->prepare("INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) VALUES (?, 'service_create', ?, ?)");
+    $log->execute([$_SESSION['admin_id'], "Created service '{$serviceTitle}'", $serviceId]);
+
+    $_SESSION['service_message'] = "Service added successfully.";
+    header("Location: service_management.php");
+    exit();
+
+} catch (Exception $e) {
+    $conn->rollBack();
+    $_SESSION['service_message'] = "Error: " . $e->getMessage();
     header("Location: service_management.php");
     exit();
 }

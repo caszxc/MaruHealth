@@ -95,52 +95,43 @@ try {
     ]);
 
     // === NEW: LOG THE ACTION ===
-    $patientId = $conn->lastInsertId();   // get the newly created patient ID
+    $patientId = $conn->lastInsertId();
 
+    // LOG
     $logStmt = $conn->prepare("
         INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
         VALUES (:admin_id, 'add_patient_record', :details, :target_id)
     ");
-
     $logStmt->execute([
         ':admin_id'   => $_SESSION['admin_id'],
         ':details'    => "Added patient: {$first_name} {$middle_name} {$last_name}",
         ':target_id'  => $patientId
     ]);
-    // === END LOG ===
 
-    // Commit transaction
     $conn->commit();
 
-    // Success response
-    header('Content-Type: application/json');
+    // SUCCESS – set session message (used after page reload)
+    $_SESSION['patient_message'] = "Patient successfully added!";
+
     echo json_encode([
-        'status' => 'success',
-        'message' => 'Patient successfully added!',
-        'family_number' => $family_number
+        'status'  => 'success',
+        'message' => 'Patient successfully added!'
     ]);
 
 } catch (PDOException $e) {
-    // Rollback on error
-    if ($conn->inTransaction()) {
-        $conn->rollBack();
-    }
+    $conn->rollBack();
+    $_SESSION['patient_message'] = "Error adding patient: " . $e->getMessage();
 
-    // Log error if needed (avoid exposing in production)
-    error_log("Patient add error: " . $e->getMessage());
-
-    header('Content-Type: application/json');
     echo json_encode([
-        'status' => 'error',
+        'status'  => 'error',
         'message' => 'Database error. Please try again.'
     ]);
 } catch (Exception $e) {
-    if ($conn->inTransaction()) {
-        $conn->rollBack();
-    }
-    header('Content-Type: application/json');
+    $conn->rollBack();
+    $_SESSION['patient_message'] = "Unexpected error: " . $e->getMessage();
+
     echo json_encode([
-        'status' => 'error',
+        'status'  => 'error',
         'message' => 'An unexpected error occurred.'
     ]);
 }

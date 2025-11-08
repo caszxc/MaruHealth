@@ -49,6 +49,17 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <style>
+        .message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .message.success { background-color: #dff0d8; color: #3c763d; }
+        .message.error   { background-color: #f2dede; color: #a94442; }
+    </style>
 </head>
 <body>
     <nav>
@@ -144,6 +155,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
     <div class="content">
         <div class="announcement-container">
+            <!-- FLASH MESSAGE -->
+            <?php if (isset($_SESSION['announcement_message'])): ?>
+                <div class="message <?= strpos($_SESSION['announcement_message'], 'Error') === false && 
+                                      strpos($_SESSION['announcement_message'], 'Failed') === false ? 'success' : 'error' ?>">
+                    <?= htmlspecialchars($_SESSION['announcement_message']) ?>
+                </div>
+                <?php unset($_SESSION['announcement_message']); ?>
+            <?php endif; ?>
             <div class="sort-controls">
                 <select id="filter" onchange="filterAnnouncements()">
                     <option value="active" <?= $filter === 'active' ? 'selected' : '' ?>>Announcements</option>
@@ -358,26 +377,33 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         }
 
         function toggleArchive(id) {
-            let filter = document.getElementById("filter").value;
-            let action = (filter === "archived") ? "unarchive" : "archive";
-            if (confirm(`Are you sure you want to ${action} this announcement?`)) {
-                fetch(`toggle_announcement.php?id=${id}&action=${action}`, {
-                    method: 'GET'
-                }).then(response => response.json())
+            const filter = document.getElementById('filter').value;
+            const action = (filter === 'archived') ? 'unarchive' : 'archive';
+            if (!confirm(`Are you sure you want to ${action} this announcement?`)) return;
+
+            fetch(`toggle_announcement.php?id=${id}&action=${action}`)
+                .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert("Failed to update the announcement.");
-                    }
-                }).catch(error => console.error('Error:', error));
-            }
+                    if (data.success) location.reload();
+                    else alert(data.message || 'Failed to update.');
+                })
+                .catch(() => alert('Network error.'));
         }
 
         function filterAnnouncements() {
             const filter = document.getElementById("filter").value;
             window.location.href = `announcements.php?filter=${filter}`;
         }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const msg = document.querySelector('.message');
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 600);
+                }, 3000);
+            }
+        });
     </script>
 </body>
 </html>

@@ -3,62 +3,79 @@
 session_start();
 require_once "config.php";
 
-// Check if user is logged in as super admin or admin
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
-    echo "Unauthorized access.";
+    echo json_encode(["success" => false, "message" => "Unauthorized"]);
     exit();
 }
 
-// Check if serviceId is provided
-if (!isset($_POST['serviceId']) || empty($_POST['serviceId'])) {
-    echo "No service selected for deletion.";
+if (!isset($_POST['serviceId'])) {
+    echo json_encode(["success" => false, "message" => "No service ID"]);
     exit();
 }
 
 $serviceId = (int)$_POST['serviceId'];
 
 try {
-    // Begin transaction
     $conn->beginTransaction();
 
-    // Fetch the icon path and service images before deletion
-    $stmt = $conn->prepare("SELECT icon_path FROM services WHERE id = :serviceId");
-    $stmt->bindParam(':serviceId', $serviceId, PDO::PARAM_INT);
-    $stmt->execute();
-    $service = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Fetch the service title (name) before deletion for logging and messaging
+    $titleStmt = $conn->prepare("SELECT name FROM services WHERE id = ?");
+    $titleStmt->execute([$serviceId]);
+    $serviceTitle = $titleStmt->fetchColumn();
 
-    // Fetch all associated service images
-    $imageStmt = $conn->prepare("SELECT image_path FROM service_images WHERE service_id = :serviceId");
-    $imageStmt->bindParam(':serviceId', $serviceId, PDO::PARAM_INT);
-    $imageStmt->execute();
-    $serviceImages = $imageStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Delete the service (sub-services, schedules, and images are automatically deleted due to ON DELETE CASCADE)
-    $stmt = $conn->prepare("DELETE FROM services WHERE id = :serviceId");
-    $stmt->bindParam(':serviceId', $serviceId, PDO::PARAM_INT);
-    $stmt->execute();
-
-    // Delete the icon file from the filesystem
-    if ($service && !empty($service['icon_path']) && file_exists($service['icon_path']) && $service['icon_path'] !== 'images/placeholder.png') {
-        unlink($service['icon_path']);
+    if (!$serviceTitle) {
+        throw new Exception("Service not found.");
     }
 
-    // Delete service images from the filesystem
-    foreach ($serviceImages as $image) {
-        if (!empty($image['image_path']) && file_exists($image['image_path'])) {
-            unlink($image['image_path']);
+    // Fetch files to delete
+    $iconStmt = $conn->prepare("SELECT icon_path FROM services WHERE id = ?");
+    $iconStmt->execute([$serviceId]);
+    $icon = $iconStmt->fetchColumn();
+
+    $imgStmt = $conn->prepare("SELECT image_path FROM service_images WHERE service_id = ?");
+    $imgStmt->execute([$serviceId]);
+    $images = $imgStmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Delete service (cascades to sub_services, schedules, service_images via ON DELETE CASCADE if set)
+    $del = $conn->prepare("DELETE FROM services WHERE id = ?");
+    $del->execute([$serviceId]);
+
+    // Delete associated files
+    if ($icon && file_exists($icon) && $icon !== 'images/uploads/service_images/icons/icon-placeholder.png') {
+        unlink($icon);
+    }
+    foreach ($images as $img) {
+        if (file_exists($img)) {
+            unlink($img);
         }
     }
 
-    // Commit transaction
     $conn->commit();
 
-    echo "Service and associated files deleted successfully.";
-} catch (PDOException $e) {
-    // Roll back transaction on error
-    $conn->rollBack();
-    echo "Error deleting service: " . $e->getMessage();
-}
+    // Log deletion using the service title
+    $log = $conn->prepare("
+        INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) 
+        VALUES (?, 'service_delete', ?, ?)
+    ");
+    $logDetails = "Deleted service titled '{$serviceTitle}'";
+    $log->execute([$_SESSION['admin_id'], $logDetails, $serviceId]);
 
-$conn = null;
+    // Success message with title
+    $successMessage = "Service '{$serviceTitle}' deleted successfully.";
+    $_SESSION['service_message'] = $successMessage;
+
+    echo json_encode([
+        "success" => true, 
+        "message" => $successMessage
+    ]);
+
+} catch (Exception $e) {
+    $conn->rollBack();
+    $errorMessage = "Error: " . $e->getMessage();
+    $_SESSION['service_message'] = $errorMessage;
+    echo json_encode([
+        "success" => false, 
+        "message" => $errorMessage
+    ]);
+}
 ?>

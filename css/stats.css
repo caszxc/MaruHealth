@@ -121,7 +121,7 @@
     height: calc(100vh - 80px);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     overflow: hidden;
 }
 

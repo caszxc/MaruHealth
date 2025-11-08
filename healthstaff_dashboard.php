@@ -472,7 +472,7 @@ $medEmailLogs = $conn->query("
                                 <p class="view-more">View Detailed Report →</p>
                             </div>
                         </a>
-                        <a href="medrequest_stats.php" class="stats-card">
+                        <a href="medicine_request_stats.php" class="stats-card">
                             <div class="stats-icon">
                                 <img src="images/icons/reqmd_icon.png" alt="">
                             </div>

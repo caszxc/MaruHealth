@@ -259,6 +259,7 @@ $emailLogs = $conn->query("
                                         'user_rejection'      => ['icon' => 'dashboard/reject_user_icon.png', 'color' => '#c0392b'],
                                         'service_create'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#2980b9'],
                                         'service_update'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#3498db'],
+                                        'service_delete'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#3498db'],
                                     ];
                                     $type = $act['action_type'];
                                     $info = $iconMap[$type] ?? ['icon' => 'dashboard_icon_active.png', 'color' => '#7f8c8d'];

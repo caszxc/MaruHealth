@@ -419,7 +419,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS activity_logs (
         id INT AUTO_INCREMENT PRIMARY KEY,
         admin_id INT NOT NULL,
-        action_type ENUM('user_approval', 'user_rejection', 'announcement_create', 'announcement_update', 'announcement_toggle', 'event_create', 'event_delete', 'service_create', 'service_update', 'add_patient_record', 'archive_patient', 'restore_patient', 'approve_request', 'decline_request', 'mark_request_claimed','return_unclaimed_request', 'update_patient_record', 'add_medicine', 'add_batch', 'update_medicine', 'update_batch', 'delete_medicine', 'delete_batch', 'add_family_member') NOT NULL,
+        action_type ENUM('user_approval', 'user_rejection', 'announcement_create', 'announcement_update', 'announcement_toggle', 'event_create', 'event_delete', 'service_create', 'service_update', 'service_delete', 'add_patient_record', 'archive_patient', 'restore_patient', 'approve_request', 'decline_request', 'mark_request_claimed','return_unclaimed_request', 'update_patient_record', 'add_medicine', 'add_batch', 'update_medicine', 'update_batch', 'delete_medicine', 'delete_batch', 'add_family_member') NOT NULL,
         action_details TEXT NOT NULL,
         target_id INT NULL, -- ID of the affected record (e.g., user ID, announcement ID, etc.)
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

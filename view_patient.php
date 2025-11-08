@@ -59,7 +59,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-
+    <style>
+        .message {
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity .5s ease-in-out;
+            font-weight: 500;
+        }
+        .message.success { background:#dff0d8; color:#3c763d; }
+        .message.error   { background:#f2dede; color:#a94442; }
+    </style>
 </head>
 <body>
 
@@ -163,7 +174,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="title-con">
             <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
             <h2>Patient Details</h2>
-        </div>
+        </div>    
+        <!-- ----- SUCCESS / ERROR MESSAGE ----- -->
+        <?php if (isset($_SESSION['patient_message'])): ?>
+            <div class="message <?= (strpos($_SESSION['patient_message'], 'successfully') !== false || strpos($_SESSION['patient_message'], 'updated') !== false) ? 'success' : 'error' ?>">
+                <?= htmlspecialchars($_SESSION['patient_message']) ?>
+            </div>
+            <?php unset($_SESSION['patient_message']); ?>
+        <?php endif; ?>
         <div class="patient-container">
             <div class="patient-box">
                 <div class="patient-info">
@@ -585,6 +603,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </script>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const msg = document.querySelector('.message');
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.style.display = 'none', 500);
+                }, 3000);
+            }
+        });
         // Add this to the JavaScript section
         function openEditModal() {
             let modal = document.getElementById("editPatientModal");
@@ -632,25 +659,21 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         // AJAX Form Submission for the edit form with confirmation
         document.getElementById("editPatientForm").addEventListener("submit", function(event) {
             event.preventDefault();
-            if (confirm("Are you sure you want to update this patient's information?")) {
-                let formData = new FormData(this);
-                fetch("update_patient_ajax.php", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(response => response.json()) // Parse JSON response
-                .then(data => {
-                    alert(data.message);
-                    if (data.status === "success") {
-                        closeEditModal();
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("An error occurred while updating the patient. Please try again.");
-                });
-            }
+            if (!confirm("Are you sure you want to update this patient's information?")) return;
+
+            const formData = new FormData(this);
+
+            fetch("update_patient_ajax.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(() => {
+                closeEditModal();
+                location.reload(); // Shows session message
+            })
+            .catch(() => {
+                alert("Network error. Please try again.");
+            });
         });
     </script>
 

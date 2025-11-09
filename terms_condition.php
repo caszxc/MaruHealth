@@ -15,6 +15,8 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
+require_once "deletion_notice.php";
+
 // Fetch the admin's name
 $adminStmt = $conn->prepare("SELECT first_name, last_name FROM users WHERE role = 'admin' LIMIT 1");
 $adminStmt->execute();

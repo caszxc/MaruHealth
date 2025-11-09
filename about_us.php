@@ -25,6 +25,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
         $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png';
     }
 }
+
+require_once "deletion_notice.php";
 ?>
 
 <!DOCTYPE html>

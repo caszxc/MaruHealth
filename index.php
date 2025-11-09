@@ -26,6 +26,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
     }
 }
 
+require_once "deletion_notice.php";
+
 // Fetch active announcements
 try {
     $stmt = $conn->prepare("SELECT a.*, u.first_name, u.last_name 

@@ -8,6 +8,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit();
 }
 
+require_once "deletion_notice.php";
+
+
 $primary_user_id = $_SESSION['user_id'];
 $active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $primary_user_id;
 $is_dependent = ($active_user_id != $primary_user_id);
@@ -172,7 +175,26 @@ try {
                     <!-- Details Tab -->
                     <div id="details" class="tab-content" style="display: flex;">
                         <div class="content-con">
-                            <h3 class="title">General Information</h3>
+                            <h3 class="title">
+                                General Information
+                                <?php
+                                $hasPending = $conn->prepare("
+                                    SELECT 1 FROM account_deletion_requests
+                                    WHERE user_id = :uid AND status='pending' LIMIT 1
+                                ");
+                                $hasPending->execute([':uid'=>$active_user_id]);
+                                $pending = $hasPending->fetchColumn();
+                                ?>
+                                <?php if (!$is_dependent && !$pending): ?>
+                                    <button class="delete-account-btn" onclick="openPrimaryDeletionModal()" style="float: right;">
+                                        Request Account Deletion
+                                    </button>
+                                <?php elseif (!$is_dependent && $pending): ?>
+                                    <span style="float:right; color:#856404; font-weight:600;">
+                                        Deletion request pending
+                                    </span>
+                                <?php endif; ?>
+                            </h3>
                             <div class="group-row">
                                 <?php if (!empty($user['family_number'])): ?>
                                 <div class="row">
@@ -383,14 +405,58 @@ try {
                                             <?php else: ?>
                                                 <!-- Approved Dependents -->
                                                 <?php foreach ($dependents as $dependent): ?>
+                                                    <?php
+                                                        // ---- NEW: check if this dependent has a pending deletion request ----
+                                                        $hasPendingDel = $conn->prepare("
+                                                            SELECT 1 FROM account_deletion_requests
+                                                            WHERE user_id = :uid AND status = 'pending' LIMIT 1
+                                                        ");
+                                                        $hasPendingDel->execute([':uid' => $dependent['id']]);
+                                                        $pendingDel = $hasPendingDel->fetchColumn();   // 1 or false
+                                                    ?>
                                                     <tr>
                                                         <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
                                                         <td><?= htmlspecialchars($dependent['relationship']) ?></td>
                                                         <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
-                                                        <td><span class="status-badge" style="background-color: #28a745; color: white;">Approved</span></td>
+                                                        <?php
+                                                        // Check for pending deletion request
+                                                        $delStatusStmt = $conn->prepare("
+                                                            SELECT status FROM account_deletion_requests 
+                                                            WHERE user_id = :uid AND status = 'pending' 
+                                                            LIMIT 1
+                                                        ");
+                                                        $delStatusStmt->execute([':uid' => $dependent['id']]);
+                                                        $delStatus = $delStatusStmt->fetchColumn(); // 'pending' or false
+
+                                                        $statusText = $delStatus ? 'Deletion Pending' : 'Approved';
+                                                        $statusColor = $delStatus ? '#ffc107' : '#28a745'; // yellow if pending, green if approved
+                                                        ?>
+                                                        <td>
+                                                            <span class="status-badge" style="background-color: <?= $statusColor ?>; color: white;">
+                                                                <?= htmlspecialchars($statusText) ?>
+                                                            </span>
+                                                        </td>
                                                         <td>
                                                             <div class="button-container">
-                                                                <button class="switch-account-btn" onclick="openSwitchAccountConfirmModal(<?= $dependent['id'] ?>)">Switch</button>
+                                                                <?php if (!$delStatus): ?>
+                                                                    <button class="switch-account-btn"
+                                                                            onclick="openSwitchAccountConfirmModal(<?= $dependent['id'] ?>)">
+                                                                        Switch
+                                                                    </button>
+                                                                    <!-- Normal:  DELETE -->
+                                                                    <button class="delete-dependent-btn"
+                                                                            onclick="openDependentDeletionModal(<?= $dependent['id'] ?>)"
+                                                                            title="Request deletion of this dependent only">
+                                                                        Delete
+                                                                    </button>
+                                                                <?php else: ?>
+                                                                    <!-- Pending deletion: Only CANCEL -->
+                                                                    <button class="cancel-dependent-deletion-btn"
+                                                                            data-dep-id="<?= $dependent['id'] ?>"
+                                                                            onclick="openCancelDepDelModal(this)">
+                                                                        Cancel Deletion
+                                                                    </button>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -418,6 +484,109 @@ try {
                     </div>
                     <?php endif; ?>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Dependent-Deletion Confirmation Modal -->
+    <div id="cancelDepDelModal" class="modal">
+        <div class="modal-content">
+            <h2>Cancel Deletion Request</h2>
+            <p>Are you sure you want to cancel the deletion request for this dependent?</p>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeCancelDepDelModal()">Cancel</button>
+                <button type="button" class="confirm-btn" id="confirmCancelDepDelBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Dependent Deletion SUCCESS Modal -->
+    <div id="cancelDepDelSuccessModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <i class="fas fa-check-circle" style="font-size:48px;color:#28a745;"></i>
+            <h2 style="margin:15px 0;">Cancellation Successful</h2>
+            <p>The deletion request for this dependent has been cancelled.</p>
+            <div class="modal-footer">
+                <button type="button" class="confirm-btn" id="cancelDepDelSuccessOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Primary Account Deletion Modal -->
+    <div id="primaryDeletionModal" class="modal">
+        <div class="modal-content">
+            <h2>Request Account Deletion</h2>
+            <p>This will delete <u>your primary account and ALL dependent accounts</u> permanently once approved.</p>
+            <form id="primaryDeletionForm">
+                <input type="hidden" name="user_id" value="<?= $primary_user_id ?>">
+                <div class="group-col">
+                    <label>Reason for deletion <span class="required">*</span></label>
+                    <textarea name="reason" rows="4" required placeholder="Why do you want to delete your account?"></textarea>
+                </div>
+                <div class="group-col">
+                    <label>Password <span class="required">*</span></label>
+                    <div class="password-wrapper">
+                        <input type="password" name="password" required>
+                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-btn" onclick="closePrimaryDeletionModal()">Cancel</button>
+                    <button type="submit" class="confirm-btn">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Primary Deletion SUCCESS Modal -->
+    <div id="primaryDeletionSuccessModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <i class="fas fa-check-circle" style="font-size:48px;color:#28a745;"></i>
+            <h2 style="margin:15px 0;">Request Submitted</h2>
+            <p>Your account-deletion request has been sent.<br>
+            <strong>You will be logged out in <span id="countdown">5</span> seconds...</strong>
+            </p>
+            <div class="modal-footer">
+                <button type="button" class="confirm-btn" id="primarySuccessOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dependent Deletion Modal -->
+    <div id="dependentDeletionModal" class="modal">
+        <div class="modal-content">
+            <h2>Request Dependent Deletion</h2>
+            <p></p>
+            <form id="dependentDeletionForm">
+                <input type="hidden" name="dependent_id" id="depDelId">
+                <input type="hidden" name="primary_id" value="<?= $primary_user_id ?>">
+                <div class="group-col">
+                    <label>Reason for deletion <span class="required">*</span></label>
+                    <textarea name="reason" rows="4" required></textarea>
+                </div>
+                <div class="group-col">
+                    <label>Your Password (Primary) <span class="required">*</span></label>
+                    <div class="password-wrapper">
+                        <input type="password" name="password" required>
+                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-btn" onclick="closeDependentDeletionModal()">Cancel</button>
+                    <button type="submit" class="confirm-btn">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dependent Deletion SUCCESS Modal -->
+    <div id="dependentDeletionSuccessModal" class="modal">
+        <div class="modal-content" style="text-align:center;">
+            <i class="fas fa-check-circle" style="font-size:48px;color:#28a745;"></i>
+            <h2 style="margin:15px 0;">Request Submitted</h2>
+            <p>The deletion request for this dependent has been sent.</p>
+            <div class="modal-footer">
+                <button type="button" class="confirm-btn" id="dependentSuccessOkBtn">OK</button>
             </div>
         </div>
     </div>
@@ -834,6 +1003,174 @@ try {
             </div>
         </div>
     </div>
+
+    <script>
+        // Primary Deletion Modal Functions
+        function openPrimaryDeletionModal() {
+            document.getElementById("primaryDeletionModal").classList.add("show");
+        }
+        function closePrimaryDeletionModal() {
+            document.getElementById("primaryDeletionModal").classList.remove("show");
+            document.getElementById("primaryDeletionForm").reset();
+        }
+
+        // Dependent Deletion Modal Functions
+        function openDependentDeletionModal(dependentId) {
+            document.getElementById("depDelId").value = dependentId;
+            document.getElementById("dependentDeletionModal").classList.add("show");
+        }
+        function closeDependentDeletionModal() {
+            document.getElementById("dependentDeletionModal").classList.remove("show");
+            document.getElementById("dependentDeletionForm").reset();
+        }
+
+        document.getElementById("primaryDeletionForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const fd = new FormData(this);
+            fd.append('type', 'primary');
+
+            fetch("request_deletion.php", {
+                method: "POST",
+                body: fd
+            })
+            .then(r => r.json())
+            .then(d => {
+                closePrimaryDeletionModal(); // close form
+
+                if (d.success) {
+                    // SHOW SUCCESS MODAL
+                    const successModal = document.getElementById("primaryDeletionSuccessModal");
+                    const countdownEl = document.getElementById("countdown");
+                    successModal.classList.add("show");
+
+                    let seconds = 5;
+                    countdownEl.textContent = seconds;
+
+                    // AUTO COUNTDOWN + LOGOUT
+                    const timer = setInterval(() => {
+                        seconds--;
+                        countdownEl.textContent = seconds;
+                        if (seconds <= 0) {
+                            clearInterval(timer);
+                            performLogout();
+                        }
+                    }, 1000);
+
+                    // INSTANT LOGOUT IF USER CLICKS OK
+                    const okBtn = document.getElementById("primarySuccessOkBtn");
+                    okBtn.onclick = () => {
+                        clearInterval(timer);
+                        performLogout();
+                    };
+
+                    // ALSO: prevent back button from keeping session alive
+                    history.pushState(null, null, location.href);
+                    window.onpopstate = () => history.go(1);
+
+                } else {
+                    openPrimaryDeletionModal();
+                    alert(d.message);
+                }
+            })
+            .catch(() => {
+                closePrimaryDeletionModal();
+                alert("Network error – please try again.");
+            });
+        });
+
+        // REUSABLE LOGOUT FUNCTION
+        function performLogout() {
+            fetch("logout.php", { method: "POST" })
+                .finally(() => {
+                    window.location.href = "index.php";
+                });
+        }
+
+        document.getElementById("dependentDeletionForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const fd = new FormData(this);
+            fd.append('type', 'dependent');
+
+            fetch("request_deletion.php", {
+                method: "POST",
+                body: fd
+            })
+            .then(r => r.json())
+            .then(d => {
+                closeDependentDeletionModal(); // close the form modal
+
+                if (d.success) {
+                    // SHOW SUCCESS MODAL
+                    const successModal = document.getElementById("dependentDeletionSuccessModal");
+                    successModal.classList.add("show");
+
+                    // OK BUTTON → reload page to update dependents list
+                    document.getElementById("dependentSuccessOkBtn").onclick = function () {
+                        successModal.classList.remove("show");
+                        location.reload(); // refresh to remove dependent from list
+                    };
+
+                } else {
+                    // FAILURE: reopen form and show error
+                    openDependentDeletionModal(document.getElementById("depDelId").value);
+                    alert(d.message);
+                }
+            })
+            .catch(() => {
+                closeDependentDeletionModal();
+                alert("Network error – please try again.");
+            });
+        });
+
+        function openCancelDepDelModal(btn) {
+            const depId = btn.dataset.depId;
+            const modal = document.getElementById('cancelDepDelModal');
+            const confirmBtn = document.getElementById('confirmCancelDepDelBtn');
+            confirmBtn.dataset.depId = depId;   // store for the POST
+            modal.classList.add('show');
+        }
+
+        function closeCancelDepDelModal() {
+            document.getElementById('cancelDepDelModal').classList.remove('show');
+            delete document.getElementById('confirmCancelDepDelBtn').dataset.reqId;
+        }
+
+        document.getElementById('confirmCancelDepDelBtn').addEventListener('click', function () {
+            const depId = this.dataset.depId;
+            if (!depId) return;
+
+            fetch('cancel_deletion.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'dependent_user_id=' + depId
+            })
+            .then(r => r.json())
+            .then(d => {
+                // Close confirmation modal
+                closeCancelDepDelModal();
+
+                if (d.success) {
+                    // SHOW SUCCESS MODAL
+                    const successModal = document.getElementById('cancelDepDelSuccessModal');
+                    successModal.classList.add('show');
+
+                    // OK → reload page
+                    document.getElementById('cancelDepDelSuccessOkBtn').onclick = () => {
+                        successModal.classList.remove('show');
+                        location.reload();
+                    };
+                } else {
+                    alert(d.message);
+                }
+            })
+            .catch(() => {
+                closeCancelDepDelModal();
+                alert('Network error – try again later.');
+            });
+        });
+    </script>
 
     <script>
         function openProfilePicModal(e) {

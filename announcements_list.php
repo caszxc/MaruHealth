@@ -25,6 +25,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
     }
 }
 
+require_once "deletion_notice.php";
+
 $announcementsPerPage = 15;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $announcementsPerPage;

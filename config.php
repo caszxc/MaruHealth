@@ -59,6 +59,18 @@ try {
     
     $conn->exec($sql);
 
+    $sql = "CREATE TABLE IF NOT EXISTS account_deletion_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        primary_user_id INT NULL,
+        reason TEXT NOT NULL,
+        requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status ENUM('pending','cancelled','deleted') DEFAULT 'pending',
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (primary_user_id) REFERENCES users(id) ON DELETE SET NULL
+    )";
+    $conn->exec($sql);
+
     // Create Pending Users Table
     $sql = "CREATE TABLE IF NOT EXISTS pending_users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -258,7 +270,25 @@ try {
         expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
         source VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        disposed_quantity INT DEFAULT 0,
+        disposal_date DATETIME NULL,
+        disposal_reason TEXT NULL,
+        disposed_by INT NULL,
+        FOREIGN KEY (disposed_by) REFERENCES admin_staff(id) ON DELETE SET NULL,
         FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE CASCADE
+    )";
+    $conn->exec($sql);
+
+    // Create Medicine Disposals Table
+    $sql = "CREATE TABLE IF NOT EXISTS medicine_disposals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        batch_id INT NOT NULL,
+        quantity INT NOT NULL,
+        disposal_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        reason TEXT,
+        performed_by INT NOT NULL,
+        FOREIGN KEY (batch_id)     REFERENCES medicine_batches(id) ON DELETE CASCADE,
+        FOREIGN KEY (performed_by) REFERENCES admin_staff(id)   ON DELETE CASCADE
     )";
     $conn->exec($sql);
     
@@ -355,6 +385,21 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     
+    $conn->exec($sql);
+
+    // Create Patient Updates Log Table
+    $sql = "CREATE TABLE IF NOT EXISTS patient_updates_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT NOT NULL,
+        updated_by_type ENUM('user', 'admin') NOT NULL,
+        updated_by_id INT NOT NULL,
+        updated_by_name VARCHAR(255) NOT NULL,
+        field_changed VARCHAR(100) NOT NULL,
+        old_value TEXT NULL,
+        new_value TEXT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+    )";
     $conn->exec($sql);
 
     // Create Patient Consultation Table

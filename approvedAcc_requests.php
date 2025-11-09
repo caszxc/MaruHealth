@@ -347,6 +347,9 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <button type="submit">Search</button>
                     </form>
                 </div> 
+                <a href="deletion_requests.php" class="add-dependent-btn" style="margin-left:12px;">
+                    Deletion Requests
+                </a>
             </div>
             <div class="account-table">
                 <div class="table-container">

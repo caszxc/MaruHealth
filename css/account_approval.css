@@ -122,7 +122,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    gap: 20px;
+    gap: 10px;
 }
 
 .tiles-container {
@@ -275,7 +275,7 @@
 .table-container .table-wrapper {
     flex: 1;
     overflow-y: auto; /* Enable vertical scrolling for table body */
-    scrollbar-width: none;
+    scrollbar-width: thin;
 }
 
 .table-wrapper table{
@@ -355,9 +355,14 @@ tr:nth-child(even) {
     -ms-overflow-style: none;
 }
 
-.modal-content .title{
-    border-radius: 5px;
+.modal-content h2 {
+    font-size: 28px;
+    font-weight: bold;
     color: #800000;
+    text-align: center;
+    border-bottom: 2px solid #800000;
+    padding-bottom: 10px;
+    flex-shrink: 0;
 }
 
 .modal.show {
@@ -373,6 +378,22 @@ tr:nth-child(even) {
     max-width: 500px;
     border-radius: 8px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-scroll{
+    flex: 1; /* take available space between header and footer */
+    overflow-y: auto;
+    padding: 20px;
+    scrollbar-width: thin;
+    background-color: rgb(245, 245, 245);
+}
+
+.content-container {
+    display: flex;
+    flex-direction: column;
 }
 
 .close-btn {
@@ -427,10 +448,8 @@ tr:nth-child(even) {
 .id-preview {
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
     width: 100%;
     padding: 10px;
-
 }
 
 .id-preview img {
@@ -438,4 +457,13 @@ tr:nth-child(even) {
     height: auto;
     border: 1px solid #ddd;
     border-radius: 5px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+    flex-shrink: 0;
 }

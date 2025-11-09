@@ -149,10 +149,11 @@ try {
         }
 
         $conn->commit();
-
+        $_SESSION['batch_message'] = "Batch updated successfully!";
         echo json_encode(['success' => true, 'message' => 'Batch updated successfully']);
 } catch (PDOException $e) {
     $conn->rollBack();
+    $_SESSION['batch_message'] = "Error updating batch: " . $e->getMessage();
     echo json_encode(['success' => false, 'message' => 'Error updating batch: ' . $e->getMessage()]);
 }
 

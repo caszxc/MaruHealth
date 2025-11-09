@@ -280,6 +280,33 @@ $emailLogs = $conn->query("
                                         'user_rejection'      => ['icon' => 'dashboard/reject_user_icon.png', 'color' => '#c0392b'],
                                         'service_create'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#2980b9'],
                                         'service_update'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#3498db'],
+
+                                        // MEDICINE CATALOG
+                                        'add_medicine'        => ['icon' => 'dashboard/add_medicine_icon.png',           'color' => '#27ae60'], // Green - Add
+                                        'update_medicine'     => ['icon' => 'dashboard/update_medicine_icon.png',          'color' => '#f39c12'], // Orange - Edit
+                                        'delete_medicine'     => ['icon' => 'dashboard/delete_medicine_icon.png',        'color' => '#e74c3c'], // Red - Delete
+
+                                        // MEDICINE BATCHES
+                                        'add_batch'           => ['icon' => 'dashboard/add_batch_icon.png',     'color' => '#27ae60'], // Green
+                                        'update_batch'        => ['icon' => 'dashboard/update_batch_icon.png',    'color' => '#f39c12'], // Orange
+                                        'delete_batch'        => ['icon' => 'dashboard/delete_batch_icon.png',  'color' => '#e74c3c'], // Red
+
+                                        // PATIENT RECORDS
+                                        'add_patient_record'  => ['icon' => 'dashboard/patient_add_icon.png',   'color' => '#3498db'], // Blue - Add Patient
+                                        'update_patient_record' => ['icon' => 'dashboard/edit_patient_icon.png',       'color' => '#f39c12'], // Orange - Edit
+                                        'add_family_member'   => ['icon' => 'dashboard/family_add_icon.png',    'color' => '#9b59b6'], // Purple - Family
+                                        'archive_patient'     => ['icon' => 'dashboard/archive_patient_icon.png',       'color' => '#95a5a6'], // Gray - Archive
+                                        'restore_patient'     => ['icon' => 'dashboard/restore_patient_icon.png',       'color' => '#1abc9c'], // Teal - Restore
+
+                                        // MEDICINE REQUESTS
+                                        'approve_request'     => ['icon' => 'dashboard/approve_request_icon.png',       'color' => '#27ae60'], // Green - Approve
+                                        'decline_request'     => ['icon' => 'dashboard/decline_request_icon.png',       'color' => '#e74c3c'], // Red - Decline
+                                        'mark_request_claimed'=> ['icon' => 'dashboard/claimed_request_icon.png',       'color' => '#2ecc71'], // Bright Green
+                                        'return_unclaimed_request' => ['icon' => 'dashboard/return_request_icon.png','color' => '#e67e22'], // Carrot Orange
+
+                                        // CONSULTATIONS
+                                        'add_consultation'    => ['icon' => 'dashboard/add_consultation_icon.png',    'color' => '#3498db'], // Blue - Add
+                                        'delete_consultation' => ['icon' => 'dashboard/delete_consultation_icon.png', 'color' => '#e74c3c'], // Red - Delete
                                     ];
                                     $type = $act['action_type'];
                                     $info = $iconMap[$type] ?? ['icon' => 'dashboard_icon_active.png', 'color' => '#7f8c8d'];

@@ -77,7 +77,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $announcementContent .= "Sub-Service: {$subName}\n";
             $announcementContent .= "Doctor: {$doctor}\n";
             $announcementContent .= "Schedule: {$daysList}\n";
-            $announcementContent .= "Notes: Available for general consultations and minor illnesses. Walk-ins welcome from 8:00 AM to 4:00 PM.\n\n";
         }
 
         // 3. Check if sub-services, schedules, or doctors have changed

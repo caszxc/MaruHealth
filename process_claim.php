@@ -81,6 +81,8 @@ try {
 
     $conn->commit();
 
+    $_SESSION['claim_message'] = "Medicine request #{$request['request_id']} marked as \"claimed\" successfully!";
+    $_SESSION['claim_status']  = 'success';
     ob_end_clean();
     echo json_encode(['success' => 'Request marked as claimed']);
     exit();
@@ -88,6 +90,9 @@ try {
 } catch (Exception $e) {
     if ($conn->inTransaction()) $conn->rollBack();
     error_log("Claim error: " . $e->getMessage());
+    $_SESSION['claim_message'] = "Error marking request as claimed: " . 
+    $_SESSION['claim_status']  = 'error';
+    $e->getMessage();
     ob_end_clean();
     echo json_encode(['error' => 'Error: ' . $e->getMessage()]);
     exit();

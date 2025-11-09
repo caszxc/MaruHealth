@@ -118,10 +118,13 @@ try {
 
     $conn->commit();
 
+    $_SESSION['batch_message'] = "Batch added successfully!";
+
     header("Location: view_batches.php?catalog_id=" . urlencode($catalog_id));
     exit();
 } catch (PDOException $e) {
     $conn->rollBack();
+    $_SESSION['batch_message'] = "Error adding batch: " . $e->getMessage();
     echo json_encode(['success' => false, 'message' => 'Error adding batch: ' . $e->getMessage()]);
     exit();
 }

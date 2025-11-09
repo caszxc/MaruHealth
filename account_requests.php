@@ -444,8 +444,8 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     </form>
                 </div> 
             </div>
-            <div class="table-details">
-                <div class="table-con">
+            <div class="account-table">
+                <div class="table-container">
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -521,62 +521,66 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <!-- Modal Structure -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Account Details</h2>
-            <div class="user-info">
-                <div class="info-group">
-                    <label>Last Name</label>
-                    <span id="lastName"></span>
-                </div>
-                <div class="info-group">
-                    <label>First Name</label>
-                    <span id="firstName"></span>
-                </div>
-                <div class="info-group">
-                    <label>Middle Name</label>
-                    <span id="middleName"></span>
-                </div>
-                <div class="info-row">
-                    <div class="info-group">
-                        <label>Gender</label>
-                        <span id="gender"></span>
+            <h2>Account Details</h2>
+            <div class="modal-scroll">
+                <div class="content-container">
+                    <div class="user-info">
+                        <div class="info-group">
+                            <label>Last Name</label>
+                            <span id="lastName"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>First Name</label>
+                            <span id="firstName"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Middle Name</label>
+                            <span id="middleName"></span>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>Gender</label>
+                                <span id="gender"></span>
+                            </div>
+                            <div class="info-group">
+                                <label>Date of Birth</label>
+                                <span id="birthday"></span>
+                            </div>
+                        </div>
+                        <div class="info-group">
+                            <label>Address</label>
+                            <span id="address"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Family Number</label>
+                            <span id="familyNumber"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>E-mail Address</label>
+                            <span id="email"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Phone Number</label>
+                            <span id="phone"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Account Type</label>
+                            <span id="accountType"></span>
+                        </div>
+                        <div class="info-group" id="dependentInfo" style="display: none;">
+                            <label>Primary User</label>
+                            <span id="primaryName"></span>
+                        </div>
+                        <div class="info-group" id="relationshipInfo" style="display: none;">
+                            <label>Relationship</label>
+                            <span id="relationship"></span>
+                        </div>
                     </div>
-                    <div class="info-group">
-                        <label>Date of Birth</label>
-                        <span id="birthday"></span>
+                    <div class="id-preview">
+                        <label>Uploaded Valid ID</label>
+                        <img id="idFront" src="" alt="Valid ID Front">
                     </div>
                 </div>
-                <div class="info-group">
-                    <label>Address</label>
-                    <span id="address"></span>
-                </div>
-                <div class="info-group">
-                    <label>Family Number</label>
-                    <span id="familyNumber"></span>
-                </div>
-                <div class="info-group">
-                    <label>E-mail Address</label>
-                    <span id="email"></span>
-                </div>
-                <div class="info-group">
-                    <label>Phone Number</label>
-                    <span id="phone"></span>
-                </div>
-                <div class="info-group">
-                    <label>Account Type</label>
-                    <span id="accountType"></span>
-                </div>
-                <div class="info-group" id="dependentInfo" style="display: none;">
-                    <label>Primary User</label>
-                    <span id="primaryName"></span>
-                </div>
-                <div class="info-group" id="relationshipInfo" style="display: none;">
-                    <label>Relationship</label>
-                    <span id="relationship"></span>
-                </div>
-            </div>
-            <div class="id-preview">
-                <label>Uploaded Valid ID</label>
-                <img id="idFront" src="" alt="Valid ID Front">
             </div>
             <div class="modal-footer">
                 <button type="button" class="close-btn" onclick="closeModal()">Close</button>

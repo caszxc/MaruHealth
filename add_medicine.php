@@ -98,8 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             $conn->commit();
 
-            $_SESSION['success'] = "Medicine added successfully!";
-            header("Location: medicine_management.php");
+            $_SESSION['medicine_message'] = "Medicine added successfully!";            header("Location: medicine_management.php");
             exit();
         } catch (PDOException $e) {
             $conn->rollBack();

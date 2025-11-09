@@ -35,7 +35,12 @@ $subServiceStmt = $conn->prepare("
         ss.id AS sub_service_id, 
         ss.name AS sub_service_name, 
         ss.doctor_name,
-        GROUP_CONCAT(s.day_of_schedule ORDER BY s.day_of_schedule SEPARATOR ', ') AS days
+        GROUP_CONCAT(
+            s.day_of_schedule 
+            ORDER BY 
+                FIELD(s.day_of_schedule, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')
+            SEPARATOR ', '
+        ) AS days
     FROM sub_services ss
     LEFT JOIN schedules s ON ss.id = s.sub_service_id
     GROUP BY ss.id, ss.name
@@ -410,6 +415,44 @@ $current_page = basename($_SERVER['PHP_SELF']);
     </div>
 
     <script>
+        /* -------------------------------------------------------------
+        DAY-CHECKBOX helpers (used by BOTH modals)
+        ------------------------------------------------------------- */
+        const WEEKDAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+        function renderDayCheckboxes(container, index, selected = []) {
+            container.innerHTML = '';                     // clear any old UI
+            const wrapper = document.createElement('div');
+            wrapper.className = 'day-picker';
+
+            WEEKDAYS.forEach(day => {
+                const id = `day_${index}_${day}`;
+                const checked = selected.includes(day) ? 'checked' : '';
+
+                wrapper.innerHTML += `
+                    <label>
+                        <input type="checkbox" name="scheduleDay[${index}][]" value="${day}" id="${id}" ${checked}>
+                        ${day}
+                    </label>`;
+            });
+            container.appendChild(wrapper);
+        }
+
+        /* ---- EDIT MODAL ------------------------------------------------ */
+        function initEditDayCheckboxes(subService, index) {
+            const days = (subService.days || '').split(',').map(d=>d.trim()).filter(Boolean);
+            const container = document.querySelector(`#editServiceModal .service-item:nth-child(${index+1}) .day-container`);
+            renderDayCheckboxes(container, index, days);
+        }
+
+        /* ---- ADD MODAL ------------------------------------------------- */
+        function initAddDayCheckboxes(index) {
+            const container = document.querySelector(`#addServiceModal .service-item:nth-child(${index+1}) .day-container`);
+            renderDayCheckboxes(container, index);
+        }
+    </script>
+
+    <script>
         // === FLASH MESSAGE AUTO-HIDE ===
         document.addEventListener("DOMContentLoaded", () => {
             const msg = document.querySelector(".message");
@@ -528,33 +571,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     const serviceDiv = document.createElement('div');
                     serviceDiv.classList.add('service-item');
                     
-                    const days = (sub.days || '').split(',').map(day => day.trim());
-                    let daysHtml = '';
-                    
-                    days.forEach(day => {
-                        if (day) {
-                            daysHtml += `
-                                <div class="schedule-input-group">
-                                    <input type="text" name="scheduleDay[${i}][]" value="${day}" required>
-                                    <button type="button" class="delete-schedule-btn" onclick="deleteSchedule(this)">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
-                            `;
-                        }
-                    });
-                    
-                    if (!daysHtml) {
-                        daysHtml = `
-                            <div class="schedule-input-group">
-                                <input type="text" name="scheduleDay[${i}][]" required>
-                                <button type="button" class="delete-schedule-btn" onclick="deleteSchedule(this)">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-                            </div>
-                        `;
-                    }
-                    
                     serviceDiv.innerHTML = `
                         <button type="button" class="delete-btn" onclick="deleteSubService(this)">Delete</button>
                         <div class="group">
@@ -562,25 +578,25 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 <label>Name of Service</label>
                                 <input type="text" name="serviceName[]" value="${sub.sub_service_name}" autocomplete="off" required>
                             </div>
+
                             <div class="row">
                                 <div class="schedule-container">
                                     <label>Day of Schedule</label>
-                                    <div class="day-container">
-                                        ${daysHtml}
-                                    </div>
-                                    <button type="button" class="add-schedule-btn" onclick="addSchedule(this, ${i})">
-                                        + Add Schedule
-                                    </button>
+                                    <div class="day-container"></div>   <!-- checkboxes go here -->
                                 </div>
                             </div>
+
                             <div class="row">
                                 <label>Doctor Name</label>
                                 <input type="text" name="doctorName[]" value="${sub.doctor_name || ''}" autocomplete="off">
                             </div>
                         </div>
                     `;
-                    
+
                     document.getElementById('serviceSchedulesContainer').appendChild(serviceDiv);
+
+                    // ---- render the 7 checkboxes ----
+                    initEditDayCheckboxes(sub, i);
                 });
             }
         }
@@ -600,13 +616,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         function addService() {
             removeNoScheduleMessage();
-            
-            const serviceItems = document.querySelectorAll('.service-item');
+
+            const serviceItems = document.querySelectorAll('#serviceSchedulesContainer .service-item');
             const nextIndex = serviceItems.length;
-            
+
             const serviceDiv = document.createElement('div');
-            serviceDiv.classList.add('service-item');
-            
+            serviceDiv.className = 'service-item';
+
             serviceDiv.innerHTML = `
                 <button type="button" class="delete-btn" onclick="deleteSubService(this)">Delete</button>
                 <div class="group">
@@ -614,62 +630,30 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <label>Name of Service</label>
                         <input type="text" name="serviceName[]" placeholder="Name of Service" autocomplete="off" required>
                     </div>
+
                     <div class="row">
                         <div class="schedule-container">
                             <label>Day of Schedule</label>
-                            <div class="day-container">
-                                <div class="schedule-input-group">
-                                    <input type="text" name="scheduleDay[${nextIndex}][]" autocomplete="off" required>
-                                    <button type="button" class="delete-schedule-btn" onclick="deleteSchedule(this)">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <button type="button" class="add-schedule-btn" onclick="addSchedule(this, ${nextIndex})">
-                                + Add Schedule
-                            </button>
+                            <div class="day-container"></div>
                         </div>
                     </div>
+
                     <div class="row">
                         <label>Doctor Name</label>
                         <input type="text" name="doctorName[]" placeholder="Doctor Name" autocomplete="off">
                     </div>
                 </div>
             `;
-            
+
             document.getElementById('serviceSchedulesContainer').appendChild(serviceDiv);
+
+            // Render the 7 day checkboxes (none selected)
+            initEditDayCheckboxes({ days: '' }, nextIndex);
         }
 
         function deleteSubService(button) {
             button.parentElement.remove();
             checkNoSchedule();
-        }
-
-        function addSchedule(button, index) {
-            const container = button.previousElementSibling;
-            
-            const scheduleDiv = document.createElement('div');
-            scheduleDiv.classList.add('schedule-input-group');
-            
-            scheduleDiv.innerHTML = `
-                <input type="text" name="scheduleDay[${index}][]" autocomplete="off" autocomplete="off" required>
-                <button type="button" class="delete-schedule-btn" onclick="deleteSchedule(this)">
-                    <i class="fa fa-trash"></i>
-                </button>
-            `;
-            
-            container.appendChild(scheduleDiv);
-        }
-
-        function deleteSchedule(button) {
-            const container = button.closest('.day-container');
-            const scheduleGroups = container.querySelectorAll('.schedule-input-group');
-            
-            if (scheduleGroups.length > 1) {
-                button.parentElement.remove();
-            } else {
-                alert("At least one schedule day must remain.");
-            }
         }
 
         function checkNoSchedule() {
@@ -885,13 +869,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
         function addNewService() {
             removeNewNoScheduleMessage();
-            
+
             const serviceItems = document.querySelectorAll('#newServiceSchedulesContainer .service-item');
             const nextIndex = serviceItems.length;
-            
+
             const serviceDiv = document.createElement('div');
-            serviceDiv.classList.add('service-item');
-            
+            serviceDiv.className = 'service-item';
+
             serviceDiv.innerHTML = `
                 <button type="button" class="delete-btn" onclick="deleteNewService(this)">Delete</button>
                 <div class="group">
@@ -899,62 +883,30 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         <label>Name of Service</label>
                         <input type="text" name="serviceName[]" placeholder="Name of Service" autocomplete="off" required>
                     </div>
+
                     <div class="row">
                         <div class="schedule-container">
                             <label>Day of Schedule</label>
-                            <div class="day-container">
-                                <div class="schedule-input-group">
-                                    <input type="text" name="scheduleDay[${nextIndex}][]" autocomplete="off" required>
-                                    <button type="button" class="delete-schedule-btn" onclick="deleteNewSchedule(this)">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <button type="button" class="add-schedule-btn" onclick="addNewSchedule(this, ${nextIndex})">
-                                + Add Schedule
-                            </button>
+                            <div class="day-container"></div>   <!-- checkboxes go here -->
                         </div>
                     </div>
+
                     <div class="row">
                         <label>Doctor Name</label>
                         <input type="text" name="doctorName[]" placeholder="Doctor Name" autocomplete="off">
                     </div>
                 </div>
             `;
-            
+
             document.getElementById('newServiceSchedulesContainer').appendChild(serviceDiv);
+
+            // ---- render the 7 checkboxes (none selected) ----
+            initAddDayCheckboxes(nextIndex);
         }
 
         function deleteNewService(button) {
             button.parentElement.remove();
             checkNewNoSchedule();
-        }
-
-        function addNewSchedule(button, index) {
-            const container = button.previousElementSibling;
-            
-            const scheduleDiv = document.createElement('div');
-            scheduleDiv.classList.add('schedule-input-group');
-            
-            scheduleDiv.innerHTML = `
-                <input type="text" name="scheduleDay[${index}][]" autocomplete="off" required>
-                <button type="button" class="delete-schedule-btn" onclick="deleteNewSchedule(this)">
-                    <i class="fa fa-trash"></i>
-                </button>
-            `;
-            
-            container.appendChild(scheduleDiv);
-        }
-
-        function deleteNewSchedule(button) {
-            const container = button.closest('.day-container');
-            const scheduleGroups = container.querySelectorAll('.schedule-input-group');
-            
-            if (scheduleGroups.length > 1) {
-                button.parentElement.remove();
-            } else {
-                alert("At least one schedule day must remain.");
-            }
         }
 
         function checkNewNoSchedule() {

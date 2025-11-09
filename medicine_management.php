@@ -93,6 +93,17 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity .5s ease-in-out;
+            margin: 10px 0;
+        }
+        .message.success { background:#dff0d8; color:#3c763d; border:1px solid #d6e9c6; }
+        .message.error   { background:#f2dede; color:#a94442; border:1px solid #ebccd1; }
+    </style>
 </head>
 <body>
     <nav>
@@ -208,6 +219,13 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                     <a href="view_expiring.php" class="expiring-btn">View Expiring Medicines</a>
                 </div>
             </div>
+            <!-- ----- SUCCESS / ERROR MESSAGE ----- -->
+            <?php if (isset($_SESSION['medicine_message'])): ?>
+                <div class="message <?= (strpos($_SESSION['medicine_message'], 'Error') !== false && strpos($_SESSION['medicine_message'], 'successfully') === false) ? 'error' : 'success' ?>">
+                    <?= nl2br(htmlspecialchars($_SESSION['medicine_message'])) ?>
+                </div>
+                <?php unset($_SESSION['medicine_message']); ?>
+            <?php endif; ?>
             <div class="table-details">
                 <div class="table-con">
                     <div class="table-wrapper">
@@ -385,6 +403,15 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const msg = document.querySelector('.message');
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500);
+                }, 3000);
+            }
+        });
         // FILTER FUNCTIONALITY + AUTO-APPLY FROM URL
         document.addEventListener('DOMContentLoaded', function () {
             const filterButtons = document.querySelectorAll('.filter-btn');
@@ -750,7 +777,6 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             .then(response => response.json()) // Parse JSON response
             .then(data => {
                 if (data.success) {
-                    alert('Medicine updated successfully!');
                     location.reload();
                 } else {
                     alert('Error: ' + data.message);
@@ -802,7 +828,6 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Medicine deleted successfully!');
                     location.reload();
                 } else {
                     alert('Error: ' + data.message);

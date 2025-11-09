@@ -395,6 +395,10 @@ $medEmailLogs = $conn->query("
                                         'decline_request'     => ['icon' => 'dashboard/decline_request_icon.png',       'color' => '#e74c3c'], // Red - Decline
                                         'mark_request_claimed'=> ['icon' => 'dashboard/claimed_request_icon.png',       'color' => '#2ecc71'], // Bright Green
                                         'return_unclaimed_request' => ['icon' => 'dashboard/return_request_icon.png','color' => '#e67e22'], // Carrot Orange
+
+                                        // CONSULTATIONS
+                                        'add_consultation'    => ['icon' => 'dashboard/add_consultation_icon.png',    'color' => '#3498db'], // Blue - Add
+                                        'delete_consultation' => ['icon' => 'dashboard/delete_consultation_icon.png', 'color' => '#e74c3c'], // Red - Delete
                                     ];
                                     $type = $act['action_type'];
                                     $info = $iconMap[$type] ?? ['icon' => 'dashboard_icon_active.png', 'color' => '#7f8c8d'];

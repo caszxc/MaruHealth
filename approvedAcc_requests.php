@@ -1,7 +1,8 @@
 <?php
 // approvedAcc_requests.php
 session_start();
-require_once "config.php"; // include your database connection
+require_once "config.php";
+require_once "email_function.php";
 
 // Check if user is logged in as super admin or admin
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
@@ -9,30 +10,202 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_
     exit();
 }
 
-// Capture and sanitize search term
+// === HANDLE DELETE ACTION ===
+if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+    $deleteUserId = intval($_GET['id']);
+    $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+    try {
+        $conn->beginTransaction();
+
+        // Fetch user data
+        $userStmt = $conn->prepare("
+            SELECT u.*, CONCAT(pu.first_name, ' ', pu.last_name) AS primary_name
+            FROM users u
+            LEFT JOIN users pu ON u.primary_user_id = pu.id
+            WHERE u.id = :id
+        ");
+        $userStmt->execute([':id' => $deleteUserId]);
+        $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) throw new Exception("User not found.");
+
+        $userId = $user['id'];
+        $userName = $user['first_name'] . ' ' . $user['last_name'];
+        $userEmail = $user['email'];
+        $isPrimary = !$user['primary_user_id'];
+        $uploadDirs = [
+            'profile_picture' => 'images/uploads/profile_pictures/',
+            'valid_id_front'  => 'images/uploads/IDs/'
+        ];
+
+        $deletedUserIds = [$userId];
+        $dependentCount = 0;
+
+        // === 1. Delete Files (current user) ===
+        foreach ($uploadDirs as $field => $dir) {
+            if (!empty($user[$field])) {
+                $filePath = $dir . basename($user[$field]);
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+            }
+        }
+
+        // === 2. Handle Dependents (only if Primary) ===
+        if ($isPrimary) {
+            $dependentsStmt = $conn->prepare("
+                SELECT id, first_name, last_name, email, valid_id_front, profile_picture
+                FROM users WHERE primary_user_id = :primary_id
+            ");
+            $dependentsStmt->execute([':primary_id' => $userId]);
+            $dependents = $dependentsStmt->fetchAll(PDO::FETCH_ASSOC);
+            $dependentCount = count($dependents);
+
+            foreach ($dependents as $dep) {
+                $depId = $dep['id'];
+                $deletedUserIds[] = $depId;
+
+                // Delete files
+                foreach ($uploadDirs as $field => $dir) {
+                    if (!empty($dep[$field])) {
+                        $filePath = $dir . basename($dep[$field]);
+                        if (file_exists($filePath)) unlink($filePath);
+                    }
+                }
+
+                // Delete medicine requests
+                $reqIdsStmt = $conn->prepare("SELECT id FROM medicine_requests WHERE user_id = :uid");
+                $reqIdsStmt->execute([':uid' => $depId]);
+                foreach ($reqIdsStmt->fetchAll(PDO::FETCH_COLUMN) as $reqId) {
+                    $conn->prepare("DELETE FROM medicine_distributions WHERE request_id = ?")->execute([$reqId]);
+                    $conn->prepare("DELETE FROM requested_medicines WHERE request_id = ?")->execute([$reqId]);
+                }
+                $conn->prepare("DELETE FROM medicine_requests WHERE user_id = ?")->execute([$depId]);
+
+                // Delete tokens
+                $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$depId]);
+
+                // Delete user (cascade deletes relationship)
+                $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$depId]);
+            }
+        }
+
+        // === 3. Delete Main User Data ===
+        $reqIdsStmt = $conn->prepare("SELECT id FROM medicine_requests WHERE user_id = :uid");
+        $reqIdsStmt->execute([':uid' => $userId]);
+        foreach ($reqIdsStmt->fetchAll(PDO::FETCH_COLUMN) as $reqId) {
+            $conn->prepare("DELETE FROM medicine_distributions WHERE request_id = ?")->execute([$reqId]);
+            $conn->prepare("DELETE FROM requested_medicines WHERE request_id = ?")->execute([$reqId]);
+        }
+        $conn->prepare("DELETE FROM medicine_requests WHERE user_id = ?")->execute([$userId]);
+        $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$userId]);
+        $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
+
+        // === 4. DETERMINE DELETION TYPE & SEND CUSTOM EMAIL ===
+        $subject = "MaruHealth Account Permanently Deleted";
+        $logDetails = "";
+        $emailMessage = "";
+
+        if ($isPrimary && $dependentCount > 0) {
+            // PRIMARY + DEPENDENTS
+            $logDetails = "Deleted primary account: $userName and $dependentCount dependent(s)";
+            $emailMessage = "
+                <h2>Your Maru-Health Account Has Been Deleted</h2>
+                <p>Dear $userName,</p>
+                <p>Your account and <strong>all $dependentCount dependent account(s)</strong> have been <strong>permanently deleted</strong> by the administrator.</p>
+                <p><strong>All associated data has been erased, including:</strong></p>
+                <ul>
+                    <li>Profile picture</li>
+                    <li>Valid ID</li>
+                    <li>All medicine requests and distribution records</li>
+                    <li>Account access and login credentials</li>
+                </ul>
+                <p>This action is irreversible. If you believe this was a mistake, please contact the health center immediately.</p>
+                <p>Best regards,<br><strong>MaruHealth Team</strong></p>
+            ";
+        } elseif ($isPrimary) {
+            // PRIMARY ONLY (no dependents)
+            $logDetails = "Deleted primary account: $userName";
+            $emailMessage = "
+                <h2>Your Maru-Health Account Has Been Deleted</h2>
+                <p>Dear $userName,</p>
+                <p>Your Account has been <strong>permanently deleted</strong> by the administrator.</p>
+                <p><strong>All your data has been erased, including:</strong></p>
+                <ul>
+                    <li>Profile picture</li>
+                    <li>Valid ID</li>
+                    <li>All medicine requests and records</li>
+                    <li>Login credentials</li>
+                </ul>
+                <p>This action is irreversible. Contact the health center if this was in error.</p>
+                <p>Best regards,<br><strong>MaruHealth Team</strong></p>
+            ";
+        } else {
+            // DEPENDENT ONLY
+            $primaryName = $user['primary_name'] ?? 'Unknown Primary';
+            $logDetails = "Deleted dependent account: $userName under primary account: $primaryName";
+            $emailMessage = "
+                <h2>Your Dependent Account Has Been Deleted</h2>
+                <p>Dear $userName,</p>
+                <p>Your <strong>dependent account</strong> under <strong>$primaryName</strong> has been <strong>permanently deleted</strong> by the administrator.</p>
+                <p><strong>All your data has been erased, including:</strong></p>
+                <ul>
+                    <li>Profile picture</li>
+                    <li>Valid ID</li>
+                    <li>All medicine requests</li>
+                    <li>Access to the platform</li>
+                </ul>
+                <p>The primary account remains active. Contact the health center if needed.</p>
+                <p>Best regards,<br><strong>Maru-Health Team</strong></p>
+            ";
+        }
+
+        // Send Email
+        sendEmail($userEmail, $userName, $subject, $emailMessage);
+
+        // === 5. Log Activity ===
+        $logStmt = $conn->prepare("
+            INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
+            VALUES (:admin_id, 'delete_user', :details, :target_id)
+        ");
+        $logStmt->execute([
+            ':admin_id' => $_SESSION['admin_id'],
+            ':details' => $logDetails,
+            ':target_id' => $userId
+        ]);
+
+        $conn->commit();
+        $_SESSION['approval_message'] = "Account(s) deleted successfully.";
+    } catch (Exception $e) {
+        $conn->rollBack();
+        $_SESSION['approval_message'] = "Error: " . $e->getMessage();
+    }
+
+    header("Location: approvedAcc_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
+    exit();
+}
+
+// === FETCH USERS (same as before) ===
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Fetch approved users with optional search filter
 $query = "
-    SELECT id, 
-        CONCAT(first_name, ' ', last_name) AS full_name, 
-        first_name, 
-        last_name, 
-        middle_name, 
-        gender, 
-        birthday, 
-        address, 
-        email, 
-        phone_number, 
-        valid_id_front, 
-        role 
-    FROM users 
-    WHERE role != 'admin'
+    SELECT 
+        u.id, 
+        CONCAT(u.first_name, ' ', u.last_name) AS full_name, 
+        u.first_name, u.last_name, u.middle_name, u.gender, u.birthday, u.address, 
+        u.email, u.phone_number, u.valid_id_front, u.role, u.family_number, u.primary_user_id,
+        dr.relationship,
+        CONCAT(pu.first_name, ' ', pu.last_name) AS primary_user_name
+    FROM users u
+    LEFT JOIN dependent_relationships dr ON u.id = dr.dependent_user_id
+    LEFT JOIN users pu ON u.primary_user_id = pu.id
+    WHERE u.role != 'admin'
 ";
 if (!empty($searchTerm)) {
-    $query .= " AND (first_name LIKE :search OR last_name LIKE :search OR email LIKE :search OR phone_number LIKE :search)";
+    $query .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search OR u.phone_number LIKE :search OR u.family_number LIKE :search)";
 }
-$query .= " ORDER BY id DESC";
+$query .= " ORDER BY u.date_registered DESC";
 
 $approvedUsersStmt = $conn->prepare($query);
 if (!empty($searchTerm)) {
@@ -42,18 +215,14 @@ if (!empty($searchTerm)) {
 $approvedUsersStmt->execute();
 $approvedUsers = $approvedUsersStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch the admin's name
+// Admin info
 $adminId = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
 $adminStmt->bindParam(':id', $adminId);
 $adminStmt->execute();
 $admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
-
-// Default to session information if query fails
 $adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
 $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
-
-// Format role for display (convert super_admin to Super Admin)
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 ?>
 
@@ -68,11 +237,34 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
-
+    <style>
+        .dependent-info {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9em;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .message.success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .message.error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        .delete-btn {
+            background: #dc3545; color: white; padding: 6px 10px; border-radius: 4px; font-size: 0.9em;
+            text-decoration: none; margin-left: 8px;
+        }
+        .delete-btn:hover { background: #c82333; }
+    </style>
 </head>
 <body>
-    
-
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
@@ -94,14 +286,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-                $dashboard_url = '';
-                if ($adminRole === 'super_admin') {
-                    $dashboard_url = 'superadmin_dashboard.php';
-                } elseif ($adminRole === 'admin') {
-                    $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'health_staff') {
-                    $dashboard_url = 'healthstaff_dashboard.php';
-                }
+                $dashboard_url = $adminRole === 'super_admin' ? 'superadmin_dashboard.php' : 'admin_dashboard.php';
             ?>
             <p class="menu-header">ANALYTICS</p>
             <div class="menu-link">
@@ -119,7 +304,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
-                <a href="account_approval.php" class="<?= ($current_page == 'account_approval.php' || $current_page == 'approvedAcc_requests.php') ? 'active' : '' ?>">User Account Management</a>
+                <a href="account_approval.php" class="<?= in_array($current_page, ['account_approval.php', 'approvedAcc_requests.php', 'account_requests.php']) ? 'active' : '' ?>">User Account Management</a>
             </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
@@ -132,20 +317,6 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
-            </div>
-            <?php endif; ?>
-            <?php if ($adminRole == 'health_staff'): ?>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
-                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
-            </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/med_icon.png" alt="">
-                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
-            </div>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
-                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
             </div>
             <?php endif; ?>
             <p class="menu-header">OTHERS</p>
@@ -162,17 +333,23 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <a href="account_approval.php" class="back-button">← Back</a>
             <h2>Approved Accounts</h2>
         </div>
+        <?php if (isset($_SESSION['approval_message'])): ?>
+            <div class="message <?= strpos($_SESSION['approval_message'], 'Error') === false ? 'success' : 'error' ?>">
+                <?= htmlspecialchars($_SESSION['approval_message']) ?>
+            </div>
+            <?php unset($_SESSION['approval_message']); ?>
+        <?php endif; ?>
         <div class="approval-container">
             <div class="sort-control">
                 <div class="search-con">
                     <form method="GET" action="approvedAcc_requests.php">
-                        <input type="text" name="search" placeholder="Search by Name, Email, or Phone Number" value="<?= htmlspecialchars($searchTerm) ?>">
+                        <input type="text" name="search" placeholder="Search by Name, Email, Phone, or Family Number" value="<?= htmlspecialchars($searchTerm) ?>">
                         <button type="submit">Search</button>
                     </form>
                 </div> 
             </div>
-            <div class="table-details">
-                <div class="table-con">
+            <div class="account-table">
+                <div class="table-container">
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -180,23 +357,32 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Phone Number</th>
+                                    <th>Family Number</th>
+                                    <th>Account Type</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($approvedUsers)): ?>
-                                    <tr>
-                                        <td colspan="4" style="text-align: center;">No approved users found.</td>
-                                    </tr>
+                                    <tr><td colspan="6" style="text-align:center;">No approved users found.</td></tr>
                                 <?php else: ?>
                                     <?php foreach ($approvedUsers as $user): ?>
                                         <tr>
-                                            <td><?= htmlspecialchars($user['full_name']) ?></td>
+                                            <td>
+                                                <?= htmlspecialchars($user['full_name']) ?>
+                                                <?php if ($user['primary_user_id']): ?>
+                                                    <div class="dependent-info">
+                                                        Dependent of: <?= htmlspecialchars($user['primary_user_name'] ?? 'Unknown') ?><br>
+                                                        Relationship: <?= htmlspecialchars($user['relationship'] ?? 'Not specified') ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?= htmlspecialchars($user['email']) ?></td>
                                             <td><?= htmlspecialchars($user['phone_number']) ?></td>
+                                            <td><?= htmlspecialchars($user['family_number'] ?? 'Not provided') ?></td>
+                                            <td><?= $user['primary_user_id'] ? 'Dependent' : 'Primary' ?></td>
                                             <td>
-                                                <a href="#" 
-                                                   class="view-btn" 
+                                                <a href="#" class="view-btn"
                                                    data-id="<?= $user['id'] ?>"
                                                    data-firstname="<?= htmlspecialchars($user['first_name']) ?>"
                                                    data-lastname="<?= htmlspecialchars($user['last_name']) ?>"
@@ -207,7 +393,16 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                                    data-gender="<?= htmlspecialchars($user['gender']) ?>"
                                                    data-birthday="<?= htmlspecialchars($user['birthday']) ?>"
                                                    data-idfront="<?= htmlspecialchars($user['valid_id_front']) ?>"
+                                                   data-familynumber="<?= htmlspecialchars($user['family_number'] ?? 'Not provided') ?>"
+                                                   data-primaryname="<?= htmlspecialchars($user['primary_user_name'] ?? 'N/A') ?>"
+                                                   data-relationship="<?= htmlspecialchars($user['relationship'] ?? 'N/A') ?>"
                                                 >View</a>
+
+                                                <a href="approvedAcc_requests.php?action=delete&id=<?= $user['id'] . (!empty($searchTerm) ? '&search=' . urlencode($searchTerm) : '') ?>"
+                                                   class="delete-btn"
+                                                   onclick="return confirm('DELETE USER?\n\nThis will permanently delete:\n• This account\n• All files (ID, profile pic)\n• Medicine requests\n<?php if (!$user['primary_user_id']): ?>• ALL DEPENDENTS<?php endif; ?>\n\nThis cannot be undone.')">
+                                                   Delete
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -223,60 +418,82 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <!-- Modal Structure -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Account Details</h2>
-            <div class="user-info">
-                <div class="info-group">
-                    <label>Last Name</label>
-                    <span id="lastName"></span>
-                </div>
-                <div class="info-group">
-                    <label>First Name</label>
-                    <span id="firstName"></span>
-                </div>
-                <div class="info-group">
-                    <label>Middle Name</label>
-                    <span id="middleName"></span>
-                </div>
-                <div class="info-row">
-                    <div class="info-group">
-                        <label>Gender</label>
-                        <span id="gender"></span>
+            <h2>Account Details</h2>
+            <div class="modal-scroll">
+                <div class="content-container">
+                    <div class="user-info">
+                        <div class="info-group">
+                            <label>Last Name</label>
+                            <span id="lastName"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>First Name</label>
+                            <span id="firstName"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Middle Name</label>
+                            <span id="middleName"></span>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>Gender</label>
+                                <span id="gender"></span>
+                            </div>
+                            <div class="info-group">
+                                <label>Date of Birth</label>
+                                <span id="birthday"></span>
+                            </div>
+                        </div>
+                        <div class="info-group">
+                            <label>Address</label>
+                            <span id="address"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Family Number</label>
+                            <span id="familyNumber"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>E-mail Address</label>
+                            <span id="email"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Phone Number</label>
+                            <span id="phone"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>Account Type</label>
+                            <span id="accountType"></span>
+                        </div>
+                        <div class="info-group" id="dependentInfo" style="display: none;">
+                            <label>Primary User</label>
+                            <span id="primaryName"></span>
+                        </div>
+                        <div class="info-group" id="relationshipInfo" style="display: none;">
+                            <label>Relationship</label>
+                            <span id="relationship"></span>
+                        </div>
                     </div>
-                    <div class="info-group">
-                        <label>Date of Birth</label>
-                        <span id="birthday"></span>
-                    </div>
-                </div>
-                <div class="info-group">
-                    <label>Address</label>
-                    <span id="address"></span>
-                </div>
-                <div class="info-group">
-                    <label>E-mail Address</label>
-                    <span id="email"></span>
-                </div>
-                <div class="info-group">
-                    <label>Phone Number</label>
-                    <span id="phone"></span>
+                    <div class="id-preview">
+                        <label>Uploaded Valid ID</label>
+                        <img id="idFront" src="" alt="Valid ID Front">
+                    </div>                              
                 </div>
             </div>
-            <div class="id-preview">
-                <label>Uploaded Valid ID</label>
-                <img id="idFront" src="" alt="Valid ID Front">
+            <div class="modal-footer">
+                <button type="button" class="close-btn" onclick="closeModal()">Close</button>
             </div>
-            <button type="button" class="close-btn" onclick="closeModal()">Close</button>
         </div>
     </div>
-    
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const modal = document.getElementById("viewModal");
             const viewButtons = document.querySelectorAll(".view-btn");
 
-            // Function to open modal and populate with data
             viewButtons.forEach(button => {
                 button.addEventListener("click", function (event) {
                     event.preventDefault();
+                    // Populate fields
                     document.getElementById("lastName").textContent = this.dataset.lastname;
                     document.getElementById("firstName").textContent = this.dataset.firstname;
                     document.getElementById("middleName").textContent = this.dataset.middlename;
@@ -285,32 +502,46 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     document.getElementById("address").textContent = this.dataset.address;
                     document.getElementById("email").textContent = this.dataset.email;
                     document.getElementById("phone").textContent = this.dataset.phone;
+                    document.getElementById("familyNumber").textContent = this.dataset.familynumber;
                     document.getElementById("idFront").src = this.dataset.idfront;
+
+                    // Account Type
+                    const isDependent = this.dataset.primaryname !== 'N/A';
+                    document.getElementById("accountType").textContent = isDependent ? 'Dependent' : 'Primary';
+
+                    // Show/hide dependent info
+                    document.getElementById("dependentInfo").style.display = isDependent ? 'flex' : 'none';
+                    document.getElementById("relationshipInfo").style.display = isDependent ? 'flex' : 'none';
+                    document.getElementById("primaryName").textContent = this.dataset.primaryname;
+                    document.getElementById("relationship").textContent = this.dataset.relationship;
+
                     modal.style.display = "flex";
                 });
             });
         });
 
         function closeModal() {
-            const modal = document.getElementById("viewModal");
-            modal.style.display = "none";
+            document.getElementById("viewModal").style.display = "none";
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
-            const closeModalButtons = document.querySelectorAll(".close-btn");
-            closeModalButtons.forEach(button => {
-                button.addEventListener("click", closeModal);
-            });
+        // Close on outside click
+        window.addEventListener("click", function (event) {
+            const modal = document.getElementById("viewModal");
+            if (event.target === modal) closeModal();
+        });
 
-            window.addEventListener("click", function (event) {
-                const modal = document.getElementById("viewModal");
-                if (event.target === modal) {
-                    closeModal();
-                }
-            });
+        // Auto-disappear message after 3 seconds
+        document.addEventListener("DOMContentLoaded", function () {
+            const message = document.querySelector(".message");
+            if (message) {
+                setTimeout(() => {
+                    message.style.opacity = "0";
+                    setTimeout(() => {
+                        message.style.display = "none";
+                    }, 500); // Wait for fade-out transition to complete
+                }, 3000); // 3 seconds
+            }
         });
     </script>
-
-
 </body>
 </html>

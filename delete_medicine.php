@@ -64,10 +64,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Commit transaction
         $conn->commit();
 
+        $_SESSION['medicine_message'] = "Medicine deleted successfully.";
+
         echo json_encode(['success' => true, 'message' => 'Medicine deleted successfully.']);
     } catch (PDOException $e) {
         // Rollback transaction on error
         $conn->rollBack();
+        $_SESSION['medicine_message'] = "Error deleting medicine: " . $e->getMessage();
         echo json_encode(['success' => false, 'message' => 'Error deleting medicine: ' . $e->getMessage()]);
     }
 } else {

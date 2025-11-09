@@ -119,7 +119,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
             $conn->commit();
-
+            $_SESSION['medicine_message'] = "Medicine updated successfully!";
             echo json_encode(['success' => true, 'message' => 'Medicine updated successfully!']);
             exit();
         } catch (PDOException $e) {

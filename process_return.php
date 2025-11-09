@@ -165,12 +165,17 @@ try {
         error_log("Failed to send cancellation email: " . $emailResult['message']);
     }
 
+    $_SESSION['claim_message'] = "Unclaimed medicines for request #{$request['request_id']} returned to inventory.";
+    $_SESSION['claim_status']  = 'success';
     ob_end_clean();
     echo json_encode(['success' => 'Unclaimed medicines returned to inventory']);
     exit();
 
 } catch (Exception $e) {
     if ($conn->inTransaction()) $conn->rollBack();
+    $_SESSION['claim_message'] = "Error returning medicines: " . $e->getMessage();
+    $_SESSION['claim_status']  = 'error';
+    
     ob_end_clean();
     echo json_encode(['error' => 'Error: ' . $e->getMessage()]);
     exit();

@@ -67,11 +67,12 @@ try {
     $deleteStmt->execute([':batch_id' => $batch_id]);
 
     $conn->commit();
-
+    $_SESSION['batch_message'] = "Batch deleted successfully.";
     echo json_encode(['success' => true, 'message' => 'Batch deleted successfully']);
     
 } catch (PDOException $e) {
     $conn->rollBack();
+    $_SESSION['batch_message'] = "Error deleting batch: " . $e->getMessage();
     echo json_encode(['success' => false, 'message' => 'Error deleting batch: ' . $e->getMessage()]);
 }
 ?>

@@ -95,7 +95,7 @@ try {
                 <p>Best regards,<br>MaruHealth Team</p>";
         sendEmail($recipientEmail, $recipientName, $subject, $message);
 
-        $_SESSION['success'] = "Request declined";
+        $_SESSION['request_message'] = "Medicine request declined successfully!";
         echo "declined";
         exit();
     }
@@ -268,12 +268,11 @@ try {
     ";
     sendEmail($recipientEmail, $recipientName, $subject, $message);
 
-    $_SESSION['success'] = "Request processed successfully";
+    $_SESSION['request_message'] = "Medicine request processed successfully!";
 
 } catch (Exception $e) {
     if ($conn->inTransaction()) $conn->rollBack();
-    $_SESSION['error'] = "Error: " . $e->getMessage();
-    error_log("Medicine request error: " . $e->getMessage());
+    $_SESSION['request_message'] = "Error processing request: " . $e->getMessage();    error_log("Medicine request error: " . $e->getMessage());
     echo "error: " . $e->getMessage();
 }
 

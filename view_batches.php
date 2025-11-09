@@ -105,6 +105,18 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity .5s ease-in-out;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        .message.success { background:#dff0d8; color:#3c763d; border:1px solid #d6e9c6; }
+        .message.error   { background:#f2dede; color:#a94442; border:1px solid #ebccd1; }
+    </style>
 </head>
 <body>
     <nav>
@@ -229,6 +241,14 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
+            <!-- ----- SUCCESS / ERROR MESSAGE ----- -->
+            <?php if (isset($_SESSION['batch_message'])): ?>
+                <div class="message <?= (strpos($_SESSION['batch_message'], 'Error') !== false && strpos($_SESSION['batch_message'], 'successfully') === false) ? 'error' : 'success' ?>">
+                    <?= nl2br(htmlspecialchars($_SESSION['batch_message'])) ?>
+                </div>
+                <?php unset($_SESSION['batch_message']); ?>
+            <?php endif; ?>
+
             <div class="table-details">
                 <div class="table-con">
                     <div class="table-wrapper">
@@ -348,6 +368,15 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const msg = document.querySelector('.message');
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500);
+                }, 3000);
+            }
+        });
         // BATCH FILTERS – CLIENT-SIDE URL UPDATE
         document.addEventListener('DOMContentLoaded', function () {
             const filterButtons = document.querySelectorAll('.filter-btn');
@@ -522,7 +551,6 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Batch updated successfully!');
                     window.location.href = 'view_batches.php?catalog_id=<?= htmlspecialchars($catalog_id) ?>';
                 } else {
                     alert('Error: ' + data.message);
@@ -717,7 +745,6 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Batch deleted successfully!');
                     window.location.reload(); // Refresh the page to update the batch list
                 } else {
                     alert('Error: ' + data.message);

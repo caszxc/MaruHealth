@@ -114,6 +114,14 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             display: flex;
             gap: 10px;
         }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity .5s ease-in-out;
+        }
+        .message.success { background:#dff0d8; color:#3c763d; }
+        .message.error   { background:#f2dede; color:#a94442; }
     </style>
 </head>
 <body>
@@ -207,6 +215,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     </form>
                 </div>
             </div>
+            <!-- SUCCESS / ERROR MESSAGE -->
+            <?php if (isset($_SESSION['claim_message'])): ?>
+                <?php 
+                    $msgClass = ($_SESSION['claim_status'] ?? '') === 'error' ? 'error' : 'success';
+                ?>
+                <div class="message <?= $msgClass ?>">
+                    <?= htmlspecialchars($_SESSION['claim_message']) ?>
+                </div>
+                <?php 
+                    unset($_SESSION['claim_message'], $_SESSION['claim_status']);
+                ?>
+            <?php endif; ?>
             <div class="request-table">
                 <div class="table-con">
                     <div class="table-wrapper">
@@ -260,6 +280,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
     
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const msg = document.querySelector('.message');
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 600);
+                }, 4000);
+            }
+        });
         function openModal(requestId) {
             fetch('get_pending_request_details.php?id=' + requestId)
                 .then(response => response.json())

@@ -55,6 +55,16 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <style>
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            transition: opacity .5s ease-in-out;
+        }
+        .message.success { background:#dff0d8; color:#3c763d; }
+        .message.error   { background:#f2dede; color:#a94442; }
+    </style>
 </head>
 <body>
     <!-- Navigation and Sidebar (unchanged) -->
@@ -156,6 +166,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                     </form>
                 </div>
             </div>
+            <!-- ----- SUCCESS / ERROR MESSAGE ----- -->
+            <?php if (isset($_SESSION['request_message'])): ?>
+                <div class="message <?= stripos($_SESSION['request_message'], 'Error') !== false ? 'error' : 'success' ?>">
+                    <?= htmlspecialchars($_SESSION['request_message']) ?>
+                </div>
+                <?php unset($_SESSION['request_message']); ?>
+            <?php endif; ?>
             <div class="request-table">
                 <div class="table-con">
                     <div class="table-wrapper">
@@ -201,6 +218,15 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const msg = document.querySelector('.message');
+            if (msg) {
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.style.display = 'none', 500);
+                }, 3000);
+            }
+        });
         // JavaScript remains unchanged
         function openModal(requestId) {
             fetch('get_request_details.php?id=' + requestId)
@@ -418,9 +444,17 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         const option = document.createElement('option');
                         option.value = batch.batch_id;
                         option.dataset.stock = batch.stocks;
-                        const medicineName = !empty(batch.brand_name) ? `${batch.brand_name} - ${batch.generic_name}` : batch.generic_name;
-                        const batchInfo = `${medicineName} - ${batch.dosage} ${batch.dosage_form} - Batch ${batch.batch_lot_number} - ${batch.stocks} in stock`;
-                        option.textContent = batchInfo;
+
+                        const medicineName = !empty(batch.brand_name)
+                            ? `${batch.brand_name} - ${batch.generic_name}`
+                            : batch.generic_name;
+
+                        // <-- EXPIRATION DATE (already formatted by PHP) -->
+                        const batchInfo = `${medicineName} - ${batch.dosage} ${batch.dosage_form} - ` +
+                                        `Batch ${batch.batch_lot_number} - ${batch.stocks} in stock - ` +
+                                        `<strong>Expiry: ${batch.exp_date}</strong>`;
+
+                        option.innerHTML = batchInfo;      // innerHTML allows <strong>
                         select.appendChild(option);
                     });
                 }

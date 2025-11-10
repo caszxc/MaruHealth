@@ -8,176 +8,243 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-$active_user_id = isset($_SESSION['active_user_id']) ? $_SESSION['active_user_id'] : $user_id;
-$is_dependent = ($active_user_id != $user_id);
+$user_id        = $_SESSION['user_id'];
+$active_user_id = $_SESSION['active_user_id'] ?? $user_id;
+$is_dependent   = ($active_user_id != $user_id);
+
 $response = ['success' => false, 'message' => ''];
 
-// Fetch current user details to use in patient update
-$stmt = $conn->prepare("SELECT first_name, last_name, middle_name, birthday, primary_user_id, phone_number, email FROM users WHERE id = :user_id");
-$stmt->bindParam(':user_id', $active_user_id, PDO::PARAM_INT);
-$stmt->execute();
-$current_user = $stmt->fetch(PDO::FETCH_ASSOC);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    $response['message'] = 'Invalid request method.';
+    echo json_encode($response);
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
-    $middle_name = trim($_POST['middle_name']);
-    $gender = trim($_POST['gender']);
-    $birthday = trim($_POST['birthday']);
-    $address = trim($_POST['address']);
-    $phone_number = isset($_POST['phone_number']) ? trim($_POST['phone_number']) : ($is_dependent ? $current_user['phone_number'] : '');
-    $email = isset($_POST['email']) ? trim($_POST['email']) : ($is_dependent ? $current_user['email'] : '');
+/* ------------------------------------------------------------------
+   1. Get CURRENT values (for comparison & patient-record lookup)
+   ------------------------------------------------------------------ */
+$stmt = $conn->prepare("
+    SELECT first_name, last_name, middle_name, gender, birthday,
+           address, phone_number, email, family_number
+    FROM users WHERE id = :id
+");
+$stmt->execute([':id' => $active_user_id]);
+$current = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Validate inputs (phone_number and email are optional for dependents)
-    if (empty($first_name) || empty($last_name) || empty($middle_name) || empty($gender) || empty($birthday) || empty($address)) {
-        $response['message'] = 'All required fields (First Name, Last Name, Middle Name, Gender, Date of Birth, Address) must be filled.';
+if (!$current) {
+    $response['message'] = 'User not found.';
+    echo json_encode($response);
+    exit();
+}
+
+/* ------------------------------------------------------------------
+   2. Gather NEW values
+   ------------------------------------------------------------------ */
+$first_name   = trim($_POST['first_name'] ?? '');
+$last_name    = trim($_POST['last_name'] ?? '');
+$middle_name  = trim($_POST['middle_name'] ?? '');
+$gender       = $_POST['gender'] ?? '';
+$birthday     = $_POST['birthday'] ?? '';
+$address      = trim($_POST['address'] ?? '');
+
+$phone_number = $is_dependent ? $current['phone_number']
+                             : trim($_POST['phone_number'] ?? '');
+$email        = $is_dependent ? $current['email']
+                             : trim($_POST['email'] ?? '');
+
+/* ------------------------------------------------------------------
+   3. Basic validation
+   ------------------------------------------------------------------ */
+$required = [$first_name,$last_name,$middle_name,$gender,$birthday,$address];
+if (in_array('', $required, true)) {
+    $response['message'] = 'All required fields must be filled.';
+    echo json_encode($response);
+    exit();
+}
+
+if (!$is_dependent) {
+    if (empty($phone_number) || empty($email)) {
+        $response['message'] = 'Phone and email are required for primary accounts.';
+        echo json_encode($response);
+        exit();
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $response['message'] = 'Invalid email format.';
+        echo json_encode($response);
+        exit();
+    }
+    if (!preg_match('/^\+?\d{10,15}$/', $phone_number)) {
+        $response['message'] = 'Invalid phone number.';
         echo json_encode($response);
         exit();
     }
 
-    if (!$is_dependent) {
-        // Validate email and phone for primary users
-        if (empty($phone_number) || empty($email)) {
-            $response['message'] = 'Phone number and email are required for primary users.';
-            echo json_encode($response);
-            exit();
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $response['message'] = 'Invalid email format.';
-            echo json_encode($response);
-            exit();
-        }
-
-        if (!preg_match('/^\+?\d{10,15}$/', $phone_number)) {
-            $response['message'] = 'Invalid phone number format.';
-            echo json_encode($response);
-            exit();
-        }
-
-        // Check email uniqueness for primary users
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = :email AND id != :user_id AND primary_user_id IS NULL");
-        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
-        $stmt->bindParam(':user_id', $active_user_id, PDO::PARAM_INT);
-        $stmt->execute();
-        if ($stmt->rowCount() > 0) {
-            $response['message'] = 'Email is already in use by another primary account.';
-            echo json_encode($response);
-            exit();
-        }
-
-        // Check phone number uniqueness for primary users
-        $stmt = $conn->prepare("SELECT id FROM users WHERE phone_number = :phone_number AND id != :user_id AND primary_user_id IS NULL");
-        $stmt->bindParam(':phone_number', $phone_number, PDO::PARAM_STR);
-        $stmt->bindParam(':user_id', $active_user_id, PDO::PARAM_INT);
-        $stmt->execute();
-        if ($stmt->rowCount() > 0) {
-            $response['message'] = 'Phone number is already in use by another primary account.';
-            echo json_encode($response);
-            exit();
-        }
+    // uniqueness checks for primary accounts
+    $check = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ? AND primary_user_id IS NULL");
+    $check->execute([$email, $active_user_id]);
+    if ($check->rowCount()) {
+        $response['message'] = 'Email already used by another primary account.';
+        echo json_encode($response);
+        exit();
     }
 
-    try {
-        // Begin transaction to ensure atomic updates
-        $conn->beginTransaction();
+    $check = $conn->prepare("SELECT id FROM users WHERE phone_number = ? AND id != ? AND primary_user_id IS NULL");
+    $check->execute([$phone_number, $active_user_id]);
+    if ($check->rowCount()) {
+        $response['message'] = 'Phone number already used by another primary account.';
+        echo json_encode($response);
+        exit();
+    }
+}
 
-        // Update user details (exclude phone_number and email for dependents)
-        if ($is_dependent) {
-            $update_stmt = $conn->prepare("
-                UPDATE users 
-                SET first_name = :first_name, 
-                    last_name = :last_name, 
-                    middle_name = :middle_name, 
-                    gender = :gender, 
-                    birthday = :birthday, 
-                    address = :address 
-                WHERE id = :user_id
-            ");
-            $update_stmt->bindParam(':first_name', $first_name, PDO::PARAM_STR);
-            $update_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
-            $update_stmt->bindParam(':middle_name', $middle_name, PDO::PARAM_STR);
-            $update_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
-            $update_stmt->bindParam(':birthday', $birthday, PDO::PARAM_STR);
-            $update_stmt->bindParam(':address', $address, PDO::PARAM_STR);
-            $update_stmt->bindParam(':user_id', $active_user_id, PDO::PARAM_INT);
-        } else {
-            $update_stmt = $conn->prepare("
-                UPDATE users 
-                SET first_name = :first_name, 
-                    last_name = :last_name, 
-                    middle_name = :middle_name, 
-                    gender = :gender, 
-                    birthday = :birthday, 
-                    address = :address, 
-                    phone_number = :phone_number, 
-                    email = :email 
-                WHERE id = :user_id
-            ");
-            $update_stmt->bindParam(':first_name', $first_name, PDO::PARAM_STR);
-            $update_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
-            $update_stmt->bindParam(':middle_name', $middle_name, PDO::PARAM_STR);
-            $update_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
-            $update_stmt->bindParam(':birthday', $birthday, PDO::PARAM_STR);
-            $update_stmt->bindParam(':address', $address, PDO::PARAM_STR);
-            $update_stmt->bindParam(':phone_number', $phone_number, PDO::PARAM_STR);
-            $update_stmt->bindParam(':email', $email, PDO::PARAM_STR);
-            $update_stmt->bindParam(':user_id', $active_user_id, PDO::PARAM_INT);
-        }
-        $update_stmt->execute();
+/* ------------------------------------------------------------------
+   4. Start transaction
+   ------------------------------------------------------------------ */
+$conn->beginTransaction();
 
-        // If the user is a primary user, sync email and phone to dependents
-        if (!$is_dependent) {
-            $sync_stmt = $conn->prepare("
-                UPDATE users 
-                SET email = :email, 
-                    phone_number = :phone_number 
-                WHERE primary_user_id = :primary_user_id
-            ");
-            $sync_stmt->bindParam(':email', $email, PDO::PARAM_STR);
-            $sync_stmt->bindParam(':phone_number', $phone_number, PDO::PARAM_STR);
-            $sync_stmt->bindParam(':primary_user_id', $active_user_id, PDO::PARAM_INT);
-            $sync_stmt->execute();
-        }
+try {
+    /* --------------------------------------------------------------
+       4a. Update users table
+       -------------------------------------------------------------- */
+    if ($is_dependent) {
+        $sql = "UPDATE users SET
+                    first_name   = :fn,
+                    last_name    = :ln,
+                    middle_name  = :mn,
+                    gender       = :g,
+                    birthday     = :b,
+                    address      = :a
+                WHERE id = :id";
+        $upd = $conn->prepare($sql);
+        $upd->execute([
+            ':fn' => $first_name,
+            ':ln' => $last_name,
+            ':mn' => $middle_name,
+            ':g'  => $gender,
+            ':b'  => $birthday,
+            ':a'  => $address,
+            ':id' => $active_user_id
+        ]);
+    } else {
+        $sql = "UPDATE users SET
+                    first_name   = :fn,
+                    last_name    = :ln,
+                    middle_name  = :mn,
+                    gender       = :g,
+                    birthday     = :b,
+                    address      = :a,
+                    phone_number = :ph,
+                    email        = :em
+                WHERE id = :id";
+        $upd = $conn->prepare($sql);
+        $upd->execute([
+            ':fn' => $first_name,
+            ':ln' => $last_name,
+            ':mn' => $middle_name,
+            ':g'  => $gender,
+            ':b'  => $birthday,
+            ':a'  => $address,
+            ':ph' => $phone_number,
+            ':em' => $email,
+            ':id' => $active_user_id
+        ]);
 
-        // Update patient record if linked
-        $patient_stmt = $conn->prepare("
-            UPDATE patients 
-            SET first_name = :first_name, 
-                last_name = :last_name, 
-                middle_name = :middle_name, 
-                birthdate = :birthday, 
-                sex = :gender, 
-                contact_number = :phone_number, 
-                address = :address 
-            WHERE first_name = :old_first_name 
-            AND last_name = :old_last_name 
-            AND birthdate = :old_birthday
+        // sync phone & email to all dependents
+        $sync = $conn->prepare("UPDATE users SET phone_number = ?, email = ? WHERE primary_user_id = ?");
+        $sync->execute([$phone_number, $email, $active_user_id]);
+    }
+
+    /* --------------------------------------------------------------
+       4b. Find the linked patient record (if any)
+       -------------------------------------------------------------- */
+    $patStmt = $conn->prepare("
+        SELECT id FROM patients
+        WHERE first_name = ? AND last_name = ? AND birthdate = ?
+        LIMIT 1
+    ");
+    $patStmt->execute([$current['first_name'], $current['last_name'], $current['birthday']]);
+    $patientRow = $patStmt->fetch(PDO::FETCH_ASSOC);
+    $patient_id = $patientRow['id'] ?? null;
+
+    /* --------------------------------------------------------------
+       4c. Update patient record (if exists)
+       -------------------------------------------------------------- */
+    if ($patient_id) {
+        $patUpd = $conn->prepare("
+            UPDATE patients SET
+                first_name     = :fn,
+                middle_name    = :mn,
+                last_name      = :ln,
+                birthdate      = :b,
+                sex            = :g,
+                contact_number = :ph,
+                address        = :a
+            WHERE id = :pid
         ");
-        $patient_stmt->bindParam(':first_name', $first_name, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':last_name', $last_name, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':middle_name', $middle_name, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':birthday', $birthday, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':gender', $gender, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':phone_number', $phone_number, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':address', $address, PDO::PARAM_STR);
-        $patient_stmt->bindParam(':old_first_name', $current_user['first_name'], PDO::PARAM_STR);
-        $patient_stmt->bindParam(':old_last_name', $current_user['last_name'], PDO::PARAM_STR);
-        $patient_stmt->bindParam(':old_birthday', $current_user['birthday'], PDO::PARAM_STR);
-        $patient_stmt->execute();
-
-        // Commit transaction
-        $conn->commit();
-
-        $response['success'] = true;
-        $response['message'] = 'Profile updated successfully.';
-    } catch (PDOException $e) {
-        $conn->rollBack();
-        $response['message'] = 'An error occurred: ' . $e->getMessage();
+        $patUpd->execute([
+            ':fn' => $first_name,
+            ':mn' => $middle_name,
+            ':ln' => $last_name,
+            ':b'  => $birthday,
+            ':g'  => $gender,
+            ':ph' => $phone_number,
+            ':a'  => $address,
+            ':pid'=> $patient_id
+        ]);
     }
-} else {
-    $response['message'] = 'Invalid request method.';
+
+    /* --------------------------------------------------------------
+       4d. LOG every changed field into patient_updates_log
+       -------------------------------------------------------------- */
+    if ($patient_id) {
+        $logFields = [
+            'first_name'   => ['First Name',   $current['first_name']],
+            'last_name'    => ['Last Name',    $current['last_name']],
+            'middle_name'  => ['Middle Name',  $current['middle_name']],
+            'gender'       => ['Gender',       $current['gender']],
+            'birthday'     => ['Birthdate',    $current['birthday']],
+            'address'      => ['Address',      $current['address']],
+        ];
+
+        if (!$is_dependent) {
+            $logFields['phone_number'] = ['Phone Number', $current['phone_number']];
+            $logFields['email']        = ['Email',        $current['email']];
+        }
+
+        $logStmt = $conn->prepare("
+            INSERT INTO patient_updates_log
+                (patient_id, updated_by_type, updated_by_id, updated_by_name,
+                 field_changed, old_value, new_value)
+            VALUES
+                (:pid, 'user', :uid, :name, :field, :old, :new)
+        ");
+
+        $userName = trim("{$current['first_name']} {$current['middle_name']} {$current['last_name']}");
+
+        foreach ($logFields as $postKey => $info) {
+            $old = $info[1] ?? '';
+            $new = ${$postKey}; // variable variable → $first_name, $phone_number …
+
+            if ($old !== $new) {
+                $logStmt->execute([
+                    ':pid'   => $patient_id,
+                    ':uid'   => $active_user_id,
+                    ':name'  => $userName,
+                    ':field' => $info[0],
+                    ':old'   => $old ?: null,
+                    ':new'   => $new ?: null
+                ]);
+            }
+        }
+    }
+
+    $conn->commit();
+    $response['success'] = true;
+    $response['message'] = 'Profile updated successfully.';
+
+} catch (Exception $e) {
+    $conn->rollBack();
+    $response['message'] = 'Database error: '.$e->getMessage();
 }
 
 echo json_encode($response);

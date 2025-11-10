@@ -184,7 +184,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         <div class="patient-container">
             <div class="patient-box">
                 <div class="patient-info">
-                    <h3>Basic Information<button class="edit-btn">Edit</button></h3>
+                    <h3>Basic Information
+                        <button class="edit-btn">Edit</button>
+                        <button class="logs-btn" onclick="openLogsModal()">Update Logs</button>
+                    </h3>
                     <div class="info-grid">
                         <div class="row">
                             <p class="label">Family Number</p>
@@ -294,6 +297,37 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Logs Modal -->
+    <div id="updateLogsModal" class="modal">
+        <div class="modal-content">
+            <h2>Patient Update History</h2>
+            <div class="table-container">
+                    <div class="table-wrapper">
+                        <table class="logs-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Updated By</th>
+                                    <th>Field</th>
+                                    <th>Old Value</th>
+                                    <th>New Value</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                <div id="noLogs" style="text-align: center; padding: 20px; color: #666;">
+                    No update logs found.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeLogsModal()">Close</button>
             </div>
         </div>
     </div>
@@ -541,6 +575,59 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
         </div>
     </div>';
     ?>
+
+    <script>
+        function openLogsModal() {
+            document.getElementById('updateLogsModal').classList.add('show');
+            fetchUpdateLogs();
+        }
+
+        function closeLogsModal() {
+            document.getElementById('updateLogsModal').classList.remove('show');
+        }
+
+        function fetchUpdateLogs() {
+            const patientId = <?= $patient_id ?>;
+            fetch(`get_patient_update_logs.php?patient_id=${patientId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById('logsTableBody');
+                    const noLogs = document.getElementById('noLogs');
+                    tbody.innerHTML = '';
+
+                    if (data.length === 0) {
+                        noLogs.style.display = 'block';
+                        return;
+                    }
+
+                    noLogs.style.display = 'none';
+
+                    data.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(log.updated_at)}</td>
+                            <td>${escapeHtml(log.updated_by_name)} (${log.updated_by_type})</td>
+                            <td><strong>${escapeHtml(log.field_changed)}</strong></td>
+                            <td>${escapeHtml(log.old_value)}</td>
+                            <td>${escapeHtml(log.new_value)}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                });
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-PH') + ' ' + d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.toString().replace(/[&<>"']/g, match => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[match]);
+        }
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

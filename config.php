@@ -391,7 +391,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS patient_updates_log (
         id INT AUTO_INCREMENT PRIMARY KEY,
         patient_id INT NOT NULL,
-        updated_by_type ENUM('user', 'admin') NOT NULL,
+        updated_by_type ENUM('user', 'health_staff') NOT NULL,
         updated_by_id INT NOT NULL,
         updated_by_name VARCHAR(255) NOT NULL,
         field_changed VARCHAR(100) NOT NULL,

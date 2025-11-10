@@ -3,9 +3,6 @@
 session_start();
 include 'config.php';
 
-// ---------------------------------------------------------------------
-// 1. AUTHORIZATION
-// ---------------------------------------------------------------------
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized access']);
     exit();
@@ -16,74 +13,50 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// ---------------------------------------------------------------------
-// 2. INPUT
-// ---------------------------------------------------------------------
 $patient_id      = $_POST['patient_id'] ?? null;
-$first_name      = $_POST['first_name'] ?? null;
-$middle_name     = $_POST['middle_name'] ?? null;
-$last_name       = $_POST['last_name'] ?? null;
+$first_name      = trim($_POST['first_name'] ?? '');
+$middle_name     = trim($_POST['middle_name'] ?? '');
+$last_name       = trim($_POST['last_name'] ?? '');
+$sex             = $_POST['sex'] ?? null;
 $contact_number  = $_POST['contact_number'] ?? null;
-$address         = $_POST['address'] ?? null;
+$address         = trim($_POST['address'] ?? '');
 $weight          = $_POST['weight'] ? floatval($_POST['weight']) : null;
 $height          = $_POST['height'] ? floatval($_POST['height']) : null;
 $bmi             = $_POST['bmi'] ? floatval($_POST['bmi']) : null;
 $bmi_status      = $_POST['bmi_status'] ?? null;
 $new_family_num  = trim($_POST['family_number'] ?? '');
 
-// ---------------------------------------------------------------------
-// 3. BASIC VALIDATIONS
-// ---------------------------------------------------------------------
-if (!$patient_id) {
-    echo json_encode(['status' => 'error', 'message' => 'Patient ID is required']);
+// Validation
+if (!$patient_id || empty($first_name) || empty($last_name) || !in_array($sex, ['Male', 'Female'])) {
+    echo json_encode(['status' => 'error', 'message' => 'Required fields missing or invalid']);
     exit();
 }
 
-if ($contact_number !== null && !preg_match('/^\d{10,11}$/', $contact_number)) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid contact number (10-11 digits)']);
-    exit();
-}
-if ($weight !== null && $weight <= 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Weight must be positive']);
-    exit();
-}
-if ($height !== null && $height <= 0) {
-    echo json_encode(['status' => 'error', 'message' => 'Height must be positive']);
-    exit();
-}
-
-// ---------------------------------------------------------------------
-// 4. START TRANSACTION
-// ---------------------------------------------------------------------
 try {
     $conn->beginTransaction();
 
-    // -----------------------------------------------------------------
-    // 4a. FETCH CURRENT PATIENT (including current family_number)
-    // -----------------------------------------------------------------
-    $stmt = $conn->prepare("SELECT family_number FROM patients WHERE id = :id FOR UPDATE");
+    // Fetch current patient data BEFORE update (for logging changes)
+    $stmt = $conn->prepare("SELECT * FROM patients WHERE id = :id FOR UPDATE");
     $stmt->execute([':id' => $patient_id]);
-    $patient = $stmt->fetch(PDO::FETCH_ASSOC);
+    $old_patient = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$patient) {
+    if (!$old_patient) {
         throw new Exception('Patient not found');
     }
-    $old_family_num = $patient['family_number'] ?? null;
 
-    // -----------------------------------------------------------------
-    // 4b. PREPARE UPDATE QUERY
-    // -----------------------------------------------------------------
+    // Update patient
     $sql = "UPDATE patients SET
-                first_name      = :first_name,
-                middle_name     = :middle_name,
-                last_name       = :last_name,
-                contact_number  = :contact_number,
-                address         = :address,
-                weight          = :weight,
-                height          = :height,
-                bmi             = :bmi,
-                bmi_status      = :bmi_status,
-                family_number   = :family_number
+                first_name = :first_name,
+                middle_name = :middle_name,
+                last_name = :last_name,
+                sex = :sex,
+                contact_number = :contact_number,
+                address = :address,
+                weight = :weight,
+                height = :height,
+                bmi = :bmi,
+                bmi_status = :bmi_status,
+                family_number = :family_number
             WHERE id = :patient_id";
 
     $stmt = $conn->prepare($sql);
@@ -91,91 +64,132 @@ try {
     $stmt->bindParam(':first_name', $first_name);
     $stmt->bindParam(':middle_name', $middle_name);
     $stmt->bindParam(':last_name', $last_name);
+    $stmt->bindParam(':sex', $sex);
     $stmt->bindParam(':contact_number', $contact_number);
     $stmt->bindParam(':address', $address);
     $stmt->bindParam(':weight', $weight);
     $stmt->bindParam(':height', $height);
     $stmt->bindParam(':bmi', $bmi);
     $stmt->bindParam(':bmi_status', $bmi_status);
-
-    if ($new_family_num === '') {
-        $stmt->bindValue(':family_number', null, PDO::PARAM_NULL);
-    } else {
-        $stmt->bindParam(':family_number', $new_family_num);
-    }
-
+    $stmt->bindValue(':family_number', $new_family_num === '' ? null : $new_family_num, $new_family_num === '' ? PDO::PARAM_NULL : PDO::PARAM_STR);
     $stmt->execute();
 
-    // -----------------------------------------------------------------
-    // 5. FAMILY-NUMBER LOGIC
-    // -----------------------------------------------------------------
+    // Handle family number member count
+    $old_family_num = $old_patient['family_number'];
     if ($old_family_num !== $new_family_num && !($old_family_num === null && $new_family_num === '')) {
-
-        // Decrement old family
         if ($old_family_num !== null) {
-            $stmt = $conn->prepare("SELECT member_count FROM families WHERE family_number = :fn FOR UPDATE");
+            $stmt = $conn->prepare("UPDATE families SET member_count = member_count - 1 WHERE family_number = :fn AND member_count > 0");
             $stmt->execute([':fn' => $old_family_num]);
-            $oldFam = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($oldFam) {
-                $newCount = $oldFam['member_count'] - 1;
-                if ($newCount > 0) {
-                    $upd = $conn->prepare("UPDATE families SET member_count = :cnt WHERE family_number = :fn");
-                    $upd->execute([':cnt' => $newCount, ':fn' => $old_family_num]);
-                } else {
-                    $del = $conn->prepare("DELETE FROM families WHERE family_number = :fn");
-                    $del->execute([':fn' => $old_family_num]);
-                }
-            }
+            $conn->prepare("DELETE FROM families WHERE family_number = :fn AND member_count = 0")->execute([':fn' => $old_family_num]);
         }
-
-        // Increment new family
         if ($new_family_num !== '') {
-            $stmt = $conn->prepare("SELECT member_count FROM families WHERE family_number = :fn FOR UPDATE");
+            $stmt = $conn->prepare("INSERT INTO families (family_number, member_count) VALUES (:fn, 1) ON DUPLICATE KEY UPDATE member_count = member_count + 1");
             $stmt->execute([':fn' => $new_family_num]);
-            $newFam = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($newFam) {
-                $upd = $conn->prepare("UPDATE families SET member_count = member_count + 1 WHERE family_number = :fn");
-                $upd->execute([':fn' => $new_family_num]);
-            } else {
-                $ins = $conn->prepare("INSERT INTO families (family_number, member_count) VALUES (:fn, 1)");
-                $ins->execute([':fn' => $new_family_num]);
-            }
         }
     }
 
-    // -----------------------------------------------------------------
-    // 6. LOG THE ACTION (like add_patient_ajax.php)
-    // -----------------------------------------------------------------
-    $fullName = trim("{$first_name} {$middle_name} {$last_name}");
-    $fullName = trim(str_replace('  ', ' ', $fullName)); // clean double spaces
+    // === LOG CHANGES TO patient_updates_log ===
+    $admin_name = $_SESSION['admin_name'] ?? 'Health Staff';
+    $admin_id = $_SESSION['admin_id'];
 
-    $logStmt = $conn->prepare("
+    $fields_to_log = [
+        'first_name' => 'First Name',
+        'middle_name' => 'Middle Name',
+        'last_name' => 'Last Name',
+        'sex' => 'Sex',
+        'contact_number' => 'Contact Number',
+        'address' => 'Address',
+        'weight' => 'Weight (kg)',
+        'height' => 'Height (cm)',
+        'bmi' => 'BMI',
+        'bmi_status' => 'BMI Status',
+        'family_number' => 'Family Number'
+    ];
+
+    // Map field names to their actual POST values
+    $new_values = [
+        'first_name'     => $first_name,
+        'middle_name'    => $middle_name,
+        'last_name'      => $last_name,
+        'sex'            => $sex,
+        'contact_number' => $contact_number,
+        'address'        => $address,
+        'weight'         => $weight,
+        'height'         => $height,
+        'bmi'            => $bmi,
+        'bmi_status'     => $bmi_status,
+        'family_number'  => $new_family_num === '' ? null : $new_family_num,
+    ];
+
+    foreach ($fields_to_log as $field => $label) {
+        $old_val = $old_patient[$field] ?? null;
+        $new_val = $new_values[$field] ?? null;
+
+        // Convert both to float if the field is numeric
+        if (in_array($field, ['weight', 'height', 'bmi'])) {
+            $old_val = $old_val !== null ? floatval($old_val) : null;
+            $new_val = $new_val !== null ? floatval($new_val) : null;
+        } else {
+            // For strings: trim and nullify empty
+            $old_val = $old_val !== null ? trim($old_val) : null;
+            $new_val = $new_val !== null ? trim($new_val) : null;
+            $old_val = $old_val === '' ? null : $old_val;
+            $new_val = $new_val === '' ? null : $new_val;
+        }
+
+        // Now strictly compare
+        if ($old_val === $new_val) {
+            continue; // No change
+        }
+
+        // Format display values
+        $display_old = $old_val === null ? 'None' : $old_val;
+        $display_new = $new_val === null ? 'None' : $new_val;
+
+        // Special formatting for decimals
+        if (in_array($field, ['weight', 'height'])) {
+            $display_old = $old_val !== null ? number_format($old_val, 2) : 'None';
+            $display_new = $new_val !== null ? number_format($new_val, 2) : 'None';
+        } elseif ($field === 'bmi') {
+            $display_old = $old_val !== null ? number_format($old_val, 1) : 'None';
+            $display_new = $new_val !== null ? number_format($new_val, 1) : 'None';
+        }
+
+        $log_stmt = $conn->prepare("
+            INSERT INTO patient_updates_log 
+            (patient_id, updated_by_type, updated_by_id, updated_by_name, field_changed, old_value, new_value)
+            VALUES 
+            (:patient_id, 'health_staff', :updated_by_id, :updated_by_name, :field, :old_value, :new_value)
+        ");
+        $log_stmt->execute([
+            ':patient_id'      => $patient_id,
+            ':updated_by_id'   => $admin_id,
+            ':updated_by_name' => $admin_name,
+            ':field'           => $label,
+            ':old_value'       => (string)$display_old,
+            ':new_value'       => (string)$display_new
+        ]);
+    }
+
+    // Log activity
+    $fullName = trim("$first_name $middle_name $last_name");
+    $conn->prepare("
         INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-        VALUES (:admin_id, 'update_patient_record', :details, :target_id)
-    ");
-
-    $logStmt->execute([
-        ':admin_id'   => $_SESSION['admin_id'],
-        ':details'    => "Updated patient: {$fullName}",
-        ':target_id'  => $patient_id
+        VALUES (?, 'update_patient_record', ?, ?)
+    ")->execute([
+        $admin_id,
+        "Updated patient: $fullName",
+        $patient_id
     ]);
 
-    // -----------------------------------------------------------------
-    // 7. COMMIT
-    // -----------------------------------------------------------------
     $conn->commit();
 
-    $_SESSION['patient_message'] = "Patient information updated successfully!";
+    $_SESSION['patient_message'] = "Patient updated successfully!";
+    echo json_encode(['status' => 'success', 'message' => 'Patient updated successfully']);
 
-    echo json_encode(['status' => 'success', 'message' => 'Patient information updated successfully']);
-    
 } catch (Exception $e) {
     $conn->rollBack();
-
-    $_SESSION['patient_message'] = "Error updating patient: " . $e->getMessage();
-    
+    $_SESSION['patient_message'] = "Error: " . $e->getMessage();
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
 ?>

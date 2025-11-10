@@ -244,6 +244,17 @@
     cursor: pointer;
 }
 
+.logs-btn {
+    float: right;
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 8px;
+}
+
 .view-btn, .delete-btn {
     border-radius: 4px;
     text-decoration: none;
@@ -423,13 +434,7 @@ tr:nth-child(even) {
     border: 1px solid #ccc;
     border-radius: 5px;
 }
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 20px;
-    gap: 10px;
-    padding-right: 20px;
-}
+
 .cancel-btn, .submit-btn {
     padding: 10px 20px;
     border: none;
@@ -545,3 +550,9 @@ tr:nth-child(even) {
 .green { background-color: #228B22; } /* Normal / No Risk */
 .orange { background-color: #FFA500; } /* Overweight */
 .red { background-color: #B22222; } /* Obese / At Risk */
+
+/* View Update Logs */
+#updateLogsModal .table-container{
+    flex: 1;
+    overflow: hidden;
+}

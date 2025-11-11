@@ -45,7 +45,7 @@ try {
     }
 
     // Update the request status to 'cancelled'
-    $updateStmt = $conn->prepare("UPDATE medicine_requests SET request_status = 'cancelled' WHERE id = :id");
+    $updateStmt = $conn->prepare("UPDATE medicine_requests SET request_status = 'cancelled', cancelled_date = NOW() WHERE id = :id");
     $updateStmt->execute([':id' => $request_id]);
 
     // If the request was 'to be claimed', release reserved stock and log to medicine_history

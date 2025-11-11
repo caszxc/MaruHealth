@@ -221,7 +221,13 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             <!-- ----- SUCCESS / ERROR MESSAGE ----- -->
             <?php if (isset($_SESSION['medicine_message'])): ?>
-                <div class="message <?= (strpos($_SESSION['medicine_message'], 'Error') !== false && strpos($_SESSION['medicine_message'], 'successfully') === false) ? 'error' : 'success' ?>">
+                <?php
+                $isSuccess = strpos($_SESSION['medicine_message'], 'successfully') !== false || 
+                            strpos($_SESSION['medicine_message'], 'added') !== false ||
+                            strpos($_SESSION['medicine_message'], 'updated') !== false ||
+                            strpos($_SESSION['medicine_message'], 'deleted') !== false;
+                ?>
+                <div class="message <?= $isSuccess ? 'success' : 'error' ?>">
                     <?= nl2br(htmlspecialchars($_SESSION['medicine_message'])) ?>
                 </div>
                 <?php unset($_SESSION['medicine_message']); ?>
@@ -523,6 +529,46 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             `;
 
             document.getElementById('detailsContent').innerHTML = detailsContent;
+
+            // === CHECK EDITABLE & DELETABLE ===
+            fetch('check_catalog_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'catalog_id=' + medicine.id
+            })
+            .then(r => r.json())
+            .then(data => {
+                const editBtn = document.getElementById('editBtn');
+                const deleteBtn = document.querySelector('.delete-btn');
+
+                // Edit Button
+                if (data.editable) {
+                    editBtn.disabled = false;
+                    editBtn.title = "Edit medicine details";
+                    editBtn.onclick = enableEditing;
+                } else {
+                    editBtn.disabled = true;
+                    editBtn.title = "Cannot edit: Batches exist";
+                    editBtn.onclick = () => alert("Cannot edit: This medicine has associated batches.");
+                    editBtn.style.opacity = '0.5';
+                    editBtn.style.cursor = 'not-allowed';
+                }
+
+                // Delete Button
+                if (data.deletable) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.title = "Delete unused medicine";
+                } else {
+                    deleteBtn.disabled = true;
+                    deleteBtn.title = "Cannot delete: Batches exist";
+                    deleteBtn.style.opacity = '0.5';
+                    deleteBtn.style.cursor = 'not-allowed';
+                    deleteBtn.onclick = () => alert("Cannot delete: This medicine has associated batches.");
+                }
+            })
+            .catch(err => {
+                console.error("Failed to check catalog status", err);
+            });
         }
 
         function switchTab(tabName) {
@@ -830,7 +876,7 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert('Error: ' + data.message);
+                    location.reload();
                 }
             })
             .catch(error => {

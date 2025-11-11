@@ -234,7 +234,7 @@ $medEmailLogs = $conn->query("
                             <p class="pending-info">
                                 <span class="pending-number"><?= $expiredCount ?></span> Medicine Batches
                             </p>
-                            <a href="view_expiring.php?filter=expired" class="manage-link">View</a>
+                            <a href="view_expiring.php?filter=expired" class="manage-link">Dispose</a>
                         </div>
 
                         <div class="alert-card <?= $outOfStockCount > 0 ? 'has-pending' : '' ?>" data-type="out-of-stock">

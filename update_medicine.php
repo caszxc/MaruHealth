@@ -63,6 +63,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "This medicine already exists in the catalog.";
     }
 
+    $batchCheck = $conn->prepare("SELECT COUNT(*) FROM medicine_batches WHERE catalog_id = :medicine_id");
+    $batchCheck->execute([':medicine_id' => $medicine_id]);
+    if ($batchCheck->fetchColumn() > 0) {
+        $errors[] = "Cannot edit: Medicine has associated batches.";
+    }
+
     // If no errors, update the medicine in the catalog
     if (empty($errors)) {
         try {

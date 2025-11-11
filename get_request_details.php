@@ -85,7 +85,7 @@ foreach ($medicines as &$medicine) {
                 htmlspecialchars($name) . " - " .
                 htmlspecialchars($batch['dosage']) . " " .
                 htmlspecialchars($batch['dosage_form']) . " - " .
-                "Batch: " . htmlspecialchars($batch['batch_lot_number']) . " - " .
+                "Batch/Lot no: " . htmlspecialchars($batch['batch_lot_number']) . " - " .
                 $batch['stocks'] . " in stock - " .
                 "Expiry: <strong>" . $batch['exp_date'] . "</strong><br>";
         }

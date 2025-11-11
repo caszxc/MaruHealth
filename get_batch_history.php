@@ -50,7 +50,7 @@ try {
         FROM medicine_history mh
         LEFT JOIN admin_staff a ON mh.performed_by = a.id
         WHERE mh.batch_id = :batch_id
-          AND mh.action_type IN ('add_batch', 'update_batch', 'delete_batch', 'distribute', 'return')
+          AND mh.action_type IN ('add_batch', 'update_batch', 'delete_batch', 'distribute', 'return', 'add_stock', 'dispose')
         ORDER BY mh.created_at DESC
     ";
 

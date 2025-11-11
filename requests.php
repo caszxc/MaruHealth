@@ -353,11 +353,11 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <div id="medicine-allocation"></div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="claim_by">Claim by</label>
+                                <label for="claim_by">Claim by <small>(8:00 AM)</small></label>
                                 <input type="date" id="claim_by" name="claim_by" required>
                             </div>
                             <div class="form-group">
-                                <label for="claim_until">Until</label>
+                                <label for="claim_until">Until <small>(6:00 PM)</small></label>
                                 <input type="date" id="claim_until" name="claim_until" required>
                             </div>
                         </div>
@@ -376,12 +376,18 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             
             modal.innerHTML = modalHTML;
             
+            // Set default dates
             const today = new Date();
             const threeDaysLater = new Date();
             threeDaysLater.setDate(today.getDate() + 3);
+
+            // Set claim_by to today at 8:00 AM
             document.getElementById('claim_by').value = formatDate(today);
+
+            // Set claim_until to 3 days later at 6:00 PM
             document.getElementById('claim_until').value = formatDate(threeDaysLater);
         }
+        
 
         function updateApproveButton() {
             const checkboxes = document.querySelectorAll('input[name="approve_medicines[]"]');
@@ -446,12 +452,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         option.dataset.stock = batch.stocks;
 
                         const medicineName = !empty(batch.brand_name)
-                            ? `${batch.brand_name} - ${batch.generic_name}`
+                            ? `${batch.brand_name} (${batch.generic_name})`
                             : batch.generic_name;
 
                         // <-- EXPIRATION DATE (already formatted by PHP) -->
                         const batchInfo = `${medicineName} - ${batch.dosage} ${batch.dosage_form} - ` +
-                                        `Batch ${batch.batch_lot_number} - ${batch.stocks} in stock - ` +
+                                        `Batch/Lot no:  ${batch.batch_lot_number} - ${batch.stocks} in stock - ` +
                                         `<strong>Expiry: ${batch.exp_date}</strong>`;
 
                         option.innerHTML = batchInfo;      // innerHTML allows <strong>

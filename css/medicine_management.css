@@ -466,6 +466,7 @@ table th {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    flex: 1;
     overflow: hidden;
 }
 
@@ -556,7 +557,7 @@ table th {
     gap: 10px;
 }
 
-.save-btn, .cancel-btn {
+.save-btn, .cancel-btn, .add-stock-btn {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -565,7 +566,7 @@ table th {
     font-weight: 500;
 }
 
-.save-btn {
+.save-btn, .add-stock-btn {
     background-color: #800000;
     color: white;
 }
@@ -575,6 +576,26 @@ table th {
     color: #333;
 }
 
+/* Add Stock Tab */
+.current-stock { 
+    background:#f8f9fa; 
+    padding:15px; 
+    border-radius:8px; 
+    font-size:1rem;
+}
+
+.current-stock strong {
+    color:#2c3e50; 
+}
+#addStockTab .form-group {
+    margin-bottom:15px; 
+}
+#addStockTab textarea {
+    width:100%; 
+    padding:10px; 
+    border:1px solid #ccc; 
+    border-radius:4px; 
+}
 
 /* History Tab */
 #historyTab .history-table{
@@ -756,6 +777,32 @@ table th {
 }
 
 #fullHistoryContent table{
+    border-collapse: collapse;
+    width: 100%;
+}
+
+/* Disposed Batches Modal */
+#disposedBatchesModal .modal-content{
+    width: 90%;
+}
+
+.disposed-container{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    padding: 20px;
+}
+
+.disposed-container .table-wrapper{
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.disposed-container .table-wrapper table{
     border-collapse: collapse;
     width: 100%;
 }

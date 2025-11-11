@@ -84,6 +84,23 @@ if ($days_to_expiry < 0) {
     $expiry_status = 'Valid';
 }
 
+// === PREVENT EDIT ON USED BATCHES ===
+$usageCheck = $conn->prepare("
+    SELECT 
+        (SELECT COUNT(*) FROM medicine_distributions WHERE batch_id = :id) AS dist,
+        (SELECT COUNT(*) FROM medicine_disposals WHERE batch_id = :id) AS disp,
+        (SELECT COUNT(*) FROM medicine_history 
+         WHERE batch_id = :id 
+           AND action_type NOT IN ('add_batch', 'update_batch')) AS acts
+");
+$usageCheck->execute([':id' => $batch_id]);
+$usage = $usageCheck->fetch(PDO::FETCH_ASSOC);
+
+if ($usage['dist'] > 0 || $usage['disp'] > 0 || $usage['acts'] > 0) {
+    echo json_encode(['success' => false, 'message' => 'Cannot edit: Batch has been distributed, disposed, or adjusted.']);
+    exit();
+}
+
 try {
     $conn->beginTransaction();
 

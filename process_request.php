@@ -58,7 +58,7 @@ try {
     // DECLINE REQUEST (FULL DECLINE)
     // ===================================================================
     if ($action === 'decline') {
-        $updateReq = $conn->prepare("UPDATE medicine_requests SET request_status = 'declined', note = :note WHERE id = :id");
+        $updateReq = $conn->prepare("UPDATE medicine_requests SET request_status = 'declined', note = :note, declined_date = NOW() WHERE id = :id");
         $updateReq->execute([':note' => $adminNote, ':id' => $requestId]);
 
         $updateMeds = $conn->prepare("UPDATE requested_medicines SET status = 'declined' WHERE request_id = :id");
@@ -103,8 +103,19 @@ try {
     // ===================================================================
     // APPROVE REQUEST (PARTIAL OR FULL)
     // ===================================================================
-    $claimBy = $_POST['claim_by'] ?? null;
-    $claimUntil = $_POST['claim_until'] ?? null;
+    $claimByDate = $_POST['claim_by'] ?? null;
+    $claimUntilDate = $_POST['claim_until'] ?? null;
+
+    if (!$claimByDate || !$claimUntilDate) {
+        throw new Exception("Claim dates are required");
+    }
+
+    // Set claim_by to 8:00 AM of the selected date
+    $claimBy = $claimByDate . ' 08:00:00';
+
+    // Set claim_until to 6:00 PM of the selected date
+    $claimUntil = $claimUntilDate . ' 18:00:00';
+    
     $approveMedicines = $_POST['approve_medicines'] ?? [];
 
     if (empty($claimBy) || empty($claimUntil) || empty($approveMedicines)) {

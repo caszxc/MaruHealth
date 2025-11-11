@@ -61,6 +61,7 @@ $batchQuery = "
            stock_status, expiry_status, source
     FROM medicine_batches
     WHERE catalog_id = :catalog_id
+    AND (stocks > 0 OR is_disposed = 0)
 ";
 
 // Apply expiry filter
@@ -238,6 +239,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 
                 <div class="button-con">
                     <button class="add-batch-btn" onclick="openBatchModal()">ADD BATCH</button>
+                    <button class="view-disposed-btn" onclick="openDisposedModal()">View Disposed Batches</button>
                 </div>
             </div>
 
@@ -294,6 +296,63 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dispose Batch Modal -->
+    <div id="disposeModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Dispose Batch</h2>
+            <div class="form-scroll">
+                <form id="disposeForm">
+                    <input type="hidden" name="batch_id" id="disposeBatchId">
+                    <input type="hidden" name="admin_id" value="<?= $adminId ?>">
+
+                    <div class="form-group">
+                        <label>Current Stocks: <strong id="currentDisposeStocks">0</strong></label>
+                    </div>
+
+                    <!-- ==== REASON FIRST ==== -->
+                    <div class="form-group">
+                        <label>Reason for Disposal <span class="required">*</span></label>
+                        <select name="reason" id="disposeReason" required>
+                            <option value="" disabled selected>Select reason</option>
+                            <option value="expired">Expired</option>
+                            <option value="damaged">Damaged</option>
+                            <option value="near-expiry donated">Near-expiry donated</option>
+                            <option value="recalled">Recalled</option>
+                            <option value="wrongly dispensed">Wrongly dispensed</option>
+                            <option value="others">Others</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="othersReasonGroup" style="display:none;">
+                        <label>Specify Reason</label>
+                        <textarea name="others_reason" rows="2" placeholder="Please specify..."></textarea>
+                    </div>
+
+                    <!-- ==== QUANTITY SECOND ==== -->
+                    <div class="form-group">
+                        <label>Quantity to Dispose <span class="required">*</span></label>
+                        <input type="number"
+                            name="quantity"
+                            id="disposeQuantity"
+                            min="1"
+                            required
+                            placeholder="How many to dispose?">
+                        <small style="color:#666;">Cannot exceed current stock.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Witness Name <span class="required">*</span></label>
+                        <input type="text" name="witness_name" required placeholder="Full name of witness">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeDisposeModal()">Cancel</button>
+                <button type="button" class="save-btn" onclick="submitDispose()">Dispose</button>
             </div>
         </div>
     </div>
@@ -364,9 +423,237 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Disposed Batches Modal -->
+    <div id="disposedBatchesModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Disposed Batches — <?= htmlspecialchars($medicine['generic_name'] . ($medicine['brand_name'] ? ' ('.$medicine['brand_name'].')' : '')) ?></h2>
+            <div class="disposed-container">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Batch Lot</th>
+                                <th>Disposed Qty</th>
+                                <th>Remaining</th>
+                                <th>Reason</th>
+                                <th>Disposed By</th>
+                                <th>Witness</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disposedBatchesBody">
+                            <tr><td colspan="7" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeDisposedModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- jQuery and Select2 JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        let disposeBatchId = null;
+        let disposeMaxStocks = 0;
+
+        function openDisposeModal(batchId, currentStocks, expiryStatus) {
+            disposeBatchId = batchId;
+            disposeMaxStocks = currentStocks;
+
+            document.getElementById('disposeBatchId').value = batchId;
+            document.getElementById('currentDisposeStocks').textContent = currentStocks;
+
+            const qtyInput = document.getElementById('disposeQuantity');
+            qtyInput.max = currentStocks;
+            qtyInput.value = currentStocks;               // default = full stock
+            qtyInput.readOnly = false;
+
+            // Reset form
+            document.getElementById('disposeForm').reset();
+            document.getElementById('disposeReason').value = '';   // clear first
+            document.getElementById('othersReasonGroup').style.display = 'none';
+
+            // === AUTO-SELECT "Expired" IF BATCH IS EXPIRED ===
+            if (expiryStatus === 'Expired') {
+                const reasonSelect = document.getElementById('disposeReason');
+                reasonSelect.value = 'expired';  // pre-select
+                // Trigger change to lock quantity automatically
+                reasonSelect.dispatchEvent(new Event('change'));
+            }
+
+            // Reason options based on expiry (still apply restrictions)
+            updateReasonOptions(expiryStatus);
+
+            document.getElementById('disposeModal').style.display = 'flex';
+        }
+
+        function closeDisposeModal() {
+            document.getElementById('disposeModal').style.display = 'none';
+        }
+
+        document.getElementById('disposeReason').addEventListener('change', function () {
+            const reason = this.value;
+            const qtyInput = document.getElementById('disposeQuantity');
+            const max = parseInt(qtyInput.max);
+
+            // Show/hide "others" textarea
+            document.getElementById('othersReasonGroup').style.display =
+                reason === 'others' ? 'block' : 'none';
+
+            // Auto-fill & lock quantity for Expired / Recalled
+            if (reason === 'expired' || reason === 'recalled') {
+                qtyInput.value = max;          // full stock
+                qtyInput.readOnly = true;      // cannot edit
+                qtyInput.title = 'All remaining stock must be disposed for this reason';
+            } else {
+                qtyInput.readOnly = false;
+                qtyInput.title = '';
+                if (qtyInput.value === '' || qtyInput.value == max) {
+                    qtyInput.value = max;      // default to full stock (user can change)
+                }
+            }
+        });
+
+        function updateReasonOptions(expiryStatus) {
+            const reasonSelect = document.querySelector('#disposeForm select[name="reason"]');
+            const expiredOption = reasonSelect.querySelector('option[value="expired"]');
+            const nearExpiryOption = reasonSelect.querySelector('option[value="near-expiry donated"]');
+
+            // Reset all options first
+            expiredOption.disabled = true;
+            expiredOption.title = "Not allowed: Batch is not expired";
+            expiredOption.style.color = "#ccc";
+
+            nearExpiryOption.disabled = true;
+            nearExpiryOption.title = "Not allowed: Batch is not near expiry";
+            nearExpiryOption.style.color = "#ccc";
+
+            // Enable based on expiry status
+            if (expiryStatus === 'Expired') {
+                expiredOption.disabled = false;
+                expiredOption.title = "";
+                expiredOption.style.color = "";
+            } 
+            else if (expiryStatus === 'Expiring within a week' || expiryStatus === 'Expiring within a month') {
+                nearExpiryOption.disabled = false;
+                nearExpiryOption.title = "";
+                nearExpiryOption.style.color = "";
+            }
+            else if (expiryStatus === 'Valid') {
+                // Both remain disabled (already set above)
+            }
+
+            // Reset selection if current value is now disabled
+            const currentValue = reasonSelect.value;
+            if ((currentValue === 'expired' && expiryStatus !== 'Expired') ||
+                (currentValue === 'near-expiry donated' && 
+                !['Expiring within a week', 'Expiring within a month'].includes(expiryStatus))) {
+                reasonSelect.value = '';
+            }
+        }
+
+        function submitDispose() {
+            const quantity = parseInt(document.getElementById('disposeQuantity').value);
+            const reason = document.querySelector('[name="reason"]').value;
+
+            if (quantity > disposeMaxStocks) {
+                alert('Cannot dispose more than available stock.');
+                return;
+            }
+            if (quantity <= 0) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+            if (!reason) {
+                alert('Please select a reason.');
+                return;
+            }
+
+            if (!confirm(`Dispose ${quantity} item(s)? This action cannot be undone.`)) {
+                return;
+            }
+
+            const formData = new FormData(document.getElementById('disposeForm'));
+            if (reason !== 'others') {
+                formData.delete('others_reason');
+            }
+
+            fetch('dispose_batch.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Failed to dispose batch.');
+            });
+        }
+
+        function openDisposedModal() {
+            document.getElementById('disposedBatchesModal').style.display = 'flex';
+            loadDisposedBatches(); // no parameter needed
+        }
+
+        function closeDisposedModal() {
+            document.getElementById('disposedBatchesModal').style.display = 'none';
+        }
+
+        function loadDisposedBatches() {
+            const tbody = document.getElementById('disposedBatchesBody');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+
+            fetch('get_disposed_batches.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'catalog_id=<?= $catalog_id ?>'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No disposal records found.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.data.forEach(d => {
+                    const was = d.remaining_at_that_time;
+                    const now = d.current_stocks_now;
+
+                    const remainingDisplay = now > 0
+                        ? `<strong style="color:#28a745;">${now} left now</strong><br>
+                        <small style="color:#666;">(was ${was} when disposed)</small>`
+                        : `<strong style="color:#dc3545;">Fully Disposed</strong><br>
+                        <small style="color:#666;">(was ${was} when this batch was disposed)</small>`;
+
+                    html += `<tr>
+                        <td><strong>${d.batch_lot_number}</strong></td>
+                        <td>${d.disposed_qty}</td>
+                        <td>${remainingDisplay}</td>
+                        <td><em>${d.reason}</em></td>
+                        <td>${d.performed_by}</td>
+                        <td>${d.witness_name}</td>
+                        <td>${d.disposal_date}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Failed to load data.</td></tr>';
+            });
+        }
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const msg = document.querySelector('.message');
@@ -417,7 +704,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
         function showBatchDetails(batch, medicine) {
             selectedBatchId = batch.id;
             medicineDetails = medicine;
-
+            
             const detailsContent = `
                 <div class="tabs-buttons">
                     <div class="details-tabs">  
@@ -430,6 +717,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                 <div id="tab-content">
                     <div id="detailsTab" class="tab-page">
                         <div class="details-buttons">
+                            <button class="dispose-btn" onclick="openDisposeModal(${batch.id}, ${batch.stocks}, '${batch.expiry_status.replace(/'/g, "\\'")}')">Dispose Batch</button>
                             <button class="edit-btn" id="editBtn" onclick="enableEditing()">Edit</button>
                             <button class="delete-btn" onclick="deleteBatch()">Delete</button>
                         </div>
@@ -481,8 +769,28 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <div id="addStockTab" class="tab-page" style="display:none;">
-                        <div class="details-fields">
-                            <p>Loading batch summary...</p>
+                        <div class="current-stock">
+                            <p><strong>Current Stocks:</strong> <span id="currentStocks">0</span></p>
+                            <p><strong>Stock Status:</strong> <span id="currentStockStatus">Out of Stock</span></p>
+                        </div>
+
+                        <div class="form-scroll">
+                            <form id="addStockForm">
+                                <input type="hidden" name="batch_id" id="addStockBatchId" value="">
+
+                                <div class="form-group">
+                                    <label>Add Quantity <span class="required">*</span></label>
+                                    <input type="number" name="quantity" min="1" required placeholder="Enter quantity to add">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Reason / Remarks (optional)</label>
+                                    <textarea name="remarks" rows="3" placeholder="e.g. Received from DOH delivery"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="stock-button">
+                            <button type="button" class="add-stock-btn" onclick="submitAddStock()">Add Stock</button>
                         </div>
                     </div>
 
@@ -495,6 +803,45 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             `;
 
             document.getElementById('detailsContent').innerHTML = detailsContent;
+
+            // === CHECK DELETABLE & EDITABLE ===
+            fetch('check_batch_status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'batch_id=' + batch.id
+            })
+            .then(r => r.json())
+            .then(data => {
+                const deleteBtn = document.querySelector('.delete-btn');
+                const editBtn = document.getElementById('editBtn');
+
+                // Delete Button
+                if (data.deletable) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.title = "Delete unused batch";
+                } else {
+                    deleteBtn.disabled = true;
+                    deleteBtn.title = "Cannot delete: Batch has been used";
+                    deleteBtn.style.opacity = '0.5';
+                    deleteBtn.style.cursor = 'not-allowed';
+                }
+
+                // Edit Button
+                if (data.editable) {
+                    editBtn.disabled = false;
+                    editBtn.title = "Edit batch details";
+                    editBtn.onclick = enableEditing;
+                } else {
+                    editBtn.disabled = true;
+                    editBtn.title = "Cannot edit: Batch has been distributed or adjusted";
+                    editBtn.style.opacity = '0.5';
+                    editBtn.style.cursor = 'not-allowed';
+                    editBtn.onclick = () => alert("Cannot edit: This batch has been used in distributions or adjustments.");
+                }
+            })
+            .catch(() => {
+                console.error("Failed to check batch status");
+            });
         }
 
         function enableEditing() {
@@ -576,12 +923,59 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
             } else if (tabName === 'addStock') {
                 document.getElementById('addStockTab').style.display = 'flex';
                 tabs[1].classList.add('active');
-                // fetchBatchSummary(selectedMedicineId); // Uncomment if needed
+                
+                // Update current stock info
+                const currentStocks = document.getElementById('currentStocks');
+                const currentStockStatus = document.getElementById('currentStockStatus');
+                const batch = <?= json_encode($batches[0] ?? []) ?>; // fallback
+
+                // Find selected batch
+                const selected = <?= json_encode($batches) ?>.find(b => b.id == selectedBatchId);
+                if (selected) {
+                    currentStocks.textContent = selected.stocks;
+                    currentStockStatus.textContent = selected.stock_status;
+                }
+
+                // Set batch ID in form
+                document.getElementById('addStockBatchId').value = selectedBatchId;
             } else if (tabName === 'history') {
                 document.getElementById('historyTab').style.display = 'flex';
                 tabs[2].classList.add('active');
                 fetchBatchHistory(selectedBatchId);
             }
+        }
+
+        function submitAddStock() {
+            if (!confirm('Are you sure you want to add stocks to this batch?')) {
+                return;
+            }
+            
+            if (!selectedBatchId) {
+                alert('Please select a batch first.');
+                return;
+            }
+
+            const form = document.getElementById('addStockForm');
+            const data = new FormData(form);
+            data.append('batch_id', selectedBatchId);
+            data.append('admin_id', '<?= $adminId ?>');
+
+            fetch('add_stock.php', {
+                method: 'POST',
+                body: data
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating.');
+            });
         }
 
         function fetchBatchHistory(batchId, limit = 5) {

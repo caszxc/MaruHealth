@@ -17,15 +17,19 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $requestId = intval($_GET['id']);
 
-// === ALLOW 'unclaimed' STATUS ===
-$requestQuery = "SELECT mr.*, 
-                DATE_FORMAT(mr.birthdate, '%m/%d/%Y') as birthdate,
-                DATE_FORMAT(mr.claim_date, '%m/%d/%Y') as formatted_claim_date,
-                DATE_FORMAT(mr.claim_until_date, '%m/%d/%Y') as formatted_until_date,
-                DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date
-                FROM medicine_requests mr 
-                WHERE mr.id = :id 
-                  AND mr.request_status IN ('claimed', 'declined', 'cancelled', 'unclaimed')";
+// === SELECT: Include declined_date and cancelled_date ===
+$requestQuery = "
+    SELECT mr.*, 
+           DATE_FORMAT(mr.birthdate, '%m/%d/%Y') as birthdate,
+           DATE_FORMAT(mr.claim_date, '%m/%d/%Y') as formatted_claim_date,
+           DATE_FORMAT(mr.claim_until_date, '%m/%d/%Y') as formatted_until_date,
+           DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date,
+           DATE_FORMAT(mr.declined_date, '%m/%d/%Y %h:%i%p') as formatted_declined_date,
+           DATE_FORMAT(mr.cancelled_date, '%m/%d/%Y %h:%i%p') as formatted_cancelled_date
+    FROM medicine_requests mr 
+    WHERE mr.id = :id 
+      AND mr.request_status IN ('claimed', 'declined', 'cancelled', 'unclaimed')
+";
 $requestStmt = $conn->prepare($requestQuery);
 $requestStmt->bindParam(':id', $requestId);
 $requestStmt->execute();

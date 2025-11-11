@@ -270,11 +270,7 @@ try {
         expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
         source VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        disposed_quantity INT DEFAULT 0,
-        disposal_date DATETIME NULL,
-        disposal_reason TEXT NULL,
-        disposed_by INT NULL,
-        FOREIGN KEY (disposed_by) REFERENCES admin_staff(id) ON DELETE SET NULL,
+        is_disposed TINYINT(1) DEFAULT 0,
         FOREIGN KEY (catalog_id) REFERENCES medicines_catalog(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);
@@ -284,9 +280,11 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         batch_id INT NOT NULL,
         quantity INT NOT NULL,
+        stock_before_disposal INT NOT NULL DEFAULT 0,
         disposal_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        reason TEXT,
+        reason ENUM('expired', 'damaged', 'near-expiry donated', 'recalled', 'wrongly dispensed', 'others') NOT NULL DEFAULT 'expired',
         performed_by INT NOT NULL,
+        witness_name VARCHAR(100) NOT NULL,
         FOREIGN KEY (batch_id)     REFERENCES medicine_batches(id) ON DELETE CASCADE,
         FOREIGN KEY (performed_by) REFERENCES admin_staff(id)   ON DELETE CASCADE
     )";
@@ -309,6 +307,8 @@ try {
         claim_date DATETIME NULL,
         claim_until_date DATETIME NULL,
         claimed_date DATETIME NULL,
+        declined_date DATETIME NULL,
+        cancelled_date DATETIME NULL,
         note TEXT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )";
@@ -331,7 +331,7 @@ try {
         id INT AUTO_INCREMENT PRIMARY KEY,
         catalog_id INT NULL,
         batch_id INT NULL,
-        action_type ENUM('add_catalog', 'update_catalog', 'delete_catalog', 'add_batch', 'update_batch', 'delete_batch', 'distribute', 'return') NOT NULL,
+        action_type ENUM('add_catalog', 'update_catalog', 'delete_catalog', 'add_batch', 'update_batch', 'delete_batch', 'distribute', 'return', 'add_stock', 'dispose') NOT NULL,
         details TEXT NOT NULL,
         performed_by INT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -27,6 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Begin transaction
         $conn->beginTransaction();
 
+        $batchCheck = $conn->prepare("SELECT COUNT(*) FROM medicine_batches WHERE catalog_id = :id");
+        $batchCheck->execute([':id' => $id]);
+        if ($batchCheck->fetchColumn() > 0) {
+            throw new Exception("Cannot delete: Medicine has associated batches.");
+        }
+
         // Fetch medicine details for history logging
         $currentStmt = $conn->prepare("SELECT * FROM medicines_catalog WHERE id = ?");
         $currentStmt->execute([$id]);

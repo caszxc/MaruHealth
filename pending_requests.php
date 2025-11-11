@@ -2,6 +2,7 @@
 //pending_requests.php
 session_start();
 require_once "config.php";
+require_once "auto_return_unclaimed.php";
 
 // Check if user is logged in as health staff
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
@@ -415,11 +416,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 </div>
                 <div class="button-group">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>
-                    ${data.request.is_past_due ? `
+                    ${data.request.is_past_due && data.request.request_status === 'to be claimed' ? `
                     <button type="button" class="btn-return" onclick="processReturn(${data.request.id})">Return to Inventory</button>
-                    ` : `
+                    ` : (data.request.request_status === 'to be claimed' ? `
                     <button type="button" class="btn-claim" onclick="processClaim(${data.request.id})">Mark as Claimed</button>
-                    `}
+                    ` : `
+                    <span class="status-badge status-expired">Expired & Returned</span>
+                    `)}
                 </div>`;
             
             modal.innerHTML = modalHTML;

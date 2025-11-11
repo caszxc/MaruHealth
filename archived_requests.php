@@ -16,6 +16,8 @@ $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 $requestsQuery = "SELECT mr.id, mr.request_id, mr.full_name, 
                  DATE_FORMAT(mr.request_date, '%m/%d/%Y %h:%i%p') as formatted_request_date,
                  DATE_FORMAT(mr.claimed_date, '%m/%d/%Y %h:%i%p') as formatted_claimed_date,
+                 DATE_FORMAT(mr.declined_date, '%m/%d/%Y %h:%i%p') AS formatted_declined_date,
+                 DATE_FORMAT(mr.cancelled_date, '%m/%d/%Y %h:%i%p') AS formatted_cancelled_date,
                  mr.request_status 
                  FROM medicine_requests mr 
                  WHERE mr.request_status IN ('claimed', 'declined', 'cancelled', 'unclaimed')";
@@ -252,7 +254,19 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                                             <td><?= htmlspecialchars($request['request_id']) ?></td>
                                             <td><?= htmlspecialchars($request['full_name']) ?></td>
                                             <td><?= htmlspecialchars($request['formatted_request_date']) ?></td>
-                                            <td><?= htmlspecialchars($request['formatted_claimed_date'] ?? 'N/A') ?></td>
+                                            <td style="text-align: center;">
+                                                <?php
+                                                if ($request['request_status'] === 'claimed') {
+                                                    echo htmlspecialchars($request['formatted_claimed_date'] ?? 'N/A');
+                                                } elseif ($request['request_status'] === 'declined') {
+                                                    echo htmlspecialchars($request['formatted_declined_date'] ?? 'N/A');
+                                                } elseif ($request['request_status'] === 'cancelled') {
+                                                    echo htmlspecialchars($request['formatted_cancelled_date'] ?? 'N/A');
+                                                } else { // unclaimed
+                                                    echo htmlspecialchars($request['formatted_claimed_date'] ?? 'N/A');
+                                                }
+                                                ?>
+                                            </td>
                                             <td>
                                                 <div class="status-badge status-<?= strtolower($request['request_status']) ?>">
                                                     <?= ucfirst($request['request_status']) ?>
@@ -349,25 +363,33 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         </div>`;
 
             // === CLAIM / UNCLAIMED INFO ===
-            if (['claimed', 'unclaimed', 'cancelled'].includes(data.request.request_status) && data.request.formatted_claim_date) {
+            if (['claimed','unclaimed','declined','cancelled'].includes(data.request.request_status)) {
                 modalHTML += `
                     <div class="form-row">
                         <div class="form-group">
                             <div class="date-claim-info">
-                                <h4>Scheduled Claim Period</h4>
-                                <p><strong>Claim From:</strong> ${data.request.formatted_claim_date}</p>
-                                <p><strong>Claim Until:</strong> ${data.request.formatted_until_date}</p>`;
+                                <h4>Status Timeline</h4>`;
                 
-                if (data.request.request_status === 'claimed') {
+                if (data.request.formatted_claim_date) {
+                    modalHTML += `<p><strong>Claim From:</strong> ${data.request.formatted_claim_date}</p>`;
+                }
+                if (data.request.formatted_until_date) {
+                    modalHTML += `<p><strong>Claim Until:</strong> ${data.request.formatted_until_date}</p>`;
+                }
+                if (data.request.request_status === 'claimed' && data.request.formatted_claimed_date) {
                     modalHTML += `<p><strong>Claimed On:</strong> ${data.request.formatted_claimed_date}</p>`;
-                } else if (data.request.request_status === 'unclaimed') {
+                }
+                if (data.request.request_status === 'declined' && data.request.formatted_declined_date) {
+                    modalHTML += `<p><strong>Declined On:</strong> ${data.request.formatted_declined_date}</p>`;
+                }
+                if (data.request.request_status === 'cancelled' && data.request.formatted_cancelled_date) {
+                    modalHTML += `<p><strong>Cancelled On:</strong> ${data.request.formatted_cancelled_date}</p>`;
+                }
+                if (data.request.request_status === 'unclaimed') {
                     modalHTML += `<p><strong>Status:</strong> <span>Unclaimed & Returned</span></p>`;
                 }
-                
-                modalHTML += `
-                            </div>
-                        </div>
-                    </div>`;
+
+                modalHTML += `</div></div></div>`;
             }
 
             modalHTML += `</div>

@@ -152,8 +152,10 @@ if ($delReq) {
         <div class="logo-container">
             <img src="images/3s logo.png" alt="Logo">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
         <div class="nav-links" id="nav-links">

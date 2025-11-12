@@ -21,7 +21,7 @@ $dependents = []; // dependents list
 $pending_dependents = [];
 
 // Fetch user details for the active user (primary or dependent)
-$sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture, family_number, primary_user_id 
+$sql = "SELECT first_name, last_name, middle_name, gender, birthday, address, phone_number, email, profile_picture, family_number, date_registered, primary_user_id 
         FROM users WHERE id = :active_user_id";
 $stmt = $conn->prepare($sql);
 $stmt->bindParam(':active_user_id', $active_user_id, PDO::PARAM_INT);
@@ -106,8 +106,10 @@ try {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
 
@@ -118,19 +120,19 @@ try {
 
         <div class="nav-links">
             <ul>
-                <li><a href="index.php">HOME</a></li>
-                <li><a href="calendar.php">CALENDAR</a></li>
+                <li><a href="index.php" class="links">HOME</a></li>
+                <li><a href="calendar.php" class="links">CALENDAR</a></li>
                 <li><a href="request_medicine.php" class="links">MEDICINE REQUEST</a></li>
-                <li><a href="about_us.php">ABOUT US</a></li>
-                <?php if (isset($_SESSION['user_id'])): ?>
-                <?php if ($_SESSION['role'] === 'user'): ?>
-                    <li>
-                        <a href="profile.php">
+                <li><a href="about_us.php" class="links">ABOUT US</a></li>
+
+                <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
+                    <li class="profile-nav">
+                        <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
-                        </a>
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
+                        </a>                    
                     </li>
-                <?php endif; ?>
-                <?php else: ?>
+                <?php elseif (!isset($_SESSION['admin_id'])): ?>
                     <li><a href="login.php" class="login-button">LOG IN</a></li>
                 <?php endif; ?>
             </ul>
@@ -138,16 +140,17 @@ try {
     </nav>
 
     <div class="profile-container">
-        <h2 class="page-title">Profile</h2>
         <div class="profile-box">
             <div class="profile-img">
-                <div class="profile-pic-wrapper" onclick="openProfilePicModal()">
-                    <img src="<?= htmlspecialchars($profilePic) ?>" alt="profile">
-                    <button class="icon-button" onclick="openProfilePicModal(event)">
-                        <i class="fas fa-pen"></i>
-                    </button>
+                <div class="name-img-container">
+                    <div class="profile-pic-wrapper" onclick="openProfilePicModal()">
+                        <img src="<?= htmlspecialchars($profilePic) ?>" alt="profile">
+                        <button class="icon-button" onclick="openProfilePicModal(event)">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                    </div>
+                    <p class="full-name"><?php echo htmlspecialchars($user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']); ?></p>
                 </div>
-                <p class="full-name"><?php echo htmlspecialchars($user['first_name'] . " " . $user['middle_name'] . " " . $user['last_name']); ?></p>
                 <div class="buttons-profile">
                     <button class="edit-profile-btn" onclick="openEditProfileModal()">Edit Profile</button>
                     <?php if ($is_dependent): ?>
@@ -186,7 +189,7 @@ try {
                                 $pending = $hasPending->fetchColumn();
                                 ?>
                                 <?php if (!$is_dependent && !$pending): ?>
-                                    <button class="delete-account-btn" onclick="openPrimaryDeletionModal()" style="float: right;">
+                                    <button class="delete-account-btn" onclick="openPrimaryDeletionModal()">
                                         Request Account Deletion
                                     </button>
                                 <?php elseif (!$is_dependent && $pending): ?>
@@ -196,12 +199,6 @@ try {
                                 <?php endif; ?>
                             </h3>
                             <div class="group-row">
-                                <?php if (!empty($user['family_number'])): ?>
-                                <div class="row">
-                                    <p class="label">Family Number</p>
-                                    <p class="value"><?php echo htmlspecialchars($user['family_number']); ?></p>
-                                </div>
-                                <?php endif; ?>
                                 <div class="row">
                                     <p class="label">Last Name</p>
                                     <p class="value"><?php echo htmlspecialchars($user['last_name']); ?></p>
@@ -283,6 +280,7 @@ try {
                                                     'pending' => 'style="background-color: #ffc107; color: white;"',
                                                     'declined' => 'style="background-color: #dc3545; color: white;"',
                                                     'to be claimed' => 'style="background-color: #17a2b8; color: white;"',
+                                                    'unclaimed' => 'style="background-color: #6f42c1; color: white;"',
                                                     'cancelled' => 'style="background-color: #6c757d; color: white;"'
                                                 ];
                                             ?>
@@ -318,9 +316,17 @@ try {
                     <div id="patient-record" class="tab-content" style="display: none;">
                         <div class="patient-con">
                             <div class="anthro-con">
-                                <h3 class="title">Anthropometric Measurement</h3>
+                                <h3 class="title">Record Information</h3>
                                 <?php if ($patient): ?>
                                 <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-label">Date Registered: </div>
+                                        <div class="metric-value"><?php echo !empty($user['date_registered']) ? htmlspecialchars(date("F j, Y", strtotime($user['date_registered']))) : 'N/A'; ?></div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Family Number: </div>
+                                        <div class="metric-value"><?= htmlspecialchars($user['family_number'] ?? 'Not Provided') ?></div>
+                                    </div>
                                     <div class="metric-card">
                                         <div class="metric-label">Height:</div>
                                         <div class="metric-value"><?= htmlspecialchars($patient['height'] ?? 'N/A') ?></div>
@@ -392,7 +398,6 @@ try {
                                             <tr>
                                                 <th>Name</th>
                                                 <th>Relationship</th>
-                                                <th>Date of Birth</th>
                                                 <th>Status</th>
                                                 <th>Action</th>
                                             </tr>
@@ -417,7 +422,6 @@ try {
                                                     <tr>
                                                         <td><?= htmlspecialchars($dependent['first_name'] . ' ' . $dependent['middle_name'] . ' ' . $dependent['last_name']) ?></td>
                                                         <td><?= htmlspecialchars($dependent['relationship']) ?></td>
-                                                        <td><?= htmlspecialchars(date('F j, Y', strtotime($dependent['birthday']))) ?></td>
                                                         <?php
                                                         // Check for pending deletion request
                                                         $delStatusStmt = $conn->prepare("
@@ -429,7 +433,7 @@ try {
                                                         $delStatus = $delStatusStmt->fetchColumn(); // 'pending' or false
 
                                                         $statusText = $delStatus ? 'Deletion Pending' : 'Approved';
-                                                        $statusColor = $delStatus ? '#ffc107' : '#28a745'; // yellow if pending, green if approved
+                                                        $statusColor = $delStatus ? '#fd7e14' : '#28a745'; // yellow if pending, green if approved
                                                         ?>
                                                         <td>
                                                             <span class="status-badge" style="background-color: <?= $statusColor ?>; color: white;">
@@ -454,7 +458,7 @@ try {
                                                                     <button class="cancel-dependent-deletion-btn"
                                                                             data-dep-id="<?= $dependent['id'] ?>"
                                                                             onclick="openCancelDepDelModal(this)">
-                                                                        Cancel Deletion
+                                                                        Cancel
                                                                     </button>
                                                                 <?php endif; ?>
                                                             </div>
@@ -466,8 +470,7 @@ try {
                                                     <tr>
                                                         <td><?= htmlspecialchars($pending_dependent['first_name'] . ' ' . $pending_dependent['middle_name'] . ' ' . $pending_dependent['last_name']) ?></td>
                                                         <td><?= htmlspecialchars($pending_dependent['relationship']) ?></td>
-                                                        <td><?= htmlspecialchars(date('F j, Y', strtotime($pending_dependent['birthday']))) ?></td>
-                                                        <td><span class="status-badge" style="background-color: #ffc107; color: white;">Pending</span></td>
+                                                        <td><span class="status-badge" style="background-color: #ffc107; color: white;">Pending Approval</span></td>
                                                         <td>
                                                             <div class="button-container">
                                                                 <button class="cancel-dependent-btn" data-id="<?= $pending_dependent['id'] ?>" onclick="openCancelDependentModal(this)">Cancel</button>
@@ -489,136 +492,151 @@ try {
     </div>
 
     <!-- Cancel Dependent-Deletion Confirmation Modal -->
-    <div id="cancelDepDelModal" class="modal">
+    <div id="cancelDepDelModal" class="modal confirmation">
         <div class="modal-content">
-            <h2>Cancel Deletion Request</h2>
+            <div class="modal-icon"><i class="fas fa-undo-alt"></i></div>
+            <h2>Cancel Deletion</h2>
             <p>Are you sure you want to cancel the deletion request for this dependent?</p>
             <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="closeCancelDepDelModal()">Cancel</button>
-                <button type="button" class="confirm-btn" id="confirmCancelDepDelBtn">Confirm</button>
+                <button class="btn-cancel" onclick="closeCancelDepDelModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmCancelDepDelBtn">Confirm</button>
             </div>
         </div>
     </div>
 
     <!-- Cancel Dependent Deletion SUCCESS Modal -->
-    <div id="cancelDepDelSuccessModal" class="modal">
-        <div class="modal-content" style="text-align:center;">
-            <i class="fas fa-check-circle" style="font-size:48px;color:#28a745;"></i>
-            <h2 style="margin:15px 0;">Cancellation Successful</h2>
+    <div id="cancelDepDelSuccessModal" class="modal success">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+            <h2>Cancellation Successful</h2>
             <p>The deletion request for this dependent has been cancelled.</p>
             <div class="modal-footer">
-                <button type="button" class="confirm-btn" id="cancelDepDelSuccessOkBtn">OK</button>
+                <button class="btn-success" id="cancelDepDelSuccessOkBtn">OK</button>
             </div>
         </div>
     </div>
 
     <!-- Primary Account Deletion Modal -->
-    <div id="primaryDeletionModal" class="modal">
+    <div id="primaryDeletionModal" class="modal form">
         <div class="modal-content">
-            <h2>Request Account Deletion</h2>
-            <p>This will delete <u>your primary account and ALL dependent accounts</u> permanently once approved.</p>
-            <form id="primaryDeletionForm">
-                <input type="hidden" name="user_id" value="<?= $primary_user_id ?>">
-                <div class="group-col">
-                    <label>Reason for deletion <span class="required">*</span></label>
-                    <textarea name="reason" rows="4" required placeholder="Why do you want to delete your account?"></textarea>
-                </div>
-                <div class="group-col">
-                    <label>Password <span class="required">*</span></label>
-                    <div class="password-wrapper">
-                        <input type="password" name="password" required>
-                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+            <div class="modal-title-bar">
+                <h2>Request Account Deletion</h2>
+            </div>
+            <div class="form-scroll">
+                <p>This will delete <u>your primary account and ALL dependent accounts</u> permanently once approved.</p>
+                <form id="primaryDeletionForm">
+                    <input type="hidden" name="user_id" value="<?= $primary_user_id ?>">
+                    <div class="group-col">
+                        <label>Reason for deletion <span class="required">*</span></label>
+                        <textarea name="reason" rows="4" required placeholder="Why do you want to delete your account?"></textarea>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closePrimaryDeletionModal()">Cancel</button>
-                    <button type="submit" class="confirm-btn">Submit Request</button>
-                </div>
-            </form>
+                    <div class="group-col">
+                        <label>Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" name="password" required>
+                            <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closePrimaryDeletionModal()">Cancel</button>
+                <button type="submit" form="primaryDeletionForm" class="confirm-btn">Submit Request</button>
+            </div>
         </div>
     </div>
 
     <!-- Primary Deletion SUCCESS Modal -->
-    <div id="primaryDeletionSuccessModal" class="modal">
-        <div class="modal-content" style="text-align:center;">
-            <i class="fas fa-check-circle" style="font-size:48px;color:#28a745;"></i>
-            <h2 style="margin:15px 0;">Request Submitted</h2>
+    <div id="primaryDeletionSuccessModal" class="modal success">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+            <h2>Request Submitted</h2>
             <p>Your account-deletion request has been sent.<br>
             <strong>You will be logged out in <span id="countdown">5</span> seconds...</strong>
             </p>
             <div class="modal-footer">
-                <button type="button" class="confirm-btn" id="primarySuccessOkBtn">OK</button>
+                <button class="btn-success" id="primarySuccessOkBtn">OK</button>
             </div>
         </div>
     </div>
 
     <!-- Dependent Deletion Modal -->
-    <div id="dependentDeletionModal" class="modal">
+    <div id="dependentDeletionModal" class="modal form">
         <div class="modal-content">
-            <h2>Request Dependent Deletion</h2>
-            <p></p>
-            <form id="dependentDeletionForm">
-                <input type="hidden" name="dependent_id" id="depDelId">
-                <input type="hidden" name="primary_id" value="<?= $primary_user_id ?>">
-                <div class="group-col">
-                    <label>Reason for deletion <span class="required">*</span></label>
-                    <textarea name="reason" rows="4" required></textarea>
-                </div>
-                <div class="group-col">
-                    <label>Your Password (Primary) <span class="required">*</span></label>
-                    <div class="password-wrapper">
-                        <input type="password" name="password" required>
-                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+            <div class="modal-title-bar">
+                <h2>Request Dependent Deletion</h2>
+            </div>
+            <div class="form-scroll">
+                <p></p>
+                <form id="dependentDeletionForm">
+                    <input type="hidden" name="dependent_id" id="depDelId">
+                    <input type="hidden" name="primary_id" value="<?= $primary_user_id ?>">
+                    <div class="group-col">
+                        <label>Reason for deletion <span class="required">*</span></label>
+                        <textarea name="reason" rows="4" required></textarea>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeDependentDeletionModal()">Cancel</button>
-                    <button type="submit" class="confirm-btn">Submit Request</button>
-                </div>
-            </form>
+                    <div class="group-col">
+                        <label>Your Password (Primary) <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" name="password" required>
+                            <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeDependentDeletionModal()">Cancel</button>
+                <button type="submit" form="dependentDeletionForm" class="confirm-btn">Submit Request</button>
+            </div>
         </div>
     </div>
 
     <!-- Dependent Deletion SUCCESS Modal -->
-    <div id="dependentDeletionSuccessModal" class="modal">
-        <div class="modal-content" style="text-align:center;">
-            <i class="fas fa-check-circle" style="font-size:48px;color:#28a745;"></i>
-            <h2 style="margin:15px 0;">Request Submitted</h2>
+    <div id="dependentDeletionSuccessModal" class="modal success">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+            <h2>Request Submitted</h2>
             <p>The deletion request for this dependent has been sent.</p>
             <div class="modal-footer">
-                <button type="button" class="confirm-btn" id="dependentSuccessOkBtn">OK</button>
+                <button class="btn-success" id="dependentSuccessOkBtn">OK</button>
             </div>
         </div>
     </div>
 
     <!-- Profile Picture Modal -->
-    <div id="changeProfileModal" class="modal">
+    <div id="changeProfileModal" class="modal form">
         <div class="modal-content">
-            <h2>Change Profile Picture</h2>
-            <form id="profilePicForm" action="upload_profilePic.php" method="POST" enctype="multipart/form-data">
+            <div class="modal-title-bar">
+                <h2>Change Profile Picture</h2>
+            </div>
+            <div class="form-scroll">
+                <form id="profilePicForm" action="upload_profilePic.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="active_user_id" value="<?= htmlspecialchars($active_user_id) ?>">
-                <div class="image-preview">
-                    <img id="preview-img" src="<?= htmlspecialchars($profilePic) ?>" alt="Preview">
-                </div>
-                <div class="file-upload">
-                    <label for="profile-photo">Choose File</label>
-                    <input type="file" name="profile_photo" id="profile-photo" accept="image/*" required style="display: none;">
-                    <span class="file-name" id="profile_file_name">No file chosen</span>
-                </div>
-                <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG, GIF</small>
-                <div class="error-message" id="profilePicError"></div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeProfilePicModal()">Cancel</button>
-                    <button type="submit" class="save-btn">Save</button>
-                </div>
-            </form>
+                    <div class="image-preview">
+                        <img id="preview-img" src="<?= htmlspecialchars($profilePic) ?>" alt="Preview">
+                    </div>
+                    <div class="file-upload">
+                        <label for="profile-photo">Choose File</label>
+                        <input type="file" name="profile_photo" id="profile-photo" accept="image/*" required style="display: none;">
+                        <span class="file-name" id="profile_file_name">No file chosen</span>
+                    </div>
+                    <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG, GIF</small>
+                    <div class="error-message" id="profilePicError"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeProfilePicModal()">Cancel</button>
+                <button type="submit" form="profilePicForm" class="save-btn">Save</button>
+            </div>
         </div>
     </div>
 
     <!-- Edit Profile Modal -->
-    <div id="editProfileModal" class="modal">
+    <div id="editProfileModal" class="modal form">
         <div class="modal-content">
-            <h2>Edit Profile</h2>
+            <div class="modal-title-bar">
+                <h2>Edit Profile</h2>
+            </div>
             <div class="error-message" id="editProfileError"></div>
             <div class="form-scroll">
                 <form id="editProfileForm" action="update_profile.php" method="POST">
@@ -677,56 +695,60 @@ try {
 
     <!-- Change Password Modal (Only for Primary User) -->
     <?php if (!$is_dependent): ?>
-    <div id="changePasswordModal" class="modal">
+    <div id="changePasswordModal" class="modal form">
         <div class="modal-content">
-            <h2>Change Password</h2>
+            <div class="modal-title-bar">
+                <h2>Change Password</h2>
+            </div>
             <div class="error-message" id="changePasswordError"></div>
-
-            <form id="changePasswordForm" action="change_password.php" method="POST" novalidate>
-                <!-- Current Password -->
-                <div class="group-col">
-                    <label for="current_password">Current Password <span class="required">*</span></label>
-                    <div class="password-wrapper">
-                        <input type="password" id="current_password" name="current_password" required>
-                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                <div class="form-scroll">
+                    <form id="changePasswordForm" action="change_password.php" method="POST" novalidate>
+                    <!-- Current Password -->
+                    <div class="group-col">
+                        <label for="current_password">Current Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" id="current_password" name="current_password" required>
+                            <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                        </div>
+                        <small class="field-hint">Enter your existing password</small>
                     </div>
-                    <small class="field-hint">Enter your existing password</small>
-                </div>
 
-                <!-- New Password -->
-                <div class="group-col">
-                    <label for="new_password">New Password <span class="required">*</span></label>
-                    <div class="password-wrapper">
-                        <input type="password" id="new_password" name="new_password" required>
-                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    <!-- New Password -->
+                    <div class="group-col">
+                        <label for="new_password">New Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" id="new_password" name="new_password" required>
+                            <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                        </div>
+                        <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
                     </div>
-                    <small class="field-hint">At least 8 characters with uppercase, lowercase, and numbers</small>
-                </div>
 
-                <!-- Confirm New Password -->
-                <div class="group-col">
-                    <label for="confirm_password">Confirm New Password <span class="required">*</span></label>
-                    <div class="password-wrapper">
-                        <input type="password" id="confirm_password" name="confirm_password" required>
-                        <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                    <!-- Confirm New Password -->
+                    <div class="group-col">
+                        <label for="confirm_password">Confirm New Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" id="confirm_password" name="confirm_password" required>
+                            <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                        </div>
+                        <small class="field-hint">Must match the new password</small>
                     </div>
-                    <small class="field-hint">Must match the new password</small>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeChangePasswordModal()">Cancel</button>
-                    <button type="submit" class="save-btn" id="changePasswordSubmitBtn" disabled>Save</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeChangePasswordModal()">Cancel</button>
+                <button type="submit" form="changePasswordForm" class="save-btn" id="changePasswordSubmitBtn" disabled>Save</button>
+            </div>
         </div>
     </div>
     <?php endif; ?>
 
     <!-- Add Dependent Modal (Only for Primary User) -->
     <?php if (!$is_dependent): ?>
-    <div id="addDependentModal" class="modal">
+    <div id="addDependentModal" class="modal form">
         <div class="modal-content">
-            <h2>Add Dependent</h2>
+            <div class="modal-title-bar">
+                <h2>Add Dependent</h2>
+            </div>
             <div class="error-message" id="addDependentError"></div>
             <div class="form-scroll">
                 <form id="addDependentForm" action="add_dependent.php" method="POST" enctype="multipart/form-data">
@@ -804,9 +826,11 @@ try {
     <?php endif; ?>
 
     <!-- View Consultation Modal -->
-    <div id="viewConsultationModal" class="modal">
+    <div id="viewConsultationModal" class="modal info">
         <div class="modal-content">
-            <h2 class="title">Consultation Details</h2>
+            <div class="modal-title-bar">
+                <h2 class="title">Consultation Details</h2>
+            </div>
             <div class="form-scroll">
                 <div class="consultation-container">
                     <div class="group-row">
@@ -870,9 +894,11 @@ try {
     </div>
 
     <!-- View Request Modal -->
-    <div id="viewRequestModal" class="modal"> 
+    <div id="viewRequestModal" class="modal info"> 
         <div class="modal-content">
-            <h2>Request Medicine Details</h2>
+            <div class="modal-title-bar">
+                <h2>Request Medicine Details</h2>
+            </div>
             <div class="form-scroll">
                 <div class="modal-container">
                     <div class="group-row">
@@ -957,54 +983,66 @@ try {
     </div>
 
     <!-- Cancel Request Confirmation Modal -->
-    <div id="cancelRequestModal" class="modal">
+    <div id="cancelRequestModal" class="modal confirmation">
         <div class="modal-content">
-            <h2>Confirm Cancellation</h2>
+            <div class="modal-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2>Cancel Request</h2>
             <p>Are you sure you want to cancel this medicine request?</p>
             <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="closeCancelRequestModal()">Cancel</button>
-                <button type="button" class="confirm-btn" id="confirmCancelBtn">Confirm</button>
+                <button class="btn-cancel" onclick="closeCancelRequestModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmCancelBtn">Confirm</button>
             </div>
         </div>
     </div>
 
     <!-- Cancel Dependent Confirmation Modal -->
-    <div id="cancelDependentModal" class="modal">
+    <div id="cancelDependentModal" class="modal confirmation">
         <div class="modal-content">
-            <h2>Confirm Cancellation</h2>
+            <div class="modal-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h2>Cancel Pending Dependent</h2>
             <p>Are you sure you want to cancel this pending dependent account?</p>
             <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="closeCancelDependentModal()">Cancel</button>
-                <button type="button" class="confirm-btn" id="confirmCancelDependentBtn">Confirm</button>
+                <button class="btn-cancel" onclick="closeCancelDependentModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmCancelDependentBtn">Confirm</button>
             </div>
         </div>
     </div>
 
     <!-- Logout Confirmation Modal -->
-    <div id="logoutConfirmModal" class="modal">
+    <div id="logoutConfirmModal" class="modal confirmation">
         <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-sign-out-alt"></i></div>
             <h2>Confirm Logout</h2>
             <p>Are you sure you want to log out?</p>
             <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="closeLogoutConfirmModal()">Cancel</button>
-                <button type="button" class="confirm-btn" onclick="confirmLogout()">Confirm</button>
+                <button class="btn-cancel" onclick="closeLogoutConfirmModal()">Cancel</button>
+                <button class="btn-confirm" onclick="confirmLogout()">Confirm</button>
             </div>
         </div>
     </div>
 
     <!-- Switch Account Confirmation Modal -->
-    <div id="switchAccountConfirmModal" class="modal">
+    <div id="switchAccountConfirmModal" class="modal confirmation">
         <div class="modal-content">
-            <h2>Confirm Account Switch</h2>
+            <div class="modal-icon"><i class="fas fa-exchange-alt"></i></div>
+            <h2>Switch Account</h2>
             <p>Are you sure you want to switch to this account?</p>
             <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="closeSwitchAccountConfirmModal()">Cancel</button>
-                <button type="button" class="confirm-btn" id="confirmSwitchAccountBtn">Confirm</button>
+                <button class="btn-cancel" onclick="closeSwitchAccountConfirmModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmSwitchAccountBtn">Confirm</button>
             </div>
         </div>
     </div>
 
     <script>
+        function showModal(id) { 
+            document.getElementById(id).classList.add('show'); 
+
+        }
+        function hideModal(id) { 
+            document.getElementById(id).classList.remove('show'); 
+
+        }
         // Primary Deletion Modal Functions
         function openPrimaryDeletionModal() {
             document.getElementById("primaryDeletionModal").classList.add("show");
@@ -1125,16 +1163,13 @@ try {
         });
 
         function openCancelDepDelModal(btn) {
-            const depId = btn.dataset.depId;
-            const modal = document.getElementById('cancelDepDelModal');
-            const confirmBtn = document.getElementById('confirmCancelDepDelBtn');
-            confirmBtn.dataset.depId = depId;   // store for the POST
-            modal.classList.add('show');
+            const id = btn.dataset.depId;
+            document.getElementById('confirmCancelDepDelBtn').dataset.depId = id;
+            showModal('cancelDepDelModal');
         }
-
+        
         function closeCancelDepDelModal() {
-            document.getElementById('cancelDepDelModal').classList.remove('show');
-            delete document.getElementById('confirmCancelDepDelBtn').dataset.reqId;
+            hideModal('cancelDepDelModal');
         }
 
         document.getElementById('confirmCancelDepDelBtn').addEventListener('click', function () {
@@ -1567,18 +1602,15 @@ try {
                 });
         }
 
-        function openCancelRequestModal(button) {
-            const requestId = button.getAttribute('data-id');
-            const modal = document.getElementById("cancelRequestModal");
-            const confirmBtn = document.getElementById("confirmCancelBtn");
-            confirmBtn.setAttribute('data-id', requestId);
-            modal.classList.add("show");
+        function openCancelRequestModal(btn) {
+            const id = btn.dataset.id;
+            const confirmBtn = document.getElementById('confirmCancelBtn');
+            confirmBtn.dataset.id = id;
+            showModal('cancelRequestModal');
         }
 
         function closeCancelRequestModal() {
-            document.getElementById("cancelRequestModal").classList.remove("show");
-            const confirmBtn = document.getElementById("confirmCancelBtn");
-            confirmBtn.removeAttribute('data-id');
+            hideModal('cancelRequestModal'); 
         }
 
         function cancelRequest(requestId) {
@@ -1632,18 +1664,15 @@ try {
                 .catch(() => alert('Failed to load consultation details.'));
         }
 
-        function openCancelDependentModal(button) {
-            const dependentId = button.getAttribute('data-id');
-            const modal = document.getElementById("cancelDependentModal");
-            const confirmBtn = document.getElementById("confirmCancelDependentBtn");
-            confirmBtn.setAttribute('data-id', dependentId);
-            modal.classList.add("show");
+        function openCancelDependentModal(btn) {
+            const id = btn.dataset.id;
+            const confirmBtn = document.getElementById('confirmCancelDependentBtn');
+            confirmBtn.dataset.id = id;
+            showModal('cancelDependentModal');
         }
 
         function closeCancelDependentModal() {
-            document.getElementById("cancelDependentModal").classList.remove("show");
-            const confirmBtn = document.getElementById("confirmCancelDependentBtn");
-            confirmBtn.removeAttribute('data-id');
+            hideModal('cancelDependentModal'); 
         }
 
         function cancelDependent(dependentId) {
@@ -1675,11 +1704,11 @@ try {
 
         // Logout Confirmation Modal
         function openLogoutConfirmModal() {
-            document.getElementById("logoutConfirmModal").classList.add("show");
+            showModal('logoutConfirmModal'); 
         }
 
         function closeLogoutConfirmModal() {
-            document.getElementById("logoutConfirmModal").classList.remove("show");
+            hideModal('logoutConfirmModal'); 
         }
 
         function confirmLogout() {
@@ -1689,14 +1718,13 @@ try {
         // Switch Account Confirmation Modal
         let pendingSwitchId = null;
 
-        function openSwitchAccountConfirmModal(dependentId) {
-            pendingSwitchId = dependentId;
-            document.getElementById("switchAccountConfirmModal").classList.add("show");
+        function openSwitchAccountConfirmModal(id) {
+            document.getElementById('confirmSwitchAccountBtn').dataset.id = id;
+            showModal('switchAccountConfirmModal');
         }
 
         function closeSwitchAccountConfirmModal() {
-            document.getElementById("switchAccountConfirmModal").classList.remove("show");
-            pendingSwitchId = null;
+            hideModal('switchAccountConfirmModal'); 
         }
 
         document.getElementById("confirmSwitchAccountBtn")?.addEventListener("click", function() {

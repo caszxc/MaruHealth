@@ -1,6 +1,4 @@
-body::-webkit-scrollbar{
-    display: none; /* For Chrome, Safari, and Opera */
-}
+body::-webkit-scrollbar { display:none; }
 
 .container{
     min-height: calc(100vh - 80px);
@@ -9,7 +7,7 @@ body::-webkit-scrollbar{
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
+    background: linear-gradient(to bottom,#7D0000,#C00000,#D32F2F,#E57373);
 }
 .announcement{
     padding: 0 40px;
@@ -19,131 +17,133 @@ body::-webkit-scrollbar{
     flex-direction: column;
     justify-content: center;
 }
-
 .announcement .breadcrumb{
-    color: white;
+    color: #fff;
+    margin-bottom: 10px;
 }
-
 .announcement .breadcrumb a{
-    color: white;
+    color: #fff;
     text-decoration: none;
 }
-
 .announcement .title{
     text-align: center;
-    color: white;
+    color: #fff;
     font-size: 3rem;
-    margin: 20px;
+    margin: 20px 0;
 }
 
-
-.announcement-container {
+/* ---------- MAIN CONTAINER ---------- */
+.announcement-container{
     display: flex;
     gap: 20px;
-    background-color: white;
+    background:#fff;
     padding: 50px;
     border-radius: 5px;
     flex-grow: 1;
-}
-
-.recent-posts {
-    width: 35%;
-    background-color: #f5f5f5;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* spacing between posts */
-    align-self: flex-start; /* prevent it from stretching if inside a flex parent */
-}
-
-
-.recent-posts h3 {
-    font-weight: bold;
-    color: #7D0000;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.post {
-    background-color: white;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    gap: 10px;
-    height: 200px; /* Total height to match the image */
-}
-
-.post img {
-    width: 50%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 5px;
-}
-
-.post-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    width: 50%;
-    overflow: hidden;
-}
-
-.post-info .post-content {
-    flex-grow: 1;
-    overflow: hidden;
-}
-
-.post-info .post-content .date{
-    font-size: 13px;
-}
-
-.post-info .announcement-content {
-    font-size: 0.9rem;
-    line-height: 1.4em;
-    max-height: 4.4em; /* ~3 lines */
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.post-info h4 {
-    color: #7D0000;
-    margin: 5px 0;
-}
-
-.post-info a {
-    color: #7D0000;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 0.9rem;
-    align-self: flex-end;
-}
-
-.main-post {
-    width: 70%;
-}
-
-.main-post img {
     width: 100%;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    max-width: 1400px;               /* optional – caps extreme widths */
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
-.main-post h3 {
-    color: #7D0000;
-    font-size: 1.8rem;
-    margin: 10px 0;
+/* ---------- RECENT POSTS (SIDEBAR) ---------- */
+.recent-posts{
+    flex: 0 0 35%;                   /* 35 % of the flex container */
+    max-width: 35%;
+    background:#f5f5f5;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:2px 2px 5px rgba(0,0,0,.1);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-self:flex-start;
+}
+.recent-posts h3{
+    font-weight:700;
+    color:#7D0000;
+    margin-bottom:15px;
+    text-align:center;
+}
+.post{
+    background:#fff;
+    padding:10px;
+    border-radius:8px;
+    box-shadow:0 2px 5px rgba(0,0,0,.1);
+    display:flex;
+    gap:10px;
+    height:200px;
+}
+.post img{
+    width:50%;
+    height:100%;
+    object-fit:cover;
+    border-radius:5px;
+}
+.post-info{
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    width:50%;
+    overflow:hidden;
+}
+.post-info .post-content{ flex-grow:1; overflow:hidden; }
+.post-info .date{ font-size:13px; }
+.post-info .announcement-content{
+    font-size:.9rem;
+    line-height:1.4;
+    max-height:4.4em;
+    overflow:hidden;
+    overflow-wrap: break-word;
+}
+.post-info h4{
+    color:#7D0000; 
+    margin:5px 0; 
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+.post-info a{
+    color:#7D0000;
+    text-decoration:none;
+    font-weight:700;
+    font-size:.9rem;
+    align-self:flex-end;
 }
 
-.main-post .content {
-    text-indent: 2em;
-    line-height: 1.6;
-    font-size: 1.1rem;
-    text-align: justify;
+/* ---------- MAIN POST (CONTENT) ---------- */
+.main-post{
+    flex: 1;                         /* takes the remaining space */
+    max-width: 100%;                 /* never exceeds its flex container */
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+}
+.main-post img{
+    width:100%;
+    border-radius:8px;
+    margin-bottom:15px;
+    object-fit:cover;
+}
+.main-post .date{
+    font-size:.95rem;
+    color:#555;
+    margin-bottom:8px;
+}
+.main-post h3{
+    color:#7D0000;
+    font-size:1.8rem;
+    margin:10px 0;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
+}
+.main-post .content{
+    text-indent:2em;
+    line-height:1.6;
+    font-size:1.1rem;
+    text-align:justify;
+    word-wrap:break-word;
+    overflow-wrap:break-word;
 }
 
 
@@ -161,103 +161,50 @@ body::-webkit-scrollbar{
         padding: 5px;
     }
 
-    .container{
-        margin-top: 70px;
-        padding: 0;
+    .container{ margin-top:70px; padding:0; }
+    .announcement{ padding:0; }
+    .announcement .title{ font-size:1.7rem; margin:10px 0; }
+    .announcement-container{
+        flex-direction:column-reverse;
+        padding:20px;
+        gap:15px;
     }
-
-    .announcement-container {
-        flex-direction: column-reverse;
-        padding: 20px;
+    .recent-posts,
+    .main-post{
+        flex:none;
+        max-width:100%;
     }
+    .post{ flex-direction:column; height:auto; }
+    .post img{ width:100%; height:180px; }
+    .post-info{ width:100%; }
+    .main-post h3{ font-size:1.4rem; }
+    .main-post .content{ font-size:1rem; }
 
     .breadcrumb {
         font-size: 12px;
         padding: 5px 20px;
     }
 
-    .announcement .title {
-        font-size: 1.7rem;
-        margin: 10px 0;
-    }
-
-    .recent-posts {
-        width: 100%;
-        box-shadow: none;
-        background-color: #fafafa;
-        padding: 10px;
-    }
-
-    .post {
-        flex-direction: column;
-        height: auto;
-        align-items: center;
-        text-align: center;
-    }
-
-    .post img {
-        width: 100%;
-        height: 180px;
-    }
-
-    .post-info {
-        width: 100%;
-    }
-
-    .main-post {
-        width: 100%;
-    }
-
-    .main-post h3 {
-        font-size: 1.4rem;
-    }
-
-    .main-post .content {
-        font-size: 1rem;
-    }
-
-    .announcement {
-        padding: 0;
-    }
 }
 
 /* ===== Medium Screens (tablets 601px–1024px) ===== */
 @media (min-width: 601px) and (max-width: 1024px) {
-    .announcement-container {
-        flex-direction: column-reverse;
-        padding: 30px;
+    .announcement-container{
+        flex-direction:column-reverse;
+        padding:30px;
     }
-
-    .recent-posts {
-        width: 100%;
-        order: 2;
+    .recent-posts,
+    .main-post{
+        flex:none;
+        max-width:100%;
     }
-
-    .main-post {
-        width: 100%;
-        order: 1;
-    }
-
-    .announcement .title {
-        font-size: 2.2rem;
-    }
-
-    .main-post .content {
-        font-size: 1rem;
-    }
+    .announcement .title{ font-size:2.2rem; }
+    .main-post .content{ font-size:1rem; }
 }
 
 /* ===== Large Screens (desktop ≥1025px) ===== */
 @media (min-width: 1025px) {
-    .announcement-container {
-        flex-direction: row;
-    }
-
-    .recent-posts {
-        width: 35%;
-    }
-
-    .main-post {
-        width: 70%;
-    }
+    .announcement-container{ flex-direction:row; }
+    .recent-posts{ flex:0 0 35%; max-width:35%; }
+    .main-post{ flex:1; }
 }

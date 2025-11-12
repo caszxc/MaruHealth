@@ -50,14 +50,21 @@ $prevYear = $month == 1 ? $year - 1 : $year;
 $daysInPrevMonth = date('t', mktime(0, 0, 0, $prevMonth, 1, $prevYear));
 $prevMonthStart = $daysInPrevMonth - $dayOfWeek + 1;
 
-// Fill in days from previous month
+// Fill in days from previous month (only if needed)
 for ($i = 0; $i < $dayOfWeek; $i++) {
     $dayNum = $prevMonthStart + $i;
     echo "<td class='faded-day'>$dayNum</td>";
 }
 
 // Main month days
+$cellsInCurrentRow = $dayOfWeek; // number of cells already filled in first row
 for ($day = 1; $day <= $daysInMonth; $day++) {
+    // Start new row if needed
+    if ($cellsInCurrentRow >= 7) {
+        echo '</tr><tr>';
+        $cellsInCurrentRow = 0;
+    }
+
     $date = "$year-" . str_pad($month, 2, "0", STR_PAD_LEFT) . "-" . str_pad($day, 2, "0", STR_PAD_LEFT);
     $isToday = ($date == $today) ? 'selected-day' : '';
     $dayId = "day-$year-$month-$day";
@@ -75,17 +82,18 @@ for ($day = 1; $day <= $daysInMonth; $day++) {
     echo "  </div>
           </td>";
 
-    if (($day + $dayOfWeek) % 7 == 0) {
-        echo "</tr><tr>";
-    }
+    $cellsInCurrentRow++;
 }
 
 // Fill in next month days
-$remainingCells = (7 - ($day + $dayOfWeek - 1) % 7) % 7;
-for ($i = 1; $i <= $remainingCells; $i++) {
-    echo "<td class='faded-day'>$i</td>";
+$remainingCells = 7 - $cellsInCurrentRow;
+if ($remainingCells < 7) { // Only add if not already full row
+    for ($i = 1; $i <= $remainingCells; $i++) {
+        echo "<td class='faded-day'>$i</td>";
+    }
 }
 
-echo "</tr>";
-echo "</table>";
+// Only close the last <tr> — no extra </tr> if row is full
+echo '</tr>';
+echo '</table>';
 ?>

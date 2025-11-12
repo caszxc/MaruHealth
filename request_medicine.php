@@ -57,8 +57,10 @@ require_once "deletion_notice.php";
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
 
@@ -75,9 +77,10 @@ require_once "deletion_notice.php";
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
 
                 <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
-                    <li>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
                 <?php elseif (!isset($_SESSION['admin_id'])): ?>
@@ -88,26 +91,28 @@ require_once "deletion_notice.php";
     </nav>
 
     <div class="container">
-        <div class="form-desc">
-            <p>Please fill out the form carefully. Your request will still need to be validated. Kindly check your SMS or email for updates on your request status.</p>
-        </div>
-
         <div class="form-box">
             <h1>Medicine Request Form</h1>
+            <div class="form-desc">
+                <p>Please fill out the form carefully. Your request will still need to be validated. Kindly check your SMS or email for updates on your request status.</p>
+            </div>
 
             <?php if (!isset($_SESSION['user_id'])): ?>
                 <!-- Pop-up Modal -->
-                <div id="popupModal" class="modal">
+                <div id="requireModal" class="modal info">
                     <div class="modal-content">
-                        <h2>Note</h2>
-                        <p>To request a medicine, you need to log in first.</p>
-                        <button id="closeModal" onclick="redirectToLogin()">OK</button>
+                        <div class="modal-icon">
+                            <i class="fas fa-sign-in-alt"></i>
+                        </div>
+                        <h2>Login Required</h2>
+                        <p>To request medicine, please log in first.</p>
+                        <button class="btn-primary" onclick="redirectToLogin()">Log In</button>
                     </div>
                 </div>
 
                 <script>
                     document.addEventListener("DOMContentLoaded", function () {
-                        document.getElementById("popupModal").style.display = "flex";
+                        document.getElementById("requireModal").style.display = "flex";
                     });
 
                     function redirectToLogin() {
@@ -117,11 +122,14 @@ require_once "deletion_notice.php";
             <?php endif; ?>
 
             <!-- Success Modal -->
-            <div id="successModal" class="modal">
+            <div id="successModal" class="modal success">
                 <div class="modal-content">
-                    <h2>Success</h2>
+                    <div class="modal-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2>Success!</h2>
                     <p id="successMessage"></p>
-                    <button id="closeSuccessModal">OK</button>
+                    <button id="closeSuccessModal" class="btn-success">OK</button>
                 </div>
             </div>
 
@@ -254,18 +262,17 @@ require_once "deletion_notice.php";
         // Handle login modal
         document.addEventListener("DOMContentLoaded", function () {
             <?php if (!isset($_SESSION['user_id'])): ?>
-                document.getElementById("popupModal").style.display = "flex";
+                document.getElementById("requireModal").classList.add("show");
             <?php endif; ?>
 
-            // Check for success query parameter
             const urlParams = new URLSearchParams(window.location.search);
             const requestId = urlParams.get('request_id');
             if (requestId) {
                 const successModal = document.getElementById('successModal');
                 const successMessage = document.getElementById('successMessage');
                 successMessage.textContent = `Medicine request submitted successfully! Your Request ID is: ${requestId}`;
-                successModal.style.display = 'flex';
-                // Clear the query parameter from the URL
+                successModal.classList.add('show');
+                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
@@ -276,8 +283,8 @@ require_once "deletion_notice.php";
 
         // Close success modal
         document.getElementById('closeSuccessModal').addEventListener('click', function () {
-            document.getElementById('successModal').style.display = 'none';
-            window.location.href = 'request_medicine.php'; // Refresh the page
+            document.getElementById('successModal').classList.remove('show');
+            window.location.href = 'request_medicine.php'; // Refresh
         });
         
         document.getElementById('requestForm').addEventListener('submit', function (e) {

@@ -13,13 +13,6 @@ body::-webkit-scrollbar{
     background: linear-gradient(to bottom, #7D0000, #C00000, #D32F2F, #E57373);
 }
 
-.form-desc{
-    color: white;
-    text-align: center;
-    width: 70%;
-    padding: 20px;
-}
-
 .form-box {
     background: white;
     padding: 30px;
@@ -32,6 +25,13 @@ h1 {
     color: #7b0000;
     font-size: 24px;
     text-align: center;
+    border-bottom: rgb(0, 0, 0,0.3) 1px solid;
+}
+
+.form-desc{
+    text-align: center;
+    font-size: 14px;
+    padding: 15px 0;
 }
 
 .form-container{
@@ -189,46 +189,107 @@ input[type="file"]::file-selector-button:hover {
     background-color: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
+    backdrop-filter: blur(3px);
 }
 
-#popupModal .modal-content  {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 16px;
     text-align: center;
-    width: 20%;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .modal-content h2 {
     color: #d9534f;
 }
 
-.modal-content button {
-    margin-top: 10px;
-    padding: 8px 16px;
-    border: none;
-    background-color: #d9534f;
+/* Icon Circle */
+.modal-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
     color: white;
-    font-size: 16px;
-    border-radius: 5px;
+}
+
+/* Title */
+.modal-content h2 {
+    margin: 0 0 12px;
+    font-size: 1.7rem;
+    font-weight: 700;
+}
+
+/* Message */
+.modal-content p {
+    margin: 0 0 24px;
+    font-size: 1rem;
+    color: #444;
+    line-height: 1.5;
+}
+
+/* Buttons */
+.modal-content button {
+    min-width: 120px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.modal-content button:hover {
-    background-color: #c9302c;
+.modal.info .modal-icon {
+    background: linear-gradient(135deg, #1976D2, #42A5F5);
+    box-shadow: 0 6px 16px rgba(25, 118, 210, 0.3);
 }
 
+/* INFO MODAL (Login Required)   */
+.modal.info h2 {
+    color: #0d47a1;
+}
+
+.btn-primary {
+    background: #1976D2;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1565c0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(25, 118, 210, 0.3);
+}
 
 /* Success Modal */
-#successModal .modal-content{
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    max-width: 1900px;
-    width: 30%;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+.modal.success .modal-icon {
+    background: linear-gradient(135deg, #4CAF50, #66BB6A);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+}
+
+.modal.success h2 {
+    color: #2e7d32;
+}
+
+.btn-success {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #43a047;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
 }
 
 .error-message {
@@ -271,6 +332,7 @@ input[type="file"]::file-selector-button:hover {
     .form-box {
         width: 100%;
         padding: 20px;
+        border-radius: 0;
     }
 
     label{
@@ -319,7 +381,24 @@ input[type="file"]::file-selector-button:hover {
     }
 
     .modal-content {
-        width: 85% !important;
+        padding: 24px;
+        width: 88%;
+    }
+    .modal-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.9rem;
+    }
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+    .modal-content p {
+        font-size: 0.95rem;
+    }
+    .modal-content button {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
     }
 }
 
@@ -358,4 +437,9 @@ input[type="file"]::file-selector-button:hover {
     .form-box {
         width: 70%;
     }
+}
+
+/* Animations */
+.info .modal-content  {
+    animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) 200ms both;
 }

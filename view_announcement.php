@@ -71,8 +71,10 @@ $recentPosts = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
 
@@ -88,15 +90,14 @@ $recentPosts = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                 <li><a href="request_medicine.php" class="links">MEDICINE REQUEST</a></li>
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
 
-                <?php if (isset($_SESSION['user_id'])): ?>
-                <?php if ($_SESSION['role'] === 'user'): ?>
-                    <li>
+                <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
-                <?php endif; ?>
-                <?php else: ?>
+                <?php elseif (!isset($_SESSION['admin_id'])): ?>
                     <li><a href="login.php" class="login-button">LOG IN</a></li>
                 <?php endif; ?>
             </ul>
@@ -131,8 +132,8 @@ $recentPosts = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
 
                     <div class="main-post">
-                        <p class="date"><?= date('M d, h:i A', strtotime($announcement['created_at'])) ?></p>
                         <img src="images/uploads/announcement_images/<?= !empty($announcement['image']) ? htmlspecialchars($announcement['image']) : 'default_announcement.png' ?>" alt="Main Image">
+                        <p class="date"><?= date('M d, h:i A', strtotime($announcement['created_at'])) ?></p>
                         <h3><?= htmlspecialchars($announcement['title']) ?></h3>
                         <p class="content"><?= nl2br(htmlspecialchars($announcement['content'])) ?></p>
                     </div>

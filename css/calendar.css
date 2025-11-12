@@ -7,6 +7,13 @@ body::-webkit-scrollbar{
     margin-top: 80px;
     height: calc(100vh - 80px);
     overflow: hidden;
+    background: linear-gradient(
+        250deg,
+        #BE0404 65%,    
+        #960101 75%,
+        #BD0000 85%,
+        #800000 95%
+    );
 }
 
 .calendar-container {
@@ -21,7 +28,7 @@ body::-webkit-scrollbar{
     flex-direction: column;
     height: 100%;
     width: 30%;
-    background: linear-gradient(to bottom, #8B0000, #C00000);
+    background: transparent;
     padding: 30px;
     color: white;
     overflow: hidden;
@@ -130,15 +137,13 @@ body::-webkit-scrollbar{
 
 
 #calendar th {
-    flex: 1;
-    border: 1px solid #800000;
+    flex: 1;          
+    border: 1px solid #EEEEEE;
     vertical-align: middle;
-    color: #8B0000;
-    font-weight: normal;
     font-size: 18px;
     box-sizing: border-box;
     text-align: center;
-    padding: 0;
+    padding: 5px;
     overflow: hidden;
     white-space: nowrap;
 }
@@ -150,9 +155,7 @@ body::-webkit-scrollbar{
 
 
 #calendar td {
-    /* width: 14.28%;
-    height: 110px; */
-    border: 1px solid #800000;
+    border: 1px solid #EEEEEE;
     vertical-align: top;
     position: relative;
     padding: 5px;
@@ -165,20 +168,18 @@ body::-webkit-scrollbar{
     flex: 1;
 }
 
-
 #calendar td:hover {
     background-color: #ffe6e6;
 }
 
 #calendar td.selected-day {
-    background-color: rgba(139, 0, 0, 0.2);
+    background-color: rgba(128, 0, 0, 0.5);
 }
 
 #calendar td.selected-day .day-number {
-    color: #8B0000;
+    color: white;
     font-weight: bold;
 }
-
 
 .today {
     background-color: rgba(139, 0, 0, 0.1);
@@ -234,7 +235,8 @@ body::-webkit-scrollbar{
     justify-content: center;
     gap: 20px;
     padding: 17px;
-    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.1);
+    z-index: 2;
 }
 
 .month-navigation h2 {
@@ -246,21 +248,20 @@ body::-webkit-scrollbar{
 }
 
 .nav-btn {
-    width: 40px;
-    height: 40px;
-    border: 2px solid #8B0000;
-    background: white;
+    width: 35px;
+    height: 35px;
+    border: none;
+    background: #800000;
     border-radius: 50%;
     font-size: 20px;
-    color: #8B0000;
+    font-weight: bold;
+    color: #FFFFFF;
     cursor: pointer;
     transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
 }
 
 .nav-btn:hover {
-    background: #8B0000;
-    color: white;
-    transform: translateY(-1px);
+    background: #6a0101;
 }
 
 /* ============================= */
@@ -444,3 +445,17 @@ body::-webkit-scrollbar{
         height: 100%;
     }
 }
+
+/* Animations */
+#calendar {
+    animation: fadeInSlideDown 700ms ease both;
+}
+
+ .event-panel {
+    animation: fadeInSlideDown 1000ms ease both;
+}
+
+.event-card { animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both; animation-delay: 120ms;}
+.event-card:nth-child(2) { animation-delay: 180ms; }
+.event-card:nth-child(3) { animation-delay: 240ms; }
+.event-card:nth-child(4) { animation-delay: 300ms; }

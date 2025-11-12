@@ -48,8 +48,10 @@ $adminName = $admin ? $admin['first_name'] . ' ' . $admin['last_name'] : 'Admin'
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
 
@@ -66,15 +68,14 @@ $adminName = $admin ? $admin['first_name'] . ' ' . $admin['last_name'] : 'Admin'
                 <li><a href="request_medicine.php" class="links">MEDICINE REQUEST</a></li>
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
 
-                <?php if (isset($_SESSION['user_id'])): ?>
-                <?php if ($_SESSION['role'] === 'user'): ?>
-                    <li>
+                <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
-                <?php endif; ?>
-                <?php else: ?>
+                <?php elseif (!isset($_SESSION['admin_id'])): ?>
                     <li><a href="login.php" class="login-button">LOG IN</a></li>
                 <?php endif; ?>
             </ul>

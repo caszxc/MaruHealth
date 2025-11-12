@@ -35,7 +35,7 @@ try {
                             LEFT JOIN users u ON u.id = a.id 
                             WHERE status = 'active' 
                             ORDER BY created_at DESC 
-                            LIMIT 3"); // Fetch the latest 3 announcements
+                            LIMIT 4"); // Fetch the latest 3 announcements
     $stmt->execute();
     $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
@@ -68,6 +68,12 @@ try {
     die("Error fetching services: " . $e->getMessage());
 }
 
+$bannerImages = [
+    'images/about-banner.jpg',
+    'images/about-banner-2.jpg',
+    'images/calendar-banner.jpg',   // fallback / last one
+];
+
 ?>
 
 
@@ -82,6 +88,7 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <title>Home</title>
 </head>
 <body>
@@ -89,8 +96,10 @@ try {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
 
@@ -107,9 +116,10 @@ try {
                 <li><a href="about_us.php" class="links">ABOUT US</a></li>
 
                 <?php if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'user'): ?>
-                    <li>
+                    <li class="profile-nav">
                         <a href="profile.php" class="profile">
                             <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile Picture" class="nav-profile-pic">
+                            <span class="nav-profile-name"><?= htmlspecialchars($_SESSION['name'] ?? '') ?></span>
                         </a>                    
                     </li>
                 <?php elseif (!isset($_SESSION['admin_id'])): ?>
@@ -120,6 +130,12 @@ try {
     </nav>
 
     <div class="banner">
+        <!-- 1. SLIDES -->
+        <?php foreach ($bannerImages as $i => $img): ?>
+            <div class="slide" style="background-image:url('<?= htmlspecialchars($img) ?>');"
+                data-index="<?= $i ?>"></div>
+        <?php endforeach; ?>
+
         <div class="address-contact">
             <p><i class="fa fa-map-marker"></i> 3S Center Marulas, Market, Valenzuela, Metro Manila</p>
             <p><i class="fa fa-phone"></i> 0968 351 1100</p>
@@ -127,61 +143,66 @@ try {
         <div class="title-container">
             <div class="title">
                 <p data-aos="fade-in" data-aos-delay="150">WELCOME TO</p>
-                <br><h1 data-aos="fade-in" data-aos-delay="300">MARU-HEALTH</h1> 
+                <br><h1 data-aos="fade-in" data-aos-delay="300">MARUHEALTH</h1> 
                 <span class="tagline" data-aos="fade-in" data-aos-delay="600">Your Health, Our Priority Making Quality Care More Accessible in Barangay Marulas</span>
             </div>
-            <div class="announcement-event">
-                <div class="announcement" data-aos="fade-up" data-aos-delay="600">
-                    <h3>Latest Announcement</h3>
-                    <?php if (!empty($announcements)): ?>
-                        <?php 
-                            $latest = $announcements[0]; // Get only the first announcement 
-                        ?>
-                        <div class="latest-announcement-banner">
-                            <img src="images/uploads/announcement_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_announcement.png' ?>" 
-                                 alt="<?= htmlspecialchars($latest['title']) ?>" 
-                                 class="announcement-image">
-                            <div class="announcement-details">
-                                <p><strong><?= htmlspecialchars($latest['title']); ?></strong></p>
-                                <p><?= date("F j, Y", strtotime($latest['created_at'])); ?></p>
-                                <a href="view_announcement.php?id=<?= $latest['id'] ?>" class="read-more">Read More</a>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="latest-announcement-banner">
-                            <p style="text-align: center;">No current announcements.</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+            <div class="announcement-event-wrapper">
+                <!-- Navigation Buttons (visible only on small screens) -->
+                <button class="scroll-btn prev-btn" aria-label="Previous">&lt;</button>
+                <button class="scroll-btn next-btn" aria-label="Next">&gt;</button>
 
-                <div class="event" data-aos="fade-up" data-aos-delay="750">
-                    <h3 style="text-align: center; color: #800000;">Latest Event</h3>
-                    <?php if (!empty($events)): ?>
-                        <?php 
-                            $latest = $events[0]; // Get only the first event 
-                        ?>
-                        <div class="latest-event-banner">
-                            <img src="images/uploads/event_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_event.png' ?>" 
-                                 alt="<?= htmlspecialchars($latest['title']) ?>" 
-                                 class="event-image">
-                            <div class="event-details">
-                                <h3 style="color: #800000;"><?= htmlspecialchars($latest['title']); ?></h3>
-                                <p><?= date("F j, Y", strtotime($latest['event_date'])); ?></p>
-                                <p><?= date("g:i A", strtotime($latest['start'])); ?> - <?= date("g:i A", strtotime($latest['end'])); ?></p>
-                                <p><?= htmlspecialchars($latest['venue']); ?></p>
+                <div class="announcement-event">
+                    <!-- 1. Announcement -->
+                    <div class="announcement" data-aos="fade-up" data-aos-delay="600">
+                        <h3>Latest Announcement</h3>
+                        <?php if (!empty($announcements)): ?>
+                            <?php $latest = $announcements[0]; ?>
+                            <div class="latest-announcement-banner">
+                                <img src="images/uploads/announcement_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_announcement.png' ?>" 
+                                    alt="<?= htmlspecialchars($latest['title']) ?>" 
+                                    class="announcement-image">
+                                <div class="announcement-details">
+                                    <p><strong><?= htmlspecialchars($latest['title']); ?></strong></p>
+                                    <p><?= date("F j, Y", strtotime($latest['created_at'])); ?></p>
+                                    <a href="view_announcement.php?id=<?= $latest['id'] ?>" class="read-more">Read More</a>
+                                </div>
                             </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="latest-event-banner">
-                            <p style="text-align: center;">No current events.</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                        <?php else: ?>
+                            <div class="latest-announcement-banner">
+                                <p style="text-align: center;">No current announcements.</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
-                <div class="open-hours" data-aos="fade-up" data-aos-delay="900">
-                    <h3>Open Hours and Schedules</h3>
-                    <div class="open-hours-banner">
-                        <p style="text-align: center;">Barangay Marulas 3S Health Center is open Monday to Friday.<br><br>8:00AM - 6:00PM</p>
+                    <!-- Open Hours -->
+                    <div class="open-hours" data-aos="fade-up" data-aos-delay="900">
+                        <h3>Open Hours and Schedules</h3>
+                        <div class="open-hours-banner">
+                            <p style="text-align: center;">Barangay Marulas 3S Health Center is open Monday to Friday.<br><br>8:00AM - 6:00PM</p>
+                        </div>
+                    </div>
+
+                    <!-- Event -->
+                    <div class="event" data-aos="fade-up" data-aos-delay="750">
+                        <h3 style="text-align: center; color: #800000;">Latest Event</h3>
+                        <?php if (!empty($events)): ?>
+                            <?php $latest = $events[0]; ?>
+                            <div class="latest-event-banner">
+                                <img src="images/uploads/event_images/<?= !empty($latest['image']) ? htmlspecialchars($latest['image']) : 'default_event.png' ?>" 
+                                    alt="<?= htmlspecialchars($latest['title']) ?>" 
+                                    class="event-image">
+                                <div class="event-details">
+                                    <h3 style="color: #800000;"><?= htmlspecialchars($latest['title']); ?></h3>
+                                    <p><?= date("F j, Y", strtotime($latest['event_date'])); ?></p>
+                                    <p><?= date("g:i A", strtotime($latest['start'])); ?> - <?= date("g:i A", strtotime($latest['end'])); ?></p>
+                                    <p><?= htmlspecialchars($latest['venue']); ?></p>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="latest-event-banner">
+                                <p style="text-align: center;">No current events.</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -192,8 +213,11 @@ try {
         <h2>Services in Marulas 3S</h2>
         <div class="card-container">
             <?php if (!empty($services)): ?>
-                <?php foreach ($services as $service): ?>
-                    <div class="service-card">
+                <?php foreach ($services as $index => $service): ?>
+                    <div class="service-card" 
+                        data-aos="fade-up" 
+                        data-aos-delay="<?= 100 + ($index * 100) ?>" 
+                        data-aos-duration="700">
                         <img src="<?= htmlspecialchars($service['icon_path']) ?>" alt="<?= htmlspecialchars($service['name']) ?>">
                         <h3><?= htmlspecialchars($service['name']) ?></h3>
                         <p><?= htmlspecialchars($service['intro']) ?></p>
@@ -236,7 +260,7 @@ try {
 
 
     <!-- Events Section -->
-    <section class="events">
+    <section class="events" data-aos="fade-in">
         <h2>Upcoming Events</h2>
         <div class="events-container">
             <?php if (empty($events)): ?>
@@ -268,31 +292,12 @@ try {
             <div class="footer-logo-container">
                 <div class="footer-logo-section">
                     <img src="images/3s logo.png" alt="3S Logo" class="footer-logo">
-                    <h3>Maru-Health<br>Barangay Marulas<br>3S Health Station</h3>
+                    <h3>MaruHealth<br>Barangay Marulas<br>3S Health Station</h3>
                 </div>
                 <div class="footer-text">
                     <p><i class="fa fa-map-marker"></i> 3S Center Marulas, Market, Valenzuela, Metro Manila</p>
                     <p><i class="fa fa-phone"></i> 0968 351 1100</p>
                 </div>
-            </div>
-
-
-            <div class="footer-links">
-                <h4>ABOUT US</h4>
-                <ul>
-                    <li><a href="#">Mission and Vision</a></li>
-                    <li><a href="#">About 3S Health Center</a></li>
-                    <li><a href="#">PhilHealth Support for 3S Health Centers</a></li>
-                </ul>
-            </div>
-            <div class="footer-links">
-                <h4>OUR SERVICES</h4>
-                <ul>
-                    <li><a href="#">Check Up</a></li>
-                    <li><a href="#">Vaccination</a></li>
-                    <li><a href="#">Family Planning</a></li>
-                    <li><a href="#">Dental Care</a></li>
-                </ul>
             </div>
         </div>
 
@@ -307,6 +312,80 @@ try {
 
 
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    <script>
+    /* ----------  BANNER SLIDER  ---------- */
+    document.addEventListener('DOMContentLoaded', () => {
+        const slides   = document.querySelectorAll('.banner .slide');
+        const total    = slides.length;
+        let   current  = 0;
+
+        if (total <= 1) return;               // nothing to slide
+
+        const fadeNext = () => {
+            // hide current
+            slides[current].style.opacity = '0';
+
+            // next index
+            current = (current + 1) % total;
+
+            // show next
+            slides[current].style.opacity = '1';
+        };
+
+        // start the loop
+        let timer = setInterval(fadeNext, 7000);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.querySelector('.announcement-event');
+        const prevBtn   = document.querySelector('.prev-btn');
+        const nextBtn   = document.querySelector('.next-btn');
+
+        if (!container || !prevBtn || !nextBtn) return;
+
+        const scrollAmount = container.clientWidth * 0.25;   // same as before
+
+        /* ---------- BUTTONS ---------- */
+        nextBtn.addEventListener('click', () => {
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+
+        prevBtn.addEventListener('click', () => {
+            container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+
+        /* ---------- DISABLE BUTTONS AT ENDS ---------- */
+        const updateButtons = () => {
+            const atStart = container.scrollLeft <= 10;
+            const atEnd   = container.scrollLeft >= (container.scrollWidth - container.clientWidth - 10);
+
+            prevBtn.style.opacity = atStart ? '0.3' : '1';
+            prevBtn.style.pointerEvents = atStart ? 'none' : 'auto';
+
+            nextBtn.style.opacity = atEnd ? '0.3' : '1';
+            nextBtn.style.pointerEvents = atEnd ? 'none' : 'auto';
+        };
+        container.addEventListener('scroll', updateButtons);
+
+        /* ---------- START WITH EVENT IN THE CENTER (mobile only) ---------- */
+        const startWithEventCentered = () => {
+            if (window.innerWidth > 600) return;                 // only on mobile
+            const eventCard = container.children[1];            // 2nd child = .event
+            if (!eventCard) return;
+
+            const cardLeft   = eventCard.offsetLeft;            // distance from left edge of container
+            const cardWidth  = eventCard.offsetWidth;
+            const viewWidth  = container.clientWidth;
+
+            const targetScroll = cardLeft - (viewWidth - cardWidth) / 2;   // center it
+            container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+        };
+
+        // Run after a tiny delay so layout is ready
+        setTimeout(startWithEventCentered, 100);
+        window.addEventListener('resize', startWithEventCentered);
+    });
+    </script>
     <script>
         // Select the hamburger toggle and navigation links container
         const menuToggle = document.getElementById('menu-toggle');
@@ -341,18 +420,21 @@ try {
 
     <script>
         AOS.init({
-            duration: 1000, // duration of animation in ms
-            once: true      // whether animation should happen only once
+            duration: 800,          // Faster, snappier
+            easing: 'ease-out-cubic',
+            once: true,             // Animate only once
+            mirror: false,
+            offset: 120,            // Account for fixed nav (80px) + padding
+            anchorPlacement: 'top-bottom',
+
+            // Mobile: lighter animation
+            // (AOS doesn't support media queries natively, so we adjust globally)
+            // We'll handle mobile via CSS media query below
         });
 
-        // Smooth Scroll to Section
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
+        // Re-init AOS on window resize (for responsive cards)
+        window.addEventListener('resize', () => {
+            AOS.refresh();
         });
     </script>
 

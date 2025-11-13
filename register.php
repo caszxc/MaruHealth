@@ -169,10 +169,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
-            <div>
-                <h1>MaruHealth</h1>
-                <p>Barangay Marulas 3S Health Station</p>
-            </div>
+            <h1>
+                <span class="maru-health">MaruHealth</span>
+                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+            </h1>
         </div>
     </nav>
     <div class="register-container">
@@ -297,7 +297,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <label for="file-upload" class="custom-file-upload">
                                     <i class="fas fa-cloud-upload-alt"></i> Add File
                                 </label>
-                                <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/png" required />
+                                <input id="file-upload" type="file" name="validID_front" onchange="updateFileName()" accept="image/jpeg,image/jpeg,image/png" required />
                                 <span id="file-name">No file chosen</span>
                             </div>
                             <small class="field-hint">Max file size: 5MB. Accepted formats: JPEG, PNG</small>

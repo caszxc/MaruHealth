@@ -30,19 +30,6 @@ $totalActiveUsers    = $totalActiveUsersStmt->fetchColumn();
 $totalAdminsStmt = $conn->query("SELECT COUNT(*) FROM admin_staff");
 $totalAdmins    = $totalAdminsStmt->fetchColumn();
 
-$totalActiveAnnouncementsStmt = $conn->query("SELECT COUNT(*) FROM announcements WHERE status = 'active'");
-$totalActiveAnnouncements    = $totalActiveAnnouncementsStmt->fetchColumn();
-
-$today = date('Y-m-d');
-$upcomingEventsStmt = $conn->prepare("
-    SELECT COUNT(*) 
-    FROM events 
-    WHERE event_date >= :today
-");
-$upcomingEventsStmt->execute([':today' => $today]);
-$upcomingEvents = $upcomingEventsStmt->fetchColumn();
-
-
 $activityStmt = $conn->prepare("
     SELECT al.*, a.full_name AS admin_name
     FROM activity_logs al
@@ -105,8 +92,10 @@ $emailLogs = $conn->query("
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -143,14 +132,13 @@ $emailLogs = $conn->query("
                 <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
-            <?php endif; ?>
-            
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
+            <?php endif; ?>
             
+            <?php if ($adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
@@ -167,7 +155,7 @@ $emailLogs = $conn->query("
             </div>
             <?php endif; ?>
 
-            <?php if ($adminRole == 'staff'): ?>
+            <?php if ($adminRole == 'health_staff'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
                 <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
@@ -235,24 +223,6 @@ $emailLogs = $conn->query("
                             </div>
                             <div class="stat-value"><?= number_format($totalAdmins) ?></div>
                         </div>
-
-                        <!-- 3. Active Announcements -->
-                        <div class="stat-item">
-                            <div class="stat-label">
-                                <img src="images/icons/dashboard/active_announcement_icon.png" alt="">
-                                <span>Active Announcements</span>
-                            </div>
-                            <div class="stat-value"><?= number_format($totalActiveAnnouncements) ?></div>
-                        </div>
-
-                        <!-- 4. Upcoming Events -->
-                        <div class="stat-item">
-                            <div class="stat-label">
-                                <img src="images/icons/dashboard/upcoming_events_icon.png" alt="">
-                                <span>Upcoming Events</span>
-                            </div>
-                            <div class="stat-value"><?= number_format($upcomingEvents) ?></div>
-                        </div>
                     </div>
                 </section>
 
@@ -260,27 +230,9 @@ $emailLogs = $conn->query("
                     <h3>Quick Actions</h3>
                     <div class="actions-container">
                         <!-- Create Admin Account -->
-                        <a href="manage_staff.php?action=create" class="action-btn admin-btn">
+                        <a href="manage_staff.php" class="action-btn admin-btn">
                             <img src="images/icons/admin_icon.png" alt="Create Admin">
                             <span>Create Admin Account</span>
-                        </a>
-
-                        <!-- Create Announcement -->
-                        <a href="announcements.php?action=create" class="action-btn announce-btn">
-                            <img src="images/icons/announcement_icon.png" alt="Announcement">
-                            <span>Create Announcement</span>
-                        </a>
-
-                        <!-- Add Event -->
-                        <a href="edit_calendar.php?action=add" class="action-btn event-btn">
-                            <img src="images/icons/calendar_icon.png" alt="Add Event">
-                            <span>Add Event</span>
-                        </a>
-
-                        <!-- Add New Service -->
-                        <a href="service_management.php?action=add" class="action-btn service-btn">
-                            <img src="images/icons/service_icon.png" alt="Add Service">
-                            <span>Add New Service</span>
                         </a>
                     </div>
                 </section>

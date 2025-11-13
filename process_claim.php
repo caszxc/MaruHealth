@@ -4,7 +4,7 @@ ob_start();
 session_start();
 require_once "config.php";
 
-// Ensure only logged-in health staff
+// Only health staff can claim
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     ob_end_clean();
     header("Location: admin_dashboard.php");
@@ -20,8 +20,8 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 $requestId = intval($_POST['request_id'] ?? 0);
-$action = $_POST['action'] ?? '';
-$adminId = $_SESSION['admin_id'];
+$action    = $_POST['action'] ?? '';
+$adminId   = $_SESSION['admin_id'];
 
 if ($requestId <= 0 || $action !== 'claim') {
     ob_end_clean();
@@ -32,7 +32,6 @@ if ($requestId <= 0 || $action !== 'claim') {
 try {
     $conn->beginTransaction();
 
-    // Validate request exists and is in 'to be claimed'
     $checkStmt = $conn->prepare("
         SELECT mr.id, mr.request_id, mr.full_name 
         FROM medicine_requests mr 
@@ -47,7 +46,6 @@ try {
 
     $claimedDate = date('Y-m-d H:i:s');
 
-    // Update request status
     $updateReq = $conn->prepare("
         UPDATE medicine_requests 
         SET request_status = 'claimed', claimed_date = :claimed_date 
@@ -58,7 +56,6 @@ try {
         ':id' => $requestId
     ]);
 
-    // Update distributions
     $updateDist = $conn->prepare("
         UPDATE medicine_distributions 
         SET status = 'claimed' 
@@ -66,7 +63,13 @@ try {
     ");
     $updateDist->execute([':request_id' => $requestId]);
 
-    // === LOG mark_request_claimed IN activity_logs ===
+    $updateMeds = $conn->prepare("
+        UPDATE requested_medicines 
+        SET status = 'claimed' 
+        WHERE request_id = :request_id
+    ");
+    $updateMeds->execute([':request_id' => $requestId]);
+
     $logDetails = "Marked medicine request #{$request['request_id']} as claimed by {$request['full_name']} on " . date('m/d/Y h:i A');
 
     $logStmt = $conn->prepare("
@@ -74,15 +77,16 @@ try {
         VALUES (:admin_id, 'mark_request_claimed', :details, :target_id)
     ");
     $logStmt->execute([
-        ':admin_id' => $adminId,
-        ':details' => $logDetails,
-        ':target_id' => $requestId
+        ':admin_id'   => $adminId,
+        ':details'    => $logDetails,
+        ':target_id'  => $requestId
     ]);
 
     $conn->commit();
 
     $_SESSION['claim_message'] = "Medicine request #{$request['request_id']} marked as \"claimed\" successfully!";
     $_SESSION['claim_status']  = 'success';
+
     ob_end_clean();
     echo json_encode(['success' => 'Request marked as claimed']);
     exit();
@@ -90,9 +94,10 @@ try {
 } catch (Exception $e) {
     if ($conn->inTransaction()) $conn->rollBack();
     error_log("Claim error: " . $e->getMessage());
-    $_SESSION['claim_message'] = "Error marking request as claimed: " . 
+
+    $_SESSION['claim_message'] = "Error marking request as claimed: " . $e->getMessage();
     $_SESSION['claim_status']  = 'error';
-    $e->getMessage();
+
     ob_end_clean();
     echo json_encode(['error' => 'Error: ' . $e->getMessage()]);
     exit();

@@ -50,13 +50,13 @@ $expiryQuery = "
     JOIN medicine_batches mb ON mc.id = mb.catalog_id
     WHERE (mb.expiration_date <= :expiryThreshold
        OR mb.expiry_status IN ('Expiring within a month', 'Expiring within a week', 'Expired'))
-      AND mb.stocks >= 0
+      AND mb.stocks >= 0 AND mb.is_disposed = '0'
 ";
 
 // Apply status filter
 if ($filter !== 'all') {
     if ($filter === 'expired') {
-        $expiryQuery .= " AND mb.expiry_status = 'Expired'";
+        $expiryQuery .= " AND mb.expiry_status = 'Expired' AND mb.is_disposed = '0'";
     } elseif ($filter === 'week') {
         $expiryQuery .= " AND mb.expiry_status = 'Expiring within a week'";
     } elseif ($filter === 'month') {
@@ -104,8 +104,10 @@ $expiringMedicines = $expiryStmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -153,7 +155,7 @@ $expiringMedicines = $expiryStmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="content">
         <div class="title-con">
             <div class="title">
-                <a href="medicine_management.php" class="back-button">Back</a>
+                <a href="medicine_management.php" class="back-button">← Back</a>
                 <h2>Expiring Medicines (Within 60 Days)</h2>
             </div>
         </div>

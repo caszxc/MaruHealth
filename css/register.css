@@ -34,13 +34,23 @@ nav {
     align-items: center;
 }
 
-.logo-container div h1{
-    color: white;
+.logo-container h1 {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    color: #ffffff; 
 }
 
-.logo-container div p {
-    color: white;
-    font-size: 11px;
+.logo-container .maru-health {
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 1.1; 
+}
+
+.logo-container .barangay-title {
+    font-size: 11px; 
+    font-weight: 400;
+    line-height: 8px; 
 }
 
 .register-container {

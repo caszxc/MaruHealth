@@ -112,18 +112,6 @@
     color: #C00000; /* Dark red text */
 }
 
-.dashboard-content {
-    margin-top: 80px;
-    margin-left: 250px;
-    padding: 20px;
-    width: calc(100% - 250px);
-    height: calc(100vh - 80px);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow: hidden;
-}
-
 /* ==============================================================
    DASHBOARD – CLEAN, MODERN, VISUALLY APPEALING THEME
    ============================================================== */
@@ -137,7 +125,7 @@
     height: calc(100vh - 80px);
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 10px;
     overflow: hidden;
     background: #f4f6f9; /* Soft gray-blue background */
 }

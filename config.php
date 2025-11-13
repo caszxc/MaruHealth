@@ -321,7 +321,7 @@ try {
         medicine_name VARCHAR(255) NOT NULL,
         dosage VARCHAR(100),
         quantity INT,
-        status ENUM('requested', 'approved', 'declined') NOT NULL DEFAULT 'requested',
+        status ENUM('requested', 'approved', 'declined', 'cancelled', 'claimed') NOT NULL DEFAULT 'requested',
         FOREIGN KEY (request_id) REFERENCES medicine_requests(id) ON DELETE CASCADE
     )";
     $conn->exec($sql);
@@ -406,7 +406,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS consultations (
         id INT AUTO_INCREMENT PRIMARY KEY,
         patient_id INT NOT NULL,
-        consultation_type ENUM('General Check Up', 'Vaccination', 'Prenatal', 'Dentistry', 'Family Planning') NOT NULL,
+        consultation_type VARCHAR(50) NOT NULL,
         consultation_date DATE NOT NULL,
         reason_for_consultation TEXT NOT NULL,
         blood_pressure VARCHAR(20),

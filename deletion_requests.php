@@ -7,7 +7,7 @@ require_once "email_function.php";
 // ---------------------------------------------------------------------
 // 1. AUTH & ADMIN INFO
 // ---------------------------------------------------------------------
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -267,7 +267,12 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav>
         <div class="logo-container">
             <img src="images/3s logo.png">
-            <div><h1>Maru-Health</h1><p>Barangay Marulas 3S Health Station</p></div>
+            <div>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
+            </div>
         </div>
     </nav>
 
@@ -280,22 +285,67 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
         <div class="menu">
-            <?php $current_page = basename($_SERVER['PHP_SELF']); $dash = $adminRole==='super_admin'?'superadmin_dashboard.php':'admin_dashboard.php'; ?>
+            <?php 
+                $current_page = basename($_SERVER['PHP_SELF']); 
+                $dashboard_url = '';
+                if ($adminRole === 'super_admin') {
+                    $dashboard_url = 'superadmin_dashboard.php';
+                } elseif ($adminRole === 'admin') {
+                    $dashboard_url = 'admin_dashboard.php';
+                } elseif ($adminRole === 'health_staff') {
+                    $dashboard_url = 'healthstaff_dashboard.php';
+                }
+            ?>
             <p class="menu-header">ANALYTICS</p>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/dashboard_icon.png"><a href="<?=htmlspecialchars($dash)?>" class="<?=$current_page==$dash?'active':''?>">Dashboard</a></div>
-
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/dashboard_icon.png" alt="">
+                <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
+            </div>
+            
             <p class="menu-header">BASE</p>
-            <?php if($adminRole=='super_admin'):?>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/admin_icon.png"><a href="manage_staff.php" class="<?=$current_page=='manage_staff.php'?'active':''?>">Admin Account Management</a></div>
-            <?php endif;?>
-            <?php if(in_array($adminRole,['super_admin','admin'])):?>
-            <div class="menu-link-active"><img class="menu-icon" src="images/icons/account_approval_icon_active.png"><a href="account_approval.php" class="<?=in_array($current_page,['account_approval.php','approvedAcc_requests.php','deletion_requests.php'])?'active':''?>">User Account Management</a></div>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/announcement_icon.png"><a href="announcements.php" class="<?=$current_page=='announcements.php'?'active':''?>">Announcement</a></div>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/calendar_icon.png"><a href="edit_calendar.php" class="<?=$current_page=='edit_calendar.php'?'active':''?>">Calendar</a></div>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/service_icon.png"><a href="service_management.php" class="<?=$current_page=='service_management.php'?'active':''?>">Service Management</a></div>
-            <?php endif;?>
+            <?php if ($adminRole == 'super_admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
+            </div>
+            <div class="menu-link-active">
+                <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
+                <a href="account_requests.php" class="<?=in_array($current_page,['account_approval.php','approvedAcc_requests.php','deletion_requests.php'])?'active':''?>">User Account Management</a>
+            </div>
+            <?php endif; ?>
+            <?php if ($adminRole == 'admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
+                <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
+                <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/service_icon.png" alt="">
+                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
+            </div>
+            <?php endif; ?>
+            <?php if ($adminRole == 'health_staff'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
+                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/med_icon.png" alt="">
+                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
+                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
+            </div>
+            <?php endif; ?>
             <p class="menu-header">OTHERS</p>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/logout_icon.png"><a href="logout.php" class="logout-button">Log Out</a></div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
+                <a href="logout.php" class="logout-button">Log Out</a>
+            </div>
         </div>
     </div>
 

@@ -899,62 +899,24 @@ try {
             <div class="modal-title-bar">
                 <h2>Request Medicine Details</h2>
             </div>
+            <div class="request-header-summary">
+                <div class="summary-item">
+                    <label>Request ID</label>
+                    <span id="requestId" class="highlight-id"></span>
+                </div>
+                <div class="summary-item">
+                    <label>Request Status</label>
+                    <span id="requestStatus" class="status-badge-large"></span>
+                </div>
+            </div>
             <div class="form-scroll">
                 <div class="modal-container">
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Request ID</label>
-                            <span id="requestId"></span>
-                        </div>
-                    </div>
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Request Status</label>
-                            <span id="requestStatus"></span>
-                        </div>
-                    </div>
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Patient's Full Name</label>
-                            <span id="req_fullName"></span>
-                        </div>
-                    </div>
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Sex</label>
-                            <span id="req_sex"></span>
-                        </div>
-                        <div class="group-col">
-                            <label>Birthdate</label>
-                            <span id="req_birthdate"></span>
-                        </div>
-                        <div class="group-col">
-                            <label>Contact Number</label>
-                            <span id="req_phone"></span>
-                        </div>
-                    </div>
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Address</label>
-                            <span id="req_address"></span>
-                        </div>
-                    </div>
-                    <div id="medicine-group">
+                    
+                    <div class="medicine-section" id="medicine-group">
                         <label>Requested Medicines</label>
                     </div>
-                    <div class="group-row">
-                        <div class="group-col">
-                            <label>Reason for Request</label>
-                            <span id="req_reason"></span>
-                        </div>
-                    </div>
-                    <div class="prescription-preview">
-                        <div class="group-col">
-                            <label>Prescription</label>
-                            <img id="prescriptionImg" src="" alt="Prescription Image">
-                        </div>
-                    </div>
-                    <div id="claim-info" style="display: none;">
+
+                    <div class="claim-section" id="claim-info" style="display: none;">
                         <div class="claim-container">
                             <div>
                                 <label>Claim Information</label>
@@ -966,11 +928,53 @@ try {
                             </div>
                         </div>
                     </div>
-                    <div id="note-info" style="display: none;">
+
+                    <div class="note-section" id="note-info" style="display: none;">
                         <div class="group-row">
                             <div class="group-col">
                                 <label>Note</label>
                                 <span id="req_note"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="req-details-section">
+                        <div class="group-row">
+                            <div class="group-col">
+                                <label>Patient's Full Name</label>
+                                <span id="req_fullName"></span>
+                            </div>
+                        </div>
+                        <div class="group-row">
+                            <div class="group-col">
+                                <label>Sex</label>
+                                <span id="req_sex"></span>
+                            </div>
+                            <div class="group-col">
+                                <label>Birthdate</label>
+                                <span id="req_birthdate"></span>
+                            </div>
+                            <div class="group-col">
+                                <label>Contact Number</label>
+                                <span id="req_phone"></span>
+                            </div>
+                        </div>
+                        <div class="group-row">
+                            <div class="group-col">
+                                <label>Address</label>
+                                <span id="req_address"></span>
+                            </div>
+                        </div>
+                        <div class="group-row">
+                            <div class="group-col">
+                                <label>Reason for Request</label>
+                                <span id="req_reason"></span>
+                            </div>
+                        </div>
+                        <div class="prescription-preview">
+                            <div class="group-col">
+                                <label>Prescription</label>
+                                <img id="prescriptionImg" src="" alt="Prescription Image">
                             </div>
                         </div>
                     </div>
@@ -995,6 +999,18 @@ try {
         </div>
     </div>
 
+    <!-- Cancel Request SUCCESS Modal -->
+    <div id="cancelRequestSuccessModal" class="modal success">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+            <h2>Cancellation Successful</h2>
+            <p>Your medicine request has been cancelled.</p>
+            <div class="modal-footer">
+                <button class="btn-success" id="cancelRequestSuccessOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cancel Dependent Confirmation Modal -->
     <div id="cancelDependentModal" class="modal confirmation">
         <div class="modal-content">
@@ -1004,6 +1020,18 @@ try {
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeCancelDependentModal()">Cancel</button>
                 <button class="btn-confirm" id="confirmCancelDependentBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Pending Dependent SUCCESS Modal -->
+    <div id="cancelPendingDepSuccessModal" class="modal success">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
+            <h2>Cancellation Successful</h2>
+            <p>The pending dependent account has been cancelled.</p>
+            <div class="modal-footer">
+                <button class="btn-success" id="cancelPendingDepSuccessOkBtn">OK</button>
             </div>
         </div>
     </div>
@@ -1554,18 +1582,55 @@ try {
 
                     // loop through medicines and append rows into the container
                     data.medicines.forEach(med => {
+                        const approvedQty = med.approved_quantity !== null ? med.approved_quantity : '—';
+                        const requestedQty = med.requested_quantity;
+                        const isDifferent = med.quantity_diff;
+
+                        let quantityDisplay = `<span>${requestedQty}</span>`;
+                        if (isDifferent) {
+                            quantityDisplay = `
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="text-decoration: line-through; color: #888; font-size: 0.9em;">
+                                        Requested: ${requestedQty}
+                                    </span>
+                                    <span style="color: #d32f2f; font-weight: 600;">
+                                        Approved: ${approvedQty}
+                                    </span>
+                                </div>`;
+                        } else if (med.approved_quantity !== null) {
+                            quantityDisplay = `<span style="color: #2e7d32;">${approvedQty}</span>`;
+                        }
+
                         const row = document.createElement('div');
                         row.classList.add('row', 'medicine-entry');
                         row.innerHTML = `
                             <div><label>Medicine Name</label><span>${med.medicine_name}</span></div>
-                            <div><label>Dosage</label><span>${med.dosage || 'N/A'}</span></div>
-                            <div><label>Quantity</label><span>${med.quantity}</span></div>
-                            <div><label>Status</label><span class="status-badge status-${med.status}">
-                                ${med.status.charAt(0).toUpperCase() + med.status.slice(1)}
-                            </span></div>
+                            <div><label>Dosage</label><span>${med.dosage}</span></div>
+                            <div><label>Quantity</label>${quantityDisplay}</div>
+                            <div><label>Status</label>
+                                <span class="status-badge status-${med.status}">
+                                    ${med.status.charAt(0).toUpperCase() + med.status.slice(1)}
+                                </span>
+                            </div>
                         `;
                         container.appendChild(row);
                     });
+
+                    const statusSpan = document.getElementById('requestStatus');
+                    const statusText = data.request_status ? data.request_status.toLowerCase() : 'pending';
+
+                    statusSpan.textContent = statusText.charAt(0).toUpperCase() + statusText.slice(1);
+
+                    // Apply correct background color
+                    const statusColors = {
+                        'claimed': '#28a745',
+                        'pending': '#ffc107',
+                        'declined': '#dc3545',
+                        'to be claimed': '#17a2b8',
+                        'unclaimed': '#6f42c1',
+                        'cancelled': '#6c757d'
+                    };
+                    statusSpan.style.backgroundColor = statusColors[statusText] || '#ccc';
 
                     medicineGroup.appendChild(container);
 
@@ -1613,24 +1678,34 @@ try {
             hideModal('cancelRequestModal'); 
         }
 
-        function cancelRequest(requestId) {
-            fetch(`cancel_request.php?id=${requestId}`, {
-                method: "POST"
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("Request cancelled successfully.");
-                    location.reload(); // Reload to reflect updated request status
-                } else {
-                    alert("Failed to cancel request: " + data.message);
-                }
-            })
-            .catch(error => {
-                alert("An error occurred while cancelling the request.");
-                console.error(error);
-            });
-        }
+        document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+            const requestId = this.dataset.id;
+            if (!requestId) return;
+
+            fetch(`cancel_request.php?id=${requestId}`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    closeCancelRequestModal();               // close confirmation
+
+                    if (data.success) {
+                        // ---- SHOW SUCCESS MODAL ----
+                        const successModal = document.getElementById('cancelRequestSuccessModal');
+                        successModal.classList.add('show');
+
+                        // OK → reload page to refresh the request list
+                        document.getElementById('cancelRequestSuccessOkBtn').onclick = () => {
+                            successModal.classList.remove('show');
+                            location.reload();
+                        };
+                    } else {
+                        alert('Failed to cancel: ' + data.message);
+                    }
+                })
+                .catch(() => {
+                    closeCancelRequestModal();
+                    alert('Network error – try again later.');
+                });
+        });
 
         document.getElementById("confirmCancelBtn")?.addEventListener("click", function() {
             const requestId = this.getAttribute('data-id');
@@ -1679,18 +1754,24 @@ try {
             fetch(`cancel_pending_dependent.php?id=${dependentId}`, {
                 method: "POST"
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
+                closeCancelDependentModal(); 
                 if (data.success) {
-                    alert("Pending dependent cancelled successfully.");
-                    location.reload(); // Reload to reflect updated dependents list
+                    const successModal = document.getElementById('cancelPendingDepSuccessModal');
+                    successModal.classList.add('show');
+
+                    document.getElementById('cancelPendingDepSuccessOkBtn').onclick = () => {
+                        successModal.classList.remove('show');
+                        location.reload();
+                    };
                 } else {
-                    alert("Failed to cancel pending dependent: " + data.message);
+                    alert('Failed to cancel: ' + data.message);
                 }
             })
-            .catch(error => {
-                alert("An error occurred while cancelling the pending dependent.");
-                console.error(error);
+            .catch(() => {
+                closeCancelDependentModal();
+                alert('Network error – try again later.');
             });
         }
 
@@ -1719,11 +1800,13 @@ try {
         let pendingSwitchId = null;
 
         function openSwitchAccountConfirmModal(id) {
+            pendingSwitchId = id;
             document.getElementById('confirmSwitchAccountBtn').dataset.id = id;
             showModal('switchAccountConfirmModal');
         }
 
         function closeSwitchAccountConfirmModal() {
+            pendingSwitchId = null;
             hideModal('switchAccountConfirmModal'); 
         }
 

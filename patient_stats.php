@@ -90,23 +90,6 @@ function countArchivedPatients($conn, $start = '', $end = '') {
     return (int)$stmt->fetchColumn();
 }
 
-/** Families */
-function countFamilies($conn) {
-    return (int)$conn->query("SELECT COUNT(*) FROM families")->fetchColumn();
-}
-
-/** Consultations */
-function countConsultations($conn, $start = '', $end = '') {
-    $sql = "SELECT COUNT(*) FROM consultations";
-    $params = [];
-    if ($start && $end) {
-        $sql .= " WHERE consultation_date BETWEEN :s AND :e";
-        $params = [':s' => $start, ':e' => $end];
-    }
-    $stmt = $conn->prepare($sql);
-    $stmt->execute($params);
-    return (int)$stmt->fetchColumn();
-}
 
 // Function to get gender distribution
 function getGenderDistribution($conn, $startDate = '', $endDate = '') {
@@ -203,39 +186,6 @@ function getAgeDistribution($conn, $startDate = '', $endDate = '') {
     }
 }
 
-// Function to get monthly consultation data
-function getMonthlyConsultations($conn, $year = null) {
-    if ($year === null) {
-        $year = date('Y');
-    }
-    
-    try {
-        $sql = "SELECT 
-                    MONTH(consultation_date) as month, 
-                    COUNT(*) as count 
-                FROM consultations 
-                WHERE YEAR(consultation_date) = :year 
-                GROUP BY MONTH(consultation_date)
-                ORDER BY month";
-                
-        $stmt = $conn->prepare($sql);
-        $stmt->bindValue(':year', $year);
-        $stmt->execute();
-        
-        // Initialize all months with zero counts
-        $monthlyData = array_fill(1, 12, 0);
-        
-        // Fill in actual data
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $monthlyData[$row['month']] = (int)$row['count'];
-        }
-        
-        return $monthlyData;
-    } catch (PDOException $e) {
-        return array_fill(1, 12, 0);
-    }
-}
-
 // Function to get patient list for table
 function getPatientList($conn, $startDate = '', $endDate = '', $limit = 10, $offset = 0) {
     try {
@@ -268,13 +218,9 @@ function getPatientList($conn, $startDate = '', $endDate = '', $limit = 10, $off
 $totalPatients      = countTotalPatients($conn, $startDate, $endDate);
 $activePatients     = countActivePatients($conn, $startDate, $endDate);
 $archivedPatients   = countArchivedPatients($conn, $startDate, $endDate);
-$totalFamilies      = countFamilies($conn);
-$totalConsultations = countConsultations($conn, $startDate, $endDate);
 $genderDistribution = getGenderDistribution($conn, $startDate, $endDate);
 $bmiDistribution = getBmiDistribution($conn, $startDate, $endDate);
 $ageDistribution = getAgeDistribution($conn, $startDate, $endDate);
-$monthlyConsultations = getMonthlyConsultations($conn);
-$totalFamilies = countFamilies($conn);
 $archivedPatients = countArchivedPatients($conn, $startDate, $endDate);
 
 // Process gender distribution for chart
@@ -374,8 +320,10 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -519,17 +467,7 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                             <h3>Archived Patients</h3>
                             <div class="number"><?= number_format($archivedPatients) ?></div>
                         </div>
-
-                        <div class="summary-tile">
-                            <h3>Total Families</h3>
-                            <div class="number"><?= number_format($totalFamilies) ?></div>
-                        </div>
-
-                        <div class="summary-tile">
-                            <h3>Total Consultations</h3>
-                            <div class="number"><?= number_format($totalConsultations) ?></div>
-                        </div>
-                        </div>
+                    </div>
                     
                     <div class="chart-row">
                         <div class="chart-container">
@@ -546,10 +484,6 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                         <div class="chart-container">
                             <h3>BMI Status Distribution</h3>
                             <canvas id="bmiChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <h3>Monthly Consultations (<?= date('Y') ?>)</h3>
-                            <canvas id="consultationChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -703,53 +637,6 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                                         const percentage = Math.round((context.raw / total) * 100);
                                         return `${label}: ${value} (${percentage}%)`;
                                     }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Monthly consultations chart
-            const consultationCtx = document.getElementById('consultationChart');
-            if (consultationCtx) {
-                const consultationChart = new Chart(consultationCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [{
-                            label: 'Consultations',
-                            data: <?= json_encode(array_values($monthlyConsultations)) ?>,
-                            backgroundColor: 'rgba(165, 42, 42, 0.2)',
-                            borderColor: '#8B0000',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: '#8B0000',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            pointRadius: 5
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
-                        },
-                        plugins: {
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleFont: {
-                                    size: 14
-                                },
-                                bodyFont: {
-                                    size: 14
                                 }
                             }
                         }

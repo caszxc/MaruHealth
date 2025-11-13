@@ -1,4 +1,5 @@
 <?php
+//switch_account.php
 session_start();
 require_once "config.php";
 

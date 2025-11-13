@@ -340,6 +340,38 @@ body::-webkit-scrollbar{
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+.view-disposed-btn {
+    background-color: transparent;
+    color: #800000;
+    padding: 10px 20px;
+    border: 1px solid #800000;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.dispose-btn {
+    background-color: #c0392b;     /* Deep red – indicates destructive action */
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stock-button{
+    display: flex;
+    justify-content: center;
+}
+
 .expiring-btn{
     text-decoration: none;
     border: 1px solid #800000;

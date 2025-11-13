@@ -50,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/forgot_password.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="main-login">
-        <div class="login-con">
+        <div class="login-con <?php echo !empty($error) ? 'has-error' : 'animate'; ?>">
             <div class="left-panel">
                 <img src="images/3s logo.png" alt="Logo">
                 <div>
@@ -117,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <script>
         function togglePass(icon) {
-            const input = icon.previousElementSibling; // the password input
+            const input = icon.previousElementSibling;
             if (input.type === "password") {
                 input.type = "text";
                 icon.classList.remove("fa-eye-slash");
@@ -128,66 +128,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 icon.classList.add("fa-eye-slash");
             }
         }
+
         document.addEventListener("DOMContentLoaded", function () {
             const newPasswordInput = document.getElementById('new_password');
             const confirmPasswordInput = document.getElementById('confirm_password');
             const resetBtn = document.getElementById('resetBtn');
 
-            // Validation rules
             const passwordValidator = {
                 new_password: {
                     element: newPasswordInput,
                     errorMsg: "Password must be at least 8 characters and include uppercase, lowercase, and numbers",
-                    validator: (value) => {
-                        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-                        return passwordRegex.test(value);
-                    }
+                    validator: (value) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(value)
                 },
                 confirm_password: {
                     element: confirmPasswordInput,
                     errorMsg: "Passwords do not match",
-                    validator: (value) => {
-                        return value === newPasswordInput.value && value.length > 0;
-                    }
+                    validator: (value) => value === newPasswordInput.value && value.length > 0
                 }
             };
 
-            // Error handling functions
+            // --- SHAKE ONLY ONCE PER FIELD ---
             function showFieldError(inputEl, message) {
-                // 1. remove old error
-                removeFieldError(inputEl);
+                const groupCol = inputEl.closest('.group-col');
+                const oldError = groupCol.querySelector('.field-error');
+                if (oldError) oldError.remove();
 
                 const err = document.createElement('span');
                 err.className = 'field-error';
                 err.textContent = message;
-                err.style.display = 'block';
-                err.style.color = '#FF0000';
-                err.style.fontSize = '12px';
-                err.style.textAlign = 'left';
 
-                // 2. highlight input
-                inputEl.style.borderColor = '#FF0000';
+                if (!groupCol.dataset.hasError) {
+                    err.classList.add('shake');
+                    groupCol.dataset.hasError = 'true';
+                }
 
-                // 3. insert AFTER the .group-col (after hint)
-                const groupCol = inputEl.closest('.group-col');
                 groupCol.appendChild(err);
+                inputEl.style.borderColor = '#FF0000';
+                inputEl.classList.remove('valid');
             }
 
             function removeFieldError(inputEl) {
                 const groupCol = inputEl.closest('.group-col');
                 const old = groupCol.querySelector('.field-error');
                 if (old) old.remove();
-
-                // reset border (green when valid – optional)
                 inputEl.style.borderColor = '#ccc';
                 inputEl.classList.add('valid');
+                delete groupCol.dataset.hasError; 
             }
 
-            // Validate field
             function validateField(fieldName) {
                 const field = passwordValidator[fieldName];
                 const value = field.element.value.trim();
-
                 if (field.validator(value)) {
                     removeFieldError(field.element);
                     return true;
@@ -197,31 +188,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
-            // Enable/disable submit button
             function updateSubmitButton() {
-                const isNewPasswordValid = passwordValidator.new_password.validator(newPasswordInput.value);
-                const isConfirmPasswordValid = passwordValidator.confirm_password.validator(confirmPasswordInput.value);
-                resetBtn.disabled = !(isNewPasswordValid && isConfirmPasswordValid);
+                const isNewValid = passwordValidator.new_password.validator(newPasswordInput.value);
+                const isConfirmValid = passwordValidator.confirm_password.validator(confirmPasswordInput.value);
+                resetBtn.disabled = !(isNewValid && isConfirmValid);
             }
 
-            // Add real-time validation
             [newPasswordInput, confirmPasswordInput].forEach(input => {
                 input.addEventListener('input', function () {
                     validateField(this.id);
                     updateSubmitButton();
                 });
-
                 input.addEventListener('blur', function () {
                     validateField(this.id);
                     updateSubmitButton();
                 });
             });
 
-            // Initial validation
             updateSubmitButton();
 
-            // Handle Go to Login button
-            document.getElementById("goToLoginBtn").addEventListener("click", function () {
+            document.getElementById("goToLoginBtn")?.addEventListener("click", () => {
                 window.location.href = "login.php";
             });
         });

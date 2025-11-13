@@ -103,8 +103,10 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         <div class="logo-container">
             <img src="images/3s logo.png" alt="Logo">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -141,12 +143,13 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                 <img class="menu-icon" src="images/icons/admin_icon_active.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
-            <?php endif; ?>
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
+            <?php endif; ?>
+            <?php if ($adminRole == 'admin'): ?>
+            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>

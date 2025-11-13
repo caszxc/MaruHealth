@@ -48,22 +48,22 @@ require_once "deletion_notice.php";
     <script>
         function loadCalendar(month, year) {
             fetch(`calendar_ajax.php?month=${month}&year=${year}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById("calendar").innerHTML = html;
-                    document.getElementById("currentMonth").value = month;
-                    document.getElementById("currentYear").value = year;
-                    
-                    // After loading the calendar, handle today's date if we're in the current month/year
-                    const today = new Date();
-                    if (today.getMonth() + 1 === month && today.getFullYear() === year) {
-                        // Let's trigger the click on today's date to show today's events
-                        const todayDay = today.getDate();
-                        setTimeout(() => {
-                            showEvents(year, month, todayDay);
-                        }, 100);
-                    }
-                });
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById("calendar").innerHTML = html;
+                document.getElementById("currentMonth").value = month;
+                document.getElementById("currentYear").value = year;
+                
+                // After loading the calendar, handle today's date if we're in the current month/year
+                const today = new Date();
+                if (today.getMonth() + 1 === month && today.getFullYear() === year) {
+                    // Let's trigger the click on today's date to show today's events
+                    const todayDay = today.getDate();
+                    setTimeout(() => {
+                        showEvents(year, month, todayDay);
+                    }, 100);
+                }
+            });
         }
         
         function showEvents(year, month, day) {
@@ -118,7 +118,7 @@ require_once "deletion_notice.php";
                         });
                     }
                 })
-                .catch(error => console.error("Error loading events:", error));
+            .catch(error => console.error("Error loading events:", error));
         }
 
         // Function to convert military time (24-hour) to 12-hour format with AM/PM
@@ -163,6 +163,12 @@ require_once "deletion_notice.php";
         
     </script>
 </head>
+<!-- ==== EVENT IMAGE MODAL ==== -->
+<div id="eventImageModal" class="event-image-modal">
+    <span class="modal-close">&times;</span>
+    <img class="modal-content" id="modalImage" src="" alt="Event image">
+    <div id="modalCaption"></div>
+</div>
 <body>
     <nav>
         <div class="logo-container">
@@ -253,6 +259,31 @@ require_once "deletion_notice.php";
                     icon.classList.replace('fa-times', 'fa-bars');
                 }
             });
+        });
+
+        /* ==== EVENT IMAGE MODAL ==== */
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('eventImageModal');
+            const modalImg = document.getElementById('modalImage');
+            const closeBtn = document.querySelector('.modal-close');
+
+            // Open modal when an event-card image is clicked
+            document.getElementById('eventList').addEventListener('click', e => {
+                const img = e.target.closest('.event-card img');
+                if (!img) return;
+
+                modal.style.display = 'flex';
+                modalImg.src = img.src;
+                document.body.style.overflow = 'hidden';   // prevent background scroll
+            });
+
+            // Close modal
+            const closeModal = () => {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            };
+            closeBtn.onclick = closeModal;
+            modal.onclick = e => { if (e.target === modal) closeModal(); };
         });
     </script>
     

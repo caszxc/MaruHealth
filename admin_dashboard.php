@@ -19,14 +19,6 @@ $adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
 $adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
-// Fetch pending accounts count
-$pendingStmt = $conn->prepare("SELECT COUNT(*) FROM pending_users");
-$pendingStmt->execute();
-$pendingCount = $pendingStmt->fetchColumn();
-
-$totalActiveUsersStmt = $conn->query("SELECT COUNT(*) FROM users");
-$totalActiveUsers    = $totalActiveUsersStmt->fetchColumn();
-
 $totalActiveAnnouncementsStmt = $conn->query("SELECT COUNT(*) FROM announcements WHERE status = 'active'");
 $totalActiveAnnouncements    = $totalActiveAnnouncementsStmt->fetchColumn();
 
@@ -67,23 +59,6 @@ function timeAgo($datetime) {
     return $interval->y . " year" . ($interval->y > 1 ? "s" : "") . " ago";
 }
 
-$stats = [
-    'total'     => $conn->query("SELECT COUNT(*) FROM users")->fetchColumn(),
-    'pending'   => $conn->query("SELECT COUNT(*) FROM pending_users")->fetchColumn(),
-    'approved'  => $conn->query("SELECT COUNT(*) FROM users")->fetchColumn(), // same as total
-];
-
-$smsLogs = $conn->query("
-    SELECT * FROM sms_logs 
-    ORDER BY sent_at DESC 
-    LIMIT 5
-")->fetchAll(PDO::FETCH_ASSOC);
-
-$emailLogs = $conn->query("
-    SELECT * FROM email_logs 
-    ORDER BY sent_at DESC 
-    LIMIT 5
-")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -103,8 +78,10 @@ $emailLogs = $conn->query("
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -120,9 +97,7 @@ $emailLogs = $conn->query("
         <div class="menu">
             <?php 
                 $current_page = basename($_SERVER['PHP_SELF']); 
-
-                // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
+                $dashboard_url = '';
                 if ($adminRole === 'super_admin') {
                     $dashboard_url = 'superadmin_dashboard.php';
                 } elseif ($adminRole === 'admin') {
@@ -132,28 +107,57 @@ $emailLogs = $conn->query("
                 }
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/dashboard_icon_active.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == $dashboard_url ? 'active' : '' ?>">Dashboard</a>
             </div>
+            
             <p class="menu-header">BASE</p>
+            <?php if ($adminRole == 'super_admin'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
+                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
+            </div>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
+            <?php endif; ?>
+            
+            <?php if ($adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
             </div>
+            
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
                 <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
             </div>
+
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/service_icon.png" alt="">
                 <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
             </div>
+            <?php endif; ?>
+
+            <?php if ($adminRole == 'health_staff'): ?>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
+                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
+            </div>
+            
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/med_icon.png" alt="">
+                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
+            </div>
+            
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
+                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
+            </div>
+            <?php endif; ?>
+
             <p class="menu-header">OTHERS</p>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
@@ -170,33 +174,10 @@ $emailLogs = $conn->query("
         <div class="dashboard-sections">
             <div class="section-wrapper">
                 <!-- Alert Section Cards-->
-                <section class="alert-section">
-                    <h3>Alerts</h3>
-                    <!-- Pending Account Approval Card-->
-                    <div class="alert-card <?= $pendingCount > 0 ? 'has-pending' : '' ?>">
-                        <div class="alert-header">
-                            <img src="images/icons/dashboard/pending_account_icon.png" alt="Pending Accounts" class="alert-icon">
-                            <h4>Pending Account Approvals</h4>
-                        </div>
-                        <p class="pending-info">
-                            <span class="pending-number"><?= $pendingCount ?></span> accounts awaiting approval
-                        </p>
-                        <a href="account_requests.php" class="manage-link">Manage Approvals</a>
-                    </div>
-                </section>
-
+                 
                 <section class="summary-section">
                     <h3>Summary</h3>
                     <div class="stat-bars">
-                        <!-- 1. Active Users -->
-                        <div class="stat-item">
-                            <div class="stat-label">
-                                <img src="images/icons/dashboard/total_users_icon.png" alt="">
-                                <span>Total Active Users</span>
-                            </div>
-                            <div class="stat-value"><?= number_format($totalActiveUsers) ?></div>
-                        </div>
-
                         <!-- 3. Active Announcements -->
                         <div class="stat-item">
                             <div class="stat-label">
@@ -221,19 +202,19 @@ $emailLogs = $conn->query("
                     <h3>Quick Actions</h3>
                     <div class="actions-container">
                         <!-- Create Announcement -->
-                        <a href="announcements.php?action=create" class="action-btn announce-btn">
+                        <a href="announcements.php" class="action-btn announce-btn">
                             <img src="images/icons/announcement_icon.png" alt="Announcement">
                             <span>Create Announcement</span>
                         </a>
 
                         <!-- Add Event -->
-                        <a href="edit_calendar.php?action=add" class="action-btn event-btn">
+                        <a href="edit_calendar.php" class="action-btn event-btn">
                             <img src="images/icons/calendar_icon.png" alt="Add Event">
                             <span>Add Event</span>
                         </a>
 
                         <!-- Add New Service -->
-                        <a href="service_management.php?action=add" class="action-btn service-btn">
+                        <a href="service_management.php" class="action-btn service-btn">
                             <img src="images/icons/service_icon.png" alt="Add Service">
                             <span>Add New Service</span>
                         </a>
@@ -288,119 +269,8 @@ $emailLogs = $conn->query("
                         <?php endif; ?>
                     </div>
                 </section>
-
-                <section class="stats-reports-section">
-                    <h3>Statistics and Reports</h3>
-                    <div class="stats-card-container">
-                        <a href="users_stats.php" class="stats-card user-stats-card">
-                            <div class="stats-icon">
-                                <img src="images/icons/dashboard/user_stats_icon.png" alt="User Stats">
-                            </div>
-                            <div class="stats-content">
-                                <h4>User Statistics</h4>
-                                <div class="stats-numbers">
-                                    <div class="stat-line">
-                                        <span class="label">Total Users</span>
-                                        <span class="value"><?= number_format($stats['total']) ?></span>
-                                    </div>
-                                    <div class="stat-line">
-                                        <span class="label">Pending Approval</span>
-                                        <span class="value pending"><?= number_format($stats['pending']) ?></span>
-                                    </div>
-                                </div>
-                                <p class="view-more">View Detailed Report →</p>
-                            </div>
-                        </a>
-                    </div>
-                </section>
-
-                <section class="system-logs-section">
-                    <h3>SMS and Email Logs</h3>
-                    <div class="log-tabs">
-                        <button class="tab-btn active" data-tab="sms">SMS</button>
-                        <button class="tab-btn" data-tab="email">Email</button>
-                    </div>
-
-                    <!-- SMS Logs -->
-                    <div class="log-content active" id="sms">
-                        <?php if (empty($smsLogs)): ?>
-                            <p class="no-logs">No SMS logs found.</p>
-                        <?php else: ?>
-                            <div class="log-list">
-                                <?php foreach ($smsLogs as $log): ?>
-                                    <details class="log-item">
-                                        <summary>
-                                            <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
-                                                <?= $log['status'] === 'success' ? 'Success' : 'Failed' ?>
-                                            </span>
-                                            <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
-                                            <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
-                                        </summary>
-                                        <div class="log-details">
-                                            <p><strong>Phone:</strong> <?= htmlspecialchars($log['recipient_phone']) ?></p>
-                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
-                                            <?php if ($log['status'] === 'failed'): ?>
-                                                <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                    </details>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Email Logs -->
-                    <div class="log-content" id="email">
-                        <?php if (empty($emailLogs)): ?>
-                            <p class="no-logs">No email logs found.</p>
-                        <?php else: ?>
-                            <div class="log-list">
-                                <?php foreach ($emailLogs as $log): ?>
-                                    <details class="log-item">
-                                        <summary>
-                                            <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
-                                                <?= $log['status'] === 'success' ? 'Success' : 'Failed' ?>
-                                            </span>
-                                            <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
-                                            <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
-                                        </summary>
-                                        <div class="log-details">
-                                            <p><strong>Email:</strong> <?= htmlspecialchars($log['recipient_email']) ?></p>
-                                            <p><strong>Subject:</strong> <?= htmlspecialchars($log['subject']) ?></p>
-                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
-                                            <?php if ($log['status'] === 'failed'): ?>
-                                                <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                    </details>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </section>
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const tabs = document.querySelectorAll('.tab-btn');
-            const contents = document.querySelectorAll('.log-content');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.getAttribute('data-tab');
-
-                    // Update active tab
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-
-                    // Show content
-                    contents.forEach(c => c.classList.remove('active'));
-                    document.getElementById(target).classList.add('active');
-                });
-            });
-        });
-        </script>
 </body>
 </html>

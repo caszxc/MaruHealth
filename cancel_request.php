@@ -48,6 +48,13 @@ try {
     $updateStmt = $conn->prepare("UPDATE medicine_requests SET request_status = 'cancelled', cancelled_date = NOW() WHERE id = :id");
     $updateStmt->execute([':id' => $request_id]);
 
+    $cancelMeds = $conn->prepare(
+        "UPDATE requested_medicines 
+         SET status = 'cancelled' 
+         WHERE request_id = :request_id"
+    );
+    $cancelMeds->execute([':request_id' => $request_id]);
+
     // If the request was 'to be claimed', release reserved stock and log to medicine_history
     if ($request['request_status'] === 'to be claimed') {
         $distStmt = $conn->prepare("SELECT md.batch_id, md.quantity, md.requested_medicine_id, mb.catalog_id 

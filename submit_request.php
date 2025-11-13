@@ -60,7 +60,7 @@ if ($_FILES['prescription']['error'] === UPLOAD_ERR_OK) {
     $fileTmpPath = $_FILES['prescription']['tmp_name'];
     $fileName = $_FILES['prescription']['name'];
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-    $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+    $allowedExtensions = ['jpg', 'jpeg', 'png'];
 
     if (!in_array($fileExtension, $allowedExtensions)) {
         header("Location: request_medicine.php?error=invalid_file_type");

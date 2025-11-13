@@ -696,7 +696,7 @@ body::-webkit-scrollbar {
 .modal.form .modal-content, .modal.info .modal-content{
     padding: 0;
     max-height: 90vh;
-    min-width: 50%;
+    max-width: 60%;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -729,8 +729,11 @@ body::-webkit-scrollbar {
     overflow-y: auto;
     padding: 20px;
     scrollbar-width: thin;
-    background-color: rgb(245, 245, 245);
+    background-color: #fafafa;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
 }
 
 .modal-content form {
@@ -834,15 +837,183 @@ body::-webkit-scrollbar {
 
 
 /* Request Medicine Details Modal */
+
+/* Request Summary Header */
+#viewRequestModal .request-header-summary {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 0;
+    gap: 20px;
+    border-bottom: 2px solid #800000;
+}
+
+#viewRequestModal .summary-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#viewRequestModal .summary-item label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+#viewRequestModal .highlight-id {
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: #800000;
+    letter-spacing: 0.5px;
+}
+
+#viewRequestModal .status-badge-large {
+    align-self: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    min-width: 120px;
+    text-align: center;
+    color: white;
+}
+
 #viewRequestModal .modal-container {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-#viewRequestModal .modal-container .group-row {
+#viewRequestModal .modal-container > * {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+}
+
+/* ---- Requested Medicines ---- */
+#viewRequestModal .medicine-section {
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#viewRequestModal .medicine-section > label {
+    font-weight: 600;
+    color: #800000;
+    font-size: 1.1rem;
+}
+
+#viewRequestModal .medicine-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#viewRequestModal .medicine-entry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.medicine-entry .status-reduced {
+    background-color: #ffebee !important;
+    color: #b71c1c !important;
+    font-size: 0.8em;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+#viewRequestModal .medicine-entry:last-child { border-bottom: none; }
+
+#viewRequestModal .medicine-entry > div {
+    flex: 1 1 120px;  
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#viewRequestModal .medicine-entry > div > label {
+    font-size: .85rem;
+    color: #555;
+    font-weight: 500;
+}
+
+#viewRequestModal .medicine-entry > div > span {
+    background: #f5f5f5;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: .95rem;
+    color: #222;
+}
+
+/* Status badge inside medicine list */
+#viewRequestModal .status-badge {
+    font-weight: 600;
+    color:#fff !important;
+}
+#viewRequestModal .status-requested {
+    background:#ffc107 !important; 
+}
+#viewRequestModal .status-approved {
+    background:#28a745 !important; 
+}
+#viewRequestModal .status-declined {
+    background:#dc3545 !important;
+}
+#viewRequestModal .status-claimed {
+    background:#17a2b8 !important;
+}
+#viewRequestModal .status-unclaimed {
+    background:#6f42c1 !important;
+}
+#viewRequestModal .status-cancelled {
+    background:#6c757d !important;
+}
+
+/* ---- Claim Information ---- */
+#viewRequestModal .claim-section .claim-container {
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+}
+#viewRequestModal .claim-section label {
+    font-weight: 600;
+    color: #800000;
+    margin-bottom: 6px;
+}
+#viewRequestModal .claim-details p {
+    margin: 4px 0;
+    font-size: .95rem;
+}
+
+#viewRequestModal .claim-details strong { color:#333; }
+
+/* ---- Note ---- */
+#viewRequestModal .note-section .group-col span {
+    background:#fffbe6;
+    padding:12px;
+    border-radius:8px;
+    border-left:4px solid #ffc107;
+    font-style:italic;
+    color:#555;
+}
+
+/* ---- Request Details ---- */
+#viewRequestModal .req-details-section{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#viewRequestModal .req-details-section .group-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 #viewRequestModal .modal-container .group-col{
@@ -853,35 +1024,29 @@ body::-webkit-scrollbar {
     text-align: left;
 }
 
-#viewRequestModal .modal-container #medicine-group{
-    flex: 1;
-    display: flex;
-    gap: 5px;
-    flex-direction: column;
+#viewRequestModal .req-details-section .group-col label {
+    font-size: .85rem;
+    color: #555;
+    font-weight: 500;
 }
 
-#viewRequestModal .modal-container .medicine-container{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+#viewRequestModal .req-details-section .group-col span {
+    display: block;
+    background:#fff;
+    padding:8px 12px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    font-size:.95rem;
 }
 
-#viewRequestModal .modal-container .medicine-entry{
-    display: flex;
-    justify-content: space-between;
-}
-
-
-#viewRequestModal .modal-container .medicine-entry > div{
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-#viewRequestModal .modal-container .group-col span{
-    padding: 10px;
-    border: 1px solid #ccc;
-    background-color: white;
+/* Prescription image */
+#viewRequestModal #prescriptionImg {
+    max-width:100%;
+    height:auto;
+    border-radius:8px;
+    border:2px solid #ddd;
+    margin-top:8px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 
 /* Consultation Details Modal */
@@ -1097,7 +1262,7 @@ body::-webkit-scrollbar {
     /* Modal */
     .modal.form .modal-content, .modal.info .modal-content {
         width: 95%;
-        min-width: unset;
+        max-width: unset;
         max-height: 85vh;
     }
 
@@ -1106,19 +1271,14 @@ body::-webkit-scrollbar {
         gap: 10px;
     }
 
+    #viewRequestModal .req-details-section .group-col { flex:1 1 100%; }
+
+    #viewRequestModal .request-header-summary .highlight-id { font-size: 1rem; }
+
     .modal-content form .group-row {
         flex-direction: column;
     }
 
-    #viewRequestModal .modal-container .medicine-entry {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    #viewRequestModal .modal-container .medicine-entry > div {
-        flex-wrap: wrap;
-    }
     .modal-footer .save-btn, .modal-footer .confirm-btn, .modal-footer .cancel-btn{
         flex: 1;
         text-wrap: nowrap;
@@ -1175,8 +1335,8 @@ body::-webkit-scrollbar {
 
     /* Modal */
     .modal.form .modal-content, .modal.info .modal-content {
-        width: 80%;
-        min-width: unset;
+        width: 90%;
+        max-width: unset;
         max-height: 85vh;
     }
 
@@ -1188,6 +1348,8 @@ body::-webkit-scrollbar {
         flex-wrap: wrap;
     }
 
+    #viewRequestModal .req-details-section .group-col { flex:1 1 100%; }
+
 }
 
 /* ===== Large devices: desktops (≥1025px) ===== */
@@ -1197,3 +1359,4 @@ body::-webkit-scrollbar {
         height: 70vh;
     }
 }
+

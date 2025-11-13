@@ -31,6 +31,7 @@ try {
     // Prepare reusable statements
     $updateReq = $conn->prepare("UPDATE medicine_requests SET request_status = 'unclaimed' WHERE id = :id");
     $updateDist = $conn->prepare("UPDATE medicine_distributions SET status = 'returned' WHERE request_id = :req_id AND status = 'reserved'");
+    $updateMeds  = $conn->prepare("UPDATE requested_medicines SET status = 'cancelled' WHERE request_id = :req_id");
     $updateStock = $conn->prepare("
         UPDATE medicine_batches 
         SET stocks = stocks + :qty,
@@ -62,6 +63,7 @@ try {
 
         // 2. Update request status
         $updateReq->execute([':id' => $requestId]);
+        $updateMeds->execute([':req_id' => $requestId]);
 
         // 3. Get all reserved distributions
         $distStmt = $conn->prepare("

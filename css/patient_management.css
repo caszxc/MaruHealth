@@ -311,11 +311,11 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .archive-button {
-    color: #f44336;
+    border: 1px solid #800000;
+    color: #800000;
     padding: 10px 20px;
     text-decoration: none;
     border-radius: 5px;
-    border: 1px solid #f44336;
     font-size: 14px;
 }
 

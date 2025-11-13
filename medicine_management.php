@@ -79,6 +79,10 @@ foreach ($params as $key => $value) {
 }
 $catalogStmt->execute();
 $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
+
+$categories = $conn->query("SELECT DISTINCT therapeutic_category FROM medicines_catalog ORDER BY therapeutic_category")->fetchAll(PDO::FETCH_COLUMN);
+$generics = $conn->query("SELECT DISTINCT generic_name FROM medicines_catalog ORDER BY generic_name")->fetchAll(PDO::FETCH_COLUMN);
+$brands = $conn->query("SELECT DISTINCT brand_name FROM medicines_catalog WHERE brand_name IS NOT NULL ORDER BY brand_name")->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <html lang="en">
 <head>
@@ -110,8 +114,10 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -409,6 +415,12 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        const preloadData = {
+            categories: <?= json_encode($categories) ?>,
+            generics: <?= json_encode($generics) ?>,
+            brands: <?= json_encode($brands) ?>
+        };
+
         document.addEventListener('DOMContentLoaded', function () {
             const msg = document.querySelector('.message');
             if (msg) {
@@ -476,20 +488,36 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="details-fields">
                                     <div class="field">
                                         <label>Therapeutic Category</label>
-                                        <input type="text" name="therapeutic_category" value="${medicine.therapeutic_category}" readonly>
+                                        <select name="therapeutic_category" class="select2-edit" disabled>
+                                            <option value="${medicine.therapeutic_category}" selected>${medicine.therapeutic_category}</option>
+                                        </select>
                                     </div>
 
                                     <div class="field">
                                         <label>Generic Name</label>
-                                        <input type="text" name="generic_name" value="${medicine.generic_name}" readonly>
+                                        <select name="generic_name" class="select2-edit" disabled>
+                                            <option value="${medicine.generic_name}" selected>${medicine.generic_name}</option>
+                                        </select>                                    
                                     </div>
                                     <div class="field">
                                         <label>Brand Name</label>
-                                        <input type="text" name="brand_name" value="${medicine.brand_name || ''}" readonly>
+                                        <select name="brand_name" class="select2-edit" disabled>
+                                            <option value="${medicine.brand_name || ''}" selected>${medicine.brand_name || ''}</option>
+                                        </select>
                                     </div>
+
                                     <div class="field">
                                         <label>Dosage Form</label>
-                                        <input type="text" name="dosage_form" value="${medicine.dosage_form || ''}" readonly>
+                                        <select name="dosage_form" required disabled>
+                                            <option value="">Select Dosage Form</option>
+                                            <option value="Tablet" ${medicine.dosage_form === 'Tablet' ? 'selected' : ''}>Tablet</option>
+                                            <option value="Capsule" ${medicine.dosage_form === 'Capsule' ? 'selected' : ''}>Capsule</option>
+                                            <option value="Syrup" ${medicine.dosage_form === 'Syrup' ? 'selected' : ''}>Syrup</option>
+                                            <option value="Suspension" ${medicine.dosage_form === 'Suspension' ? 'selected' : ''}>Suspension</option>
+                                            <option value="Cream" ${medicine.dosage_form === 'Cream' ? 'selected' : ''}>Cream</option>
+                                            <option value="Drops" ${medicine.dosage_form === 'Drops' ? 'selected' : ''}>Drops</option>
+                                            <option value="Ointment" ${medicine.dosage_form === 'Ointment' ? 'selected' : ''}>Ointment</option>
+                                        </select>
                                     </div>
 
                                     <div class="row">
@@ -529,6 +557,30 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
             `;
 
             document.getElementById('detailsContent').innerHTML = detailsContent;
+
+            // Initialize Select2 on the three fields (disabled initially)
+            $('.select2-edit').select2({
+                tags: true,
+                placeholder: "Type to search or add new",
+                allowClear: true,
+                data: [] // Will populate below
+            });
+
+            // Populate options from preloaded data
+            $('#medicineForm select[name="therapeutic_category"]').select2('destroy').select2({
+                tags: true,
+                data: preloadData.categories.map(c => ({ id: c, text: c }))
+            }).val(medicine.therapeutic_category).trigger('change').prop('disabled', true);
+
+            $('#medicineForm select[name="generic_name"]').select2('destroy').select2({
+                tags: true,
+                data: preloadData.generics.map(g => ({ id: g, text: g }))
+            }).val(medicine.generic_name).trigger('change').prop('disabled', true);
+
+            $('#medicineForm select[name="brand_name"]').select2('destroy').select2({
+                tags: true,
+                data: preloadData.brands.map(b => ({ id: b, text: b }))
+            }).val(medicine.brand_name || '').trigger('change').prop('disabled', true);
 
             // === CHECK EDITABLE & DELETABLE ===
             fetch('check_catalog_status.php', {
@@ -787,10 +839,17 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
         function enableEditing() {
             const inputs = document.querySelectorAll('#medicineForm input');
             inputs.forEach(input => {
-                if (input.name !== 'stocks') { // Prevent editing of stocks field
+                if (input.name !== 'stocks') {
                     input.removeAttribute('readonly');
                 }
             });
+
+            // Enable Select2 fields
+            $('#medicineForm select[name="therapeutic_category"]').prop('disabled', false);
+            $('#medicineForm select[name="generic_name"]').prop('disabled', false);
+            $('#medicineForm select[name="brand_name"]').prop('disabled', false);
+
+            $('#medicineForm select[name="dosage_form"]').prop('disabled', false);
 
             document.querySelectorAll('.action-buttons').forEach(actionBtn => {
                 actionBtn.style.display = 'flex';
@@ -837,10 +896,17 @@ $catalogs = $catalogStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         function cancelEditing() {
-            const medicineInputs = document.querySelectorAll('#medicineForm input');
-            medicineInputs.forEach(input => {
+            const inputs = document.querySelectorAll('#medicineForm input');
+            inputs.forEach(input => {
                 input.setAttribute('readonly', true);
             });
+
+            // Disable Select2
+            $('#medicineForm select[name="therapeutic_category"]').prop('disabled', true);
+            $('#medicineForm select[name="generic_name"]').prop('disabled', true);
+            $('#medicineForm select[name="brand_name"]').prop('disabled', true);
+
+            $('#medicineForm select[name="dosage_form"]').prop('disabled', true);
 
             document.querySelectorAll('.action-buttons').forEach(actionBtn => {
                 actionBtn.style.display = 'none';

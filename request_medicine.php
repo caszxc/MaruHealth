@@ -203,10 +203,10 @@ require_once "deletion_notice.php";
                                 <label for="file-upload" class="custom-file-upload">
                                     <i class="fas fa-cloud-upload-alt"></i> Add File
                                 </label>
-                                <input id="file-upload" type="file" name="prescription" onchange="updateFileName()" accept="image/*,application/pdf">
+                                <input id="file-upload" type="file" name="prescription" onchange="updateFileName()" accept="image/jpeg,image/jpg,image/png">
                                 <span id="file-name">No file chosen</span>
                             </div>
-                            <small class="field-hint">Upload a clear photo or PDF of your prescription (JPG, PNG, or PDF only)</small>
+                            <small class="field-hint">Upload a clear photo of your prescription (JPG or PNG only)</small>
                             <span id="prescription-error" class="error-message"></span>
                         </div>
                     </div>

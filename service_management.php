@@ -4,7 +4,7 @@ session_start();
 require_once "config.php"; 
 
 // Check if user is logged in as super admin or admin
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin'])) {
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['admin'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
@@ -107,8 +107,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <div class="logo-container">
             <img src="images/3s logo.png" alt="Logo">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
@@ -149,14 +151,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <img class="menu-icon" src="images/icons/admin_icon.png" alt="">
                 <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a>
             </div>
-            <?php endif; ?>
-            
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
+            <?php endif; ?>
             
+            <?php if ($adminRole == 'admin'): ?>
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
                 <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>

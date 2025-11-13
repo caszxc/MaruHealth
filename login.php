@@ -88,7 +88,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>    
     <div class="main-login">
-        <div class="login-con">
+        <div class="login-con <?php echo isset($error) ? 'has-error' : 'animate'; ?>">
             <div class="left-panel">
                 <img src="images/3s logo.png" alt="Logo">
                 <div>
@@ -129,6 +129,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- ---------- JavaScript for toggle ---------- -->
     <script>
+        // Ensure animations play after full load
+        window.addEventListener('load', () => {
+            document.body.style.opacity = 1;
+        });
+        
         function togglePass(icon) {
             const input = icon.previousElementSibling; // the password input
             if (input.type === "password") {

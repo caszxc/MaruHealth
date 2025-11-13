@@ -23,7 +23,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 // 1. ALERTS
 // ---------------------------------------------------------------------
 // Expired batches
-$expiredStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiry_status = 'Expired'");
+$expiredStmt = $conn->query("SELECT COUNT(*) FROM medicine_batches WHERE expiry_status = 'Expired' AND is_disposed = '0'");
 $expiredCount = $expiredStmt->fetchColumn();
 
 // Expiring within a week
@@ -161,8 +161,10 @@ $medEmailLogs = $conn->query("
         <div class="logo-container">
             <img src="images/3s logo.png">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth">MaruHealth</span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>

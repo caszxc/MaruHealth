@@ -262,6 +262,7 @@
     align-items: center;
     visibility: hidden; /* Ensures modal is not visible */
     opacity: 0; /* Fully transparent */
+    backdrop-filter: blur(3px);
     transition: opacity 0.3s ease-in-out, visibility 0.3s;
 }
 
@@ -276,7 +277,6 @@
     width: 40%; /* Adjust width for responsiveness */
     max-width: 1900px; /* Set a max width */
     max-height: 90vh; /* Set a max height relative to the viewport */
-    padding: 20px;
     border-radius: 8px;
     position: relative;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
@@ -285,16 +285,33 @@
     -ms-overflow-style: none;
 }
 
-.modal-content .title{
-    font-size: 22px;
-    font-weight: bold;
-    color: #8B0000;
+.modal-title{
+    background: linear-gradient(135deg, #BE0404 65%, #960101 75%, #BD0000 85%, #800000 95%);
+    padding: 10px 20px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    flex-shrink: 0;
+}
+
+.modal-title > h2{
+    font-size: 20px;
+    font-weight: normal;
+    color: #ffffff;
     text-align: center;
-    margin-bottom: 15px;
 }
 
 .modal-content .form-container{
+    padding: 20px;
+    background-color: #fafafa;
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-content .form-container > form{
+    display: flex;
+    padding: 20px;
+    background-color: white;
     flex-direction: column;
     gap: 10px;
 }
@@ -310,10 +327,46 @@
     flex: 1;
 }
 
+.form-group label{
+    font-size: .95rem;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group p{
+    background-color: #fff;
+}
+
 .form-group input, .form-group select {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 20px; /* space for the icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: rgb(0, 0, 0, 0.5);
+    font-size: 13px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.toggle-password:hover {
+    opacity: 0.7;
+    transform: scale(1.1);
 }
 
 .form-group p{
@@ -325,7 +378,7 @@
 .modal-footer {
     display: flex;
     justify-content: flex-end;
-    margin-top: 20px;
+    padding: 10px;
     gap: 10px;
 }
 
@@ -340,7 +393,42 @@
     background-color: #ccc;
     color: black;
 }
+
 .submit-btn {
     background-color: #800000;
     color: white;
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+#errorMessage {
+    display: none;                     /* Hidden by default */
+    background-color: #ffebee;         /* Light red background */
+    color: #c62828;                    /* Deep red text */
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 4px solid #e53935;    /* Strong red accent line */
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(229, 57, 53, 0.15);
+    position: relative;
+    animation: slideDown 0.4s ease-out;
+    line-height: 1.4;
+}
+
+/* Optional: Add a small error icon */
+#errorMessage::before {
+    content: "\f06a";                  /* Font Awesome exclamation triangle */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 10px;
+    font-size: 1.1rem;
+    color: #e53935;
+}
+
+#errorMessage:not(:empty) {
+    display: block;
 }

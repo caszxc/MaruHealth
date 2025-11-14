@@ -356,7 +356,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                         <button type="submit">Search</button>
                     </form>
                 </div> 
-                <a href="deletion_requests.php" class="add-dependent-btn" style="margin-left:12px;">
+                <a href="deletion_requests.php" class="delete-requests-btn">
                     Deletion Requests
                 </a>
             </div>
@@ -430,7 +430,9 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <!-- Modal Structure -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
-            <h2>Account Details</h2>
+            <div class="modal-title">
+                <h2>Account Details</h2>
+            </div>
             <div class="modal-scroll">
                 <div class="content-container">
                     <div class="user-info">

@@ -211,10 +211,23 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 
         function addEvent(e) {
             e.preventDefault();
+
+            const postButton = document.querySelector("#eventModal .btn-post");
+            const cancelButton = document.querySelector("#eventModal .btn-cancel");
+            const btnText = postButton.querySelector(".btn-text");
+            const spinner = postButton.querySelector(".fa-spinner");
+
+            // Disable buttons
+            postButton.disabled = true;
+            cancelButton.disabled = true;
+            btnText.textContent = "Posting...";
+            spinner.style.display = "inline-block";
+            
             const start = document.getElementById("startTime").value;
             const end   = document.getElementById("endTime").value;
             if (start && end && start >= end) {
                 alert("End time must be after start time.");
+                resetButton();
                 return;
             }
 
@@ -224,11 +237,24 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
                 .then(data => {
                     if (data.success) {
                         closeModal();
-                        location.reload(); // Flash message will appear
+                        location.reload();
                     } else {
-                        alert(data.message);
+                        alert(data.message || "Failed to add event.");
+                        resetButton();
                     }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Connection error. Please try again.");
+                    resetButton();
                 });
+
+                function resetButton() {
+                    postButton.disabled = false;
+                    cancelButton.disabled = false;
+                    btnText.textContent = "Post";
+                    spinner.style.display = "none";
+                }
         }
 
         window.onload = function () {
@@ -431,7 +457,10 @@ $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
                 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn-post">Post</button>
+                    <button type="submit" class="btn-post">
+                        <span class="btn-text">Post</span>
+                        <i class="fas fa-spinner fa-spin" style="display: none; margin-left: 8px;"></i>
+                    </button>
                 </div>
             </form>
 

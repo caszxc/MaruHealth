@@ -395,6 +395,12 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
             </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/settings_icon.png" alt="">
+                <a href="system_settings.php" class="<?= $current_page == 'system_settings.php' ? 'active' : '' ?>">
+                    System Settings
+                </a>
+            </div>
             <?php endif; ?>
             
             <?php if ($adminRole == 'admin'): ?>

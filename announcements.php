@@ -247,7 +247,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="post-btn">Post</button>
+                    <button type="submit" class="post-btn" id="postSubmitBtn">
+                        <span class="btn-text">Post</span>
+                        <i class="fas fa-spinner fa-spin" style="display: none; margin-left: 8px;"></i>
+                    </button>
                 </div>
             </form>
         </div>
@@ -285,7 +288,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="cancel-btn" onclick="closeEditModal()">Cancel</button>
-                    <button type="submit" class="post-btn">Update</button>
+                    <button type="submit" class="post-btn">
+                        <span class="btn-text">Update</span>
+                        <i class="fas fa-spinner fa-spin" style="display: none; margin-left: 8px;"></i>
+                    </button>
                 </div>
             </form>
         </div>
@@ -304,13 +310,44 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                 }
             });
 
-            // Add confirmation for edit form submission
+            const postForm = document.querySelector('#postModal form');
+            const submitBtn = document.getElementById('postSubmitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const spinner = submitBtn.querySelector('.fa-spinner');
+
+            if (postForm && submitBtn) {
+                postForm.addEventListener('submit', function () {
+                    // Disable button immediately
+                    submitBtn.disabled = true;
+                    btnText.textContent = 'Posting...';
+                    spinner.style.display = 'inline-block';
+
+                    // Optional: Disable cancel button too
+                    const cancelBtn = document.querySelector('#postModal .cancel-btn');
+                    if (cancelBtn) cancelBtn.disabled = true;
+                });
+            }
+
+            // Also handle Edit form the same way
             const editForm = document.getElementById('editForm');
-            editForm.addEventListener('submit', function (event) {
-                if (!confirm('Are you sure you want to update this announcement?')) {
-                    event.preventDefault(); // Prevent form submission if user cancels
-                }
-            });
+            if (editForm) {
+                editForm.addEventListener('submit', function () {
+                    const updateBtn = editForm.querySelector('.post-btn');
+                    const updateText = updateBtn.querySelector('.btn-text') || updateBtn;
+                    const updateSpinner = updateBtn.querySelector('.fa-spinner');
+
+                    updateBtn.disabled = true;
+                    if (updateText.tagName === 'SPAN') {
+                        updateText.textContent = 'Updating...';
+                    } else {
+                        updateBtn.textContent = 'Updating...';
+                    }
+                    if (updateSpinner) updateSpinner.style.display = 'inline-block';
+
+                    const cancelBtn = document.querySelector('#editModal .cancel-btn');
+                    if (cancelBtn) cancelBtn.disabled = true;
+                });
+            }
         });
 
         function toggleMenu(id) {

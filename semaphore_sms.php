@@ -1,91 +1,90 @@
 <?php
-// Add this to the top of account_requests.php after session_start(); and before any HTML output
-// Create semaphore_sms.php in the same directory as your other PHP files
+// semaphore_sms.php
 
 function sendSMS($phone, $message) {
-    // Semaphore API Configuration
-    $apiKey = "b7e3447e45e5c215e87ae547c027de14"; // Replace with your actual Semaphore API key
-    $senderId = "MaruHealth"; // Optional: Your registered sender ID
-    
-    // Format the phone number (ensure it has the Philippines country code +63)
-    $phone = formatPhoneNumber($phone);
-    
-    // API Endpoint
+    $apiKey = "b7e3447e45e5c215e87ae547c027de14"; // Your Semaphore API key
+    $senderId = "MaruHealth";
+
+    // Convert to 63 format for Semaphore API
+    $phoneForAPI = convertTo63($phone);
+
     $url = "https://semaphore.co/api/v4/messages";
-    
-    // Prepare the data
+
     $data = [
-        'apikey' => $apiKey,
-        'number' => $phone,
-        'message' => $message
+        'apikey'    => $apiKey,
+        'number'    => $phoneForAPI,
+        'message'   => $message,
+        'sendername'=> $senderId
     ];
-    
-    if (!empty($senderId)) {
-        $data['senderId'] = $senderId;
-    }
-    
-    // Initialize cURL session
+
     $ch = curl_init($url);
-    
-    // Set cURL options
-    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
-    // Execute cURL request
     $response = curl_exec($ch);
-    $error = curl_error($ch);
+    $error    = curl_error($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    
-    // Close cURL session
     curl_close($ch);
-    
-    // Log the SMS transaction
-    logSMSTransaction($phone, $message, ($httpCode >= 200 && $httpCode < 300) ? 'success' : 'failed', $error);
-    
-    // Return the response
+
+    // Log using 09 format (user-friendly)
+    $phoneForLog = convertTo09($phone);
+
+    logSMSTransaction($phoneForLog, $message, ($httpCode >= 200 && $httpCode < 300) ? 'success' : 'failed', $error);
+
     return [
-        'success' => ($httpCode >= 200 && $httpCode < 300),
-        'response' => $response,
-        'error' => $error,
+        'success'   => ($httpCode >= 200 && $httpCode < 300),
+        'response'  => $response,
+        'error'     => $error,
         'http_code' => $httpCode
     ];
 }
 
-function formatPhoneNumber($phone) {
-    // Remove any non-numeric characters
+// Convert any format → 63xxxxxxxxxx (for Semaphore API)
+function convertTo63($phone) {
     $phone = preg_replace('/[^0-9]/', '', $phone);
-    
-    // Remove leading 0 if present
-    if (substr($phone, 0, 1) == '0') {
-        $phone = substr($phone, 1);
+    if (substr($phone, 0, 1) === '0') {
+        $phone = substr($phone, 1); // remove leading 0
     }
-    
-    // Add Philippines country code if not already present
-    if (substr($phone, 0, 2) != '63') {
+    if (substr($phone, 0, 2) !== '63') {
         $phone = '63' . $phone;
     }
-    
     return $phone;
+}
+
+// Convert to 09xxxxxxxxx (for display & logs)
+function convertTo09($phone) {
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+    if (strlen($phone) === 11 && substr($phone, 0, 2) === '63') {
+        return '0' . substr($phone, 2);
+    }
+    if (strlen($phone) === 10 && substr($phone, 0, 1) !== '0') {
+        return '0' . $phone;
+    }
+    if (strlen($phone) === 11 && substr($phone, 0, 1) === '0') {
+        return $phone; // already 09...
+    }
+    return $phone; // fallback
 }
 
 function logSMSTransaction($recipient_phone, $message, $status, $error_message = '') {
     global $conn;
-    
-    // Get recipient name from phone number - you'll need to implement this
-    // For now, we'll just use "User" as the recipient name
-    $recipient_name = "User";
-    
-    $stmt = $conn->prepare("
-        INSERT INTO sms_logs (recipient_name, recipient_phone, message, status, error_message)
-        VALUES (:recipient_name, :recipient_phone, :message, :status, :error_message)
-    ");
-    
+
+    // Get real name from phone number
+    $cleanPhone = preg_replace('/[^0-9]/', '', $recipient_phone);
+    $stmt = $conn->prepare("SELECT CONCAT(first_name, ' ', last_name) AS name FROM users WHERE REPLACE(phone_number, '-', '') LIKE :phone LIMIT 1");
+    $stmt->execute([':phone' => "%$cleanPhone%"]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $recipient_name = $row ? $row['name'] : "Resident";
+
+    $stmt = $conn->prepare("INSERT INTO sms_logs 
+        (recipient_name, recipient_phone, message, status, error_message)
+        VALUES (:name, :phone, :message, :status, :error_message)");
+
     $stmt->execute([
-        ':recipient_name' => $recipient_name,
-        ':recipient_phone' => $recipient_phone,
-        ':message' => $message,
-        ':status' => $status,
+        ':name'     => $recipient_name,
+        ':phone'    => $recipient_phone,        // Shows 09xxxxxxxxx
+        ':message'  => $message,
+        ':status'   => $status,
         ':error_message' => $error_message
     ]);
 }

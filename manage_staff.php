@@ -261,10 +261,12 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     <!-- Add Admin Modal -->
     <div id="addAdminModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">Add New Admin</h2>
-            <div id="errorMessage" class="error-message"></div>
-            <form id="addAdminForm">
-                <div class="form-container">
+            <div class="modal-title">
+                <h2 class="title">Add New Admin</h2>
+            </div>
+            <div class="form-container">
+                <div id="errorMessage" class="error-message"></div>
+                <form id="addAdminForm">
                     <div class="form-group">
                         <label for="full_name">Full Name</label>
                         <input type="text" id="full_name" name="full_name" autocomplete="off" required>
@@ -285,29 +287,42 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                         <label for="username">Username</label>
                         <input type="text" id="username" name="username" autocomplete="off" required>
                     </div>
+
+                    <!-- PASSWORD FIELDS WITH TOGGLE -->
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group password-field">
                             <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required>
+                            <div class="password-wrapper">
+                                <input type="password" id="password" name="password" required>
+                                <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                            </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group password-field">
                             <label for="confirm_password">Confirm Password</label>
-                            <input type="password" id="confirm_password" name="confirm_password" required>
+                            <div class="password-wrapper">
+                                <input type="password" id="confirm_password" name="confirm_password" required>
+                                <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="submit-btn">Submit</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                <button type="submit" form="addAdminForm" class="submit-btn" id="submitBtn">
+                    <span class="btn-text">Submit</span>
+                    <i class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- View Admin Modal -->
     <div id="viewAdminModal" class="modal">
         <div class="modal-content">
-            <h2 class="title">View Staff Details</h2>
+            <div class="modal-title">
+                <h2>View Staff Details</h2>
+            </div>
             <div class="form-container">
                 <div class="form-group">
                     <label>Full Name</label>
@@ -359,21 +374,22 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         document.getElementById("addAdminForm").addEventListener("submit", function(event) {
             event.preventDefault();
 
-            // Client-side password validation
+            // References
+            const submitBtn = document.getElementById("submitBtn");
+            const cancelBtn = document.querySelector("#addAdminModal .cancel-btn");
+            const btnText = submitBtn.querySelector(".btn-text");
+            const spinner = submitBtn.querySelector(".fa-spinner");
+            const errorMessage = document.getElementById("errorMessage");
+
+            // Client-side validation
             let password = document.getElementById("password").value;
             let confirmPassword = document.getElementById("confirm_password").value;
             let passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-            let errorMessage = document.getElementById("errorMessage");
+            errorMessage.style.display = "none";
 
-            if (password.length < 8) {
-                errorMessage.textContent = "Password must be at least 8 characters and include uppercase, lowercase, and numbers";
-                errorMessage.style.display = "block";
-                return;
-            }
-
-            if (!passwordRegex.test(password)) {
-                errorMessage.textContent = "Password must include at least one uppercase letter, one lowercase letter, and one number";
+            if (password.length < 8 || !passwordRegex.test(password)) {
+                errorMessage.textContent = "Password must be at least 8 characters and include uppercase, lowercase, and a number.";
                 errorMessage.style.display = "block";
                 return;
             }
@@ -384,7 +400,13 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                 return;
             }
 
-            // Proceed with AJAX submission
+            // === DISABLE BUTTONS & SHOW LOADING STATE ===
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            btnText.textContent = "Submitting...";
+            spinner.style.display = "inline-block";
+
+            // Proceed with AJAX
             let formData = new FormData(this);
 
             fetch("add_admin_ajax.php", {
@@ -395,15 +417,26 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
             .then(data => {
                 if (data.success) {
                     closeModal();
-                    location.reload();
+                    location.reload(); // Refresh to show new admin
                 } else {
-                    errorMessage.textContent = data.error;
-                    errorMessage.style.display = "block";
+                    // Re-enable buttons on error
+                    submitBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    btnText.textContent = "Submit";
+                    spinner.style.display = "none";
+
+                    showError(data.error || "An unknown error occurred.");
                 }
             })
             .catch(error => {
                 console.error("Error:", error);
-                errorMessage.textContent = "An error occurred. Please try again.";
+                // Re-enable on network/error
+                submitBtn.disabled = false;
+                cancelBtn.disabled = false;
+                btnText.textContent = "Submit";
+                spinner.style.display = "none";
+
+                errorMessage.textContent = "Network error. Please try again.";
                 errorMessage.style.display = "block";
             });
         });
@@ -455,6 +488,34 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                 }, 3000); // 3 seconds
             }
         });
+
+        // Password toggle function (same as login page)
+        function togglePass(icon) {
+            const input = icon.previousElementSibling;
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            }
+        }
+
+        // Auto-hide error message after 6 seconds
+        function showError(msg) {
+            const errorEl = document.getElementById("errorMessage");
+            errorEl.textContent = msg;
+            errorEl.style.display = "block";
+
+            // Clear any existing timeout
+            if (errorEl.hideTimeout) clearTimeout(errorEl.hideTimeout);
+
+            errorEl.hideTimeout = setTimeout(() => {
+                errorEl.style.display = "none";
+            }, 6000);
+        }
     </script>
 </body>
 </html>

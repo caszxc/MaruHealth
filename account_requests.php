@@ -531,7 +531,9 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <!-- Modal Structure -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
-            <h2>Account Details</h2>
+            <div class="modal-title">
+                <h2>Account Details</h2>
+            </div>
             <div class="modal-scroll">
                 <div class="content-container">
                     <div class="user-info">

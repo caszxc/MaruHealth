@@ -196,7 +196,10 @@ $emailLogs = $conn->query("
             <div class="section-wrapper">
                 <!-- Alert Section Cards-->
                 <section class="alert-section">
-                    <h3>Alerts</h3>
+                    <div class="section-header">
+                        <h3>Alerts</h3>
+                    </div>
+                    
                     <!-- Pending Account Approval Card-->
                     <div class="alert-card <?= $pendingCount > 0 ? 'has-pending' : '' ?>">
                         <div class="alert-header">
@@ -211,7 +214,9 @@ $emailLogs = $conn->query("
                 </section>
 
                 <section class="summary-section">
-                    <h3>Summary</h3>
+                    <div class="section-header">
+                        <h3>Summary</h3>
+                    </div>
                     <div class="stat-bars">
                         <!-- 1. Active Users -->
                         <div class="stat-item">
@@ -232,20 +237,15 @@ $emailLogs = $conn->query("
                         </div>
                     </div>
                 </section>
-
-                <section class="quick-actions-section">
-                    <h3>Quick Actions</h3>
-                    <div class="actions-container">
-                        <!-- Create Admin Account -->
-                        <a href="manage_staff.php" class="action-btn admin-btn">
-                            <img src="images/icons/admin_icon.png" alt="Create Admin">
-                            <span>Create Admin Account</span>
-                        </a>
-                    </div>
-                </section>
     
                 <section class="recent-activities-section">
-                    <h3>Recent Activities</h3>
+                    <div class="section-header">
+                        <h3>Recent Activities</h3>
+                        <a href="activity_logs.php" class="view-all-link">
+                            <i class="fas fa-history"></i> View Full Activity Logs →
+                        </a>
+                    </div>
+                    
                     <div class="activity-list">
                         <?php if (empty($activities)): ?>
                             <p class="no-activity">No recent activity.</p>
@@ -320,7 +320,9 @@ $emailLogs = $conn->query("
                 </section>
 
                 <section class="stats-reports-section">
-                    <h3>Statistics and Reports</h3>
+                    <div class="section-header">
+                        <h3>Statistics and Reports</h3>
+                    </div>
                     <div class="stats-card-container">
                         <a href="users_stats.php" class="stats-card user-stats-card">
                             <div class="stats-icon">
@@ -345,67 +347,71 @@ $emailLogs = $conn->query("
                 </section>
 
                 <section class="system-logs-section">
-                    <h3>System Logs</h3>
-                    <div class="log-tabs">
-                        <button class="tab-btn active" data-tab="sms">SMS Logs</button>
-                        <button class="tab-btn" data-tab="email">Email Logs</button>
+                    <div class="section-header">
+                        <h3>System Logs</h3>
                     </div>
+                    <div class="system-logs">
+                        <div class="log-tabs">
+                            <button class="tab-btn active" data-tab="sms">SMS Logs</button>
+                            <button class="tab-btn" data-tab="email">Email Logs</button>
+                        </div>
 
-                    <!-- SMS Logs -->
-                    <div class="log-content active" id="sms">
-                        <?php if (empty($smsLogs)): ?>
-                            <p class="no-logs">No SMS logs found.</p>
-                        <?php else: ?>
-                            <div class="log-list">
-                                <?php foreach ($smsLogs as $log): ?>
-                                    <details class="log-item">
-                                        <summary>
-                                            <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
-                                                <?= $log['status'] === 'success' ? 'Success' : 'Failed' ?>
-                                            </span>
-                                            <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
-                                            <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
-                                        </summary>
-                                        <div class="log-details">
-                                            <p><strong>Phone:</strong> <?= htmlspecialchars($log['recipient_phone']) ?></p>
-                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
-                                            <?php if ($log['status'] === 'failed'): ?>
-                                                <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                    </details>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                        <!-- SMS Logs -->
+                        <div class="log-content active" id="sms">
+                            <?php if (empty($smsLogs)): ?>
+                                <p class="no-logs">No SMS logs found.</p>
+                            <?php else: ?>
+                                <div class="log-list">
+                                    <?php foreach ($smsLogs as $log): ?>
+                                        <details class="log-item">
+                                            <summary>
+                                                <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
+                                                    <?= $log['status'] === 'success' ? 'Success' : 'Failed' ?>
+                                                </span>
+                                                <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
+                                                <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
+                                            </summary>
+                                            <div class="log-details">
+                                                <p><strong>Phone:</strong> <?= htmlspecialchars($log['recipient_phone']) ?></p>
+                                                <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
+                                                <?php if ($log['status'] === 'failed'): ?>
+                                                    <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </details>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
-                    <!-- Email Logs -->
-                    <div class="log-content" id="email">
-                        <?php if (empty($emailLogs)): ?>
-                            <p class="no-logs">No email logs found.</p>
-                        <?php else: ?>
-                            <div class="log-list">
-                                <?php foreach ($emailLogs as $log): ?>
-                                    <details class="log-item">
-                                        <summary>
-                                            <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
-                                                <?= $log['status'] === 'success' ? 'Success' : 'Failed' ?>
-                                            </span>
-                                            <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
-                                            <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
-                                        </summary>
-                                        <div class="log-details">
-                                            <p><strong>Email:</strong> <?= htmlspecialchars($log['recipient_email']) ?></p>
-                                            <p><strong>Subject:</strong> <?= htmlspecialchars($log['subject']) ?></p>
-                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
-                                            <?php if ($log['status'] === 'failed'): ?>
-                                                <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                    </details>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+                        <!-- Email Logs -->
+                        <div class="log-content" id="email">
+                            <?php if (empty($emailLogs)): ?>
+                                <p class="no-logs">No email logs found.</p>
+                            <?php else: ?>
+                                <div class="log-list">
+                                    <?php foreach ($emailLogs as $log): ?>
+                                        <details class="log-item">
+                                            <summary>
+                                                <span class="log-status <?= $log['status'] === 'success' ? 'success' : 'failed' ?>">
+                                                    <?= $log['status'] === 'success' ? 'Success' : 'Failed' ?>
+                                                </span>
+                                                <span class="log-recipient"><?= htmlspecialchars($log['recipient_name']) ?></span>
+                                                <span class="log-time"><?= timeAgo($log['sent_at']) ?></span>
+                                            </summary>
+                                            <div class="log-details">
+                                                <p><strong>Email:</strong> <?= htmlspecialchars($log['recipient_email']) ?></p>
+                                                <p><strong>Subject:</strong> <?= htmlspecialchars($log['subject']) ?></p>
+                                                <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
+                                                <?php if ($log['status'] === 'failed'): ?>
+                                                    <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </details>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </section>
             </div>

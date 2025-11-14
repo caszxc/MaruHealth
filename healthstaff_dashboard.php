@@ -2,6 +2,7 @@
 // healthstaff_dashboard.php
 session_start();
 require_once "config.php";
+include 'settings.php';
 
 // Check if user is logged in and is health staff
 if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'health_staff') {
@@ -159,10 +160,10 @@ $medEmailLogs = $conn->query("
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>
@@ -226,7 +227,7 @@ $medEmailLogs = $conn->query("
                             <p class="pending-info">
                                 <span class="pending-number"><?= $overdueCount ?></span> Requests
                             </p>
-                            <a href="medicine_requests.php?status=overdue" class="manage-link">Notify</a>
+                            <a href="pending_requests.php" class="manage-link">Unclaimed</a>
                         </div>
                         <div class="alert-card <?= $expiredCount > 0 ? 'has-pending' : '' ?>" data-type="expired">
                             <div class="alert-header">

@@ -2,6 +2,7 @@
 //service_management.php
 session_start();
 require_once "config.php"; 
+include 'settings.php';
 
 // Check if user is logged in as super admin or admin
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['admin'])) {
@@ -105,10 +106,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png" alt="Logo">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>

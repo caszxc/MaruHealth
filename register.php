@@ -1,6 +1,7 @@
 <?php
 //register.php
 include 'config.php';
+include 'settings.php';
 
 $registrationSuccess = false;
 $errors = [];
@@ -168,11 +169,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
-            <h1>
-                <span class="maru-health">MaruHealth</span>
-                <span class="barangay-title">Barangay Marulas 3S Health Center</span>
-            </h1>
+            <img src="<?= $logo_url ?>" alt="Logo">
+            <div>
+                <h1>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
+            </div>
         </div>
     </nav>
     <div class="register-container">

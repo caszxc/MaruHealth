@@ -2,6 +2,7 @@
 // index.php
 session_start();
 include 'config.php';
+include 'settings.php';
 
 $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // default picture
 
@@ -94,10 +95,10 @@ $bannerImages = [
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>
@@ -137,14 +138,19 @@ $bannerImages = [
         <?php endforeach; ?>
 
         <div class="address-contact">
-            <p><i class="fa fa-map-marker"></i> 3S Center Marulas, Market, Valenzuela, Metro Manila</p>
-            <p><i class="fa fa-phone"></i> 0968 351 1100</p>
+            <p><i class="fa fa-map-marker"></i> <?= htmlspecialchars($contact_address) ?></p>
+            <p><i class="fa fa-phone"></i> <?= htmlspecialchars($contact_phone) ?></p>
         </div>
+
         <div class="title-container">
             <div class="title">
                 <p data-aos="fade-in" data-aos-delay="150">WELCOME TO</p>
-                <br><h1 data-aos="fade-in" data-aos-delay="300">MARUHEALTH</h1> 
-                <span class="tagline" data-aos="fade-in" data-aos-delay="600">Your Health, Our Priority Making Quality Care More Accessible in Barangay Marulas</span>
+                <br><h1 data-aos="fade-in" data-aos-delay="300">
+                    <?= htmlspecialchars($site_name) ?>
+                </h1> 
+                <span class="tagline" data-aos="fade-in" data-aos-delay="600">
+                    <?= htmlspecialchars($site_tagline) ?>
+                </span>
             </div>
             <div class="announcement-event-wrapper">
                 <!-- Navigation Buttons (visible only on small screens) -->
@@ -291,18 +297,18 @@ $bannerImages = [
         <div class="footer-container">
             <div class="footer-logo-container">
                 <div class="footer-logo-section">
-                    <img src="images/3s logo.png" alt="3S Logo" class="footer-logo">
+                    <img src="<?= $logo_url ?>" alt="Logo" class="footer-logo">
                     <h3>MaruHealth<br>Barangay Marulas<br>3S Health Station</h3>
                 </div>
                 <div class="footer-text">
-                    <p><i class="fa fa-map-marker"></i> 3S Center Marulas, Market, Valenzuela, Metro Manila</p>
-                    <p><i class="fa fa-phone"></i> 0968 351 1100</p>
+                    <p><i class="fa fa-map-marker"></i>  <?= htmlspecialchars($contact_address) ?></p>
+                    <p><i class="fa fa-phone"></i> <?= htmlspecialchars($contact_phone) ?></p>
                 </div>
             </div>
         </div>
 
         <div class="footer-bottom">
-            <p>© 2025 3S Barangay Marulas. All Rights Reserved.</p>
+            <p><?= htmlspecialchars($footer_copyright) ?></p>
             <div class="footer-policy">
                 <a href="privacy_policy.php">Privacy & Policy</a> |
                 <a href="terms_condition.php">Terms & Conditions</a>

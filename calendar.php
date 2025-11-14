@@ -2,6 +2,7 @@
 // calendar.php
 session_start();
 include 'config.php';
+include 'settings.php';
 
 $month = isset($_GET['month']) ? intval($_GET['month']) : date('n');
 $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
@@ -172,10 +173,10 @@ require_once "deletion_notice.php";
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>

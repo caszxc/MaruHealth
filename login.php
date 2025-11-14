@@ -2,6 +2,7 @@
 // login.php
 session_start();
 include 'config.php';
+include 'settings.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $identifier = trim($_POST['identifier']); // email, phone, or username
@@ -90,9 +91,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="main-login">
         <div class="login-con <?php echo isset($error) ? 'has-error' : 'animate'; ?>">
             <div class="left-panel">
-                <img src="images/3s logo.png" alt="Logo">
+                <img src="<?= $logo_url ?>" alt="Logo">
                 <div>
-                    <h1>MaruHealth</h1>
+                    <h1><?= htmlspecialchars($site_name) ?></h1>
                     <p>Barangay Marulas 3S Health Station</p>
                 </div>
             </div>

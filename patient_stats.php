@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once "config.php";
+include 'settings.php';
 
 // Check if user is logged in as super admin or health staff
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'health_staff'])) {
@@ -318,10 +319,10 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>

@@ -3,6 +3,7 @@
 session_start();
 require_once "config.php";
 require_once "email_function.php";
+include 'settings.php';
 
 // ---------------------------------------------------------------------
 // 1. AUTH & ADMIN INFO
@@ -266,10 +267,10 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- ====================== NAV & SIDEBAR (same as approvedAcc_requests.php) ====================== -->
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>
@@ -311,6 +312,12 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
                 <a href="account_requests.php" class="<?=in_array($current_page,['account_approval.php','approvedAcc_requests.php','deletion_requests.php'])?'active':''?>">User Account Management</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/settings_icon.png" alt="">
+                <a href="system_settings.php" class="<?= $current_page == 'system_settings.php' ? 'active' : '' ?>">
+                    System Settings
+                </a>
             </div>
             <?php endif; ?>
             <?php if ($adminRole == 'admin'): ?>

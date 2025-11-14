@@ -22,6 +22,45 @@ try {
     // Set MySQL timezone to Asia/Manila
     $conn->exec("SET time_zone = '+08:00'");
     
+    // Create System Settings Table
+    $sql = "CREATE TABLE IF NOT EXISTS system_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        setting_key VARCHAR(100) UNIQUE NOT NULL,
+        setting_value TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )";
+    $conn->exec($sql);
+
+    // Insert default values if not exist
+    $defaults = [
+        'site_name' => 'MaruHealth',
+        'site_tagline' => 'Your Health, Our Priority Making Quality Care More Accessible in Barangay Marulas',
+        'contact_address' => '3S Center Marulas, Market, Valenzuela, Metro Manila',
+        'contact_phone' => '0968 351 1100',
+        'footer_copyright' => '© 2025 3S Barangay Marulas. All Rights Reserved.'
+    ];
+
+    foreach ($defaults as $key => $value) {
+        $check = $conn->prepare("SELECT COUNT(*) FROM system_settings WHERE setting_key = :key");
+        $check->execute([':key' => $key]);
+        if ($check->fetchColumn() == 0) {
+            $insert = $conn->prepare("INSERT INTO system_settings (setting_key, setting_value) VALUES (:key, :value)");
+            $insert->execute([':key' => $key, ':value' => $value]);
+        }
+    }
+
+    // Helper: Get system setting
+    function getSetting($conn, $key, $default = '') {
+        try {
+            $stmt = $conn->prepare("SELECT setting_value FROM system_settings WHERE setting_key = :key");
+            $stmt->execute([':key' => $key]);
+            $result = $stmt->fetchColumn();
+            return $result !== false ? $result : $default;
+        } catch (Exception $e) {
+            return $default;
+        }
+    }
+
     // SQL to create events table
     $sql = "CREATE TABLE IF NOT EXISTS events (
         id INT AUTO_INCREMENT PRIMARY KEY,

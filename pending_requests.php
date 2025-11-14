@@ -3,6 +3,7 @@
 session_start();
 require_once "config.php";
 require_once "auto_return_unclaimed.php";
+include 'settings.php';
 
 // Check if user is logged in as health staff
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
@@ -128,10 +129,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>

@@ -2,6 +2,7 @@
 // manage_staff.php
 session_start();
 require_once "config.php"; 
+include 'settings.php';
 
 // Security: Redirect if not super admin
 if (!isset($_SESSION['admin_id']) || $_SESSION['admin_role'] !== 'super_admin') {
@@ -101,10 +102,10 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png" alt="Logo">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>
@@ -146,6 +147,12 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
             <div class="menu-link">
                 <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/settings_icon.png" alt="">
+                <a href="system_settings.php" class="<?= $current_page == 'system_settings.php' ? 'active' : '' ?>">
+                    System Settings
+                </a>
             </div>
             <?php endif; ?>
             <?php if ($adminRole == 'admin'): ?>

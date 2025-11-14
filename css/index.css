@@ -541,7 +541,6 @@ body::-webkit-scrollbar{
     .announcement .announcement-image,
     .event .event-image {
         height: 80px;
-        width: auto;
         object-fit: cover;
     }
 

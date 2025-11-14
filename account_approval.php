@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once "config.php"; // include your database connection
+include 'settings.php';
 
 // Check if user is logged in as super admin or admin
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin'])) {
@@ -53,10 +54,10 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span class="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>
@@ -102,6 +103,12 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/account_approval_icon_active.png" alt="">
                 <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a>
+            </div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/settings_icon.png" alt="">
+                <a href="system_settings.php" class="<?= $current_page == 'system_settings.php' ? 'active' : '' ?>">
+                    System Settings
+                </a>
             </div>
             <?php endif; ?>
             

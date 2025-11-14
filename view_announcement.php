@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'config.php';
+include 'settings.php';
 
 $profilePic = 'images/uploads/profile_pictures/profile-placeholder.png'; // default picture
 
@@ -69,10 +70,10 @@ $recentPosts = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
                 <h1>
-                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>
@@ -106,8 +107,8 @@ $recentPosts = $recentStmt->fetchAll(PDO::FETCH_ASSOC);
     <!-- Announcement Section -->
     <section class="container">
         <div class="address-contact">
-            <p><i class="fa fa-map-marker"></i> 3S Center Marulas, Market, Valenzuela, Metro Manila</p>
-            <p><i class="fa fa-phone"></i> 0968 351 1100</p>
+            <p><i class="fa fa-map-marker"></i> <?= htmlspecialchars($contact_address) ?></p>
+            <p><i class="fa fa-phone"></i> <?= htmlspecialchars($contact_phone) ?></p>
         </div>
         <div class="announcement">
             <p class="breadcrumb"><a href="index.php">Home</a> > <a href="announcements_list.php">Announcements</a> > <?= htmlspecialchars($announcement['title']) ?></p>

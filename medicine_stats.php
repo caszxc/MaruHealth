@@ -133,20 +133,21 @@ try {
             <p class="menu-header">ANALYTICS</p>
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/dashboard_icon_active.png" alt="">
-                <a href="<?=htmlspecialchars($dashboard_url)?>" class="<?= $current_page == 'medicine_stats.php' ? 'active' : '' ?>">Dashboard</a>
+                <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == 'medicine_stats.php' ? 'active' : '' ?>">Dashboard</a>
             </div>
 
             <p class="menu-header">BASE</p>
             <?php if ($adminRole == 'super_admin'): ?>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/account_approval_icon.png" alt=""><a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a></div>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/account_approval_icon.png" alt=""><a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a></div>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/account_approval_icon.png" alt=""><a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a></div>
+            <div class="menu-link">
+                <img class="menu-icon" src="images/icons/settings_icon.png" alt="">
+                <a href="system_settings.php" class="<?= $current_page == 'system_settings.php' ? 'active' : '' ?>">
+                    System Settings
+                </a>
+            </div>
             <?php endif; ?>
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/account_approval_icon.png" alt=""><a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a></div>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/announcement_icon.png" alt=""><a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a></div>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/calendar_icon.png" alt=""><a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a></div>
-            <div class="menu-link"><img class="menu-icon" src="images/icons/calendar_icon.png" alt=""><a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a></div>
-            <?php endif; ?>
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
+            <?php if ($adminRole == 'health_staff'): ?>
             <div class="menu-link"><img class="menu-icon" src="images/icons/patient_icon.png" alt=""><a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a></div>
             <div class="menu-link"><img class="menu-icon" src="images/icons/med_icon.png" alt=""><a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a></div>
             <div class="menu-link"><img class="menu-icon" src="images/icons/reqmd_icon.png" alt=""><a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a></div>
@@ -165,15 +166,16 @@ try {
                 <h2>Medicine Statistics</h2>
             </div>
 
-            <!-- ADD THIS BUTTON -->
-            <button type="button" class="generate-report-btn" id="openReportModal">
-                <i class="fas fa-file-export"></i> Generate Reports
-            </button>
-
             <small class="stat-desc">Last updated: <?= date('M d, Y h:i A') ?></small>
         </div>
 
         <div class="stats-container">
+            <div class="action-button">
+                <button type="button" class="generate-report-btn" id="openReportModal">
+                    <i class="fas fa-file-export"></i> Generate Reports
+                </button>
+            </div>
+            
             <div class="stats-grid">
                 <div class="stat-card card-total">
                     <div>
@@ -267,17 +269,41 @@ try {
                 <span class="close-modal" id="closeReportModal">&times;</span>
             </div>
 
-            <form id="reportForm" action="generate_report.php" method="POST" target="_blank">
+            <form id="reportForm" action="generate_medicine_report.php" method="POST" target="_blank">
                 <div class="modal-body">
                     <div class="form-group">
                         <label><strong>Select Report Type</strong></label>
                         <div class="radio-group">
-                            <label><input type="radio" name="report_type" value="total_stock" required> Total Stock Medicines</label>
-                            <label><input type="radio" name="report_type" value="out_of_stock"> Out of Stock Medicines</label>
-                            <label><input type="radio" name="report_type" value="low_stock"> Low Stock Medicines</label>
-                            <label><input type="radio" name="report_type" value="disposed"> Disposed Medicines</label>
-                            <label><input type="radio" name="report_type" value="expired"> Expired Medicines</label>
-                            <label><input type="radio" name="report_type" value="expiring_soon"> Expiring Medicines (Next 30 Days)</label>
+                            <label class="radio-label">
+                                <input type="radio" name="report_type" value="total_stock" required>
+                                <span class="radio-custom"></span>
+                                Total Stock Medicines (All Available)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="report_type" value="out_of_stock">
+                                <span class="radio-custom"></span>
+                                Out of Stock Medicines
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="report_type" value="low_stock">
+                                <span class="radio-custom"></span>
+                                Low Stock Medicines (Below Minimum)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="report_type" value="expiring_soon">
+                                <span class="radio-custom"></span>
+                                Expiring Soon (Next 30 Days)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="report_type" value="expired">
+                                <span class="radio-custom"></span>
+                                Expired Medicines (For Disposal)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="report_type" value="disposed">
+                                <span class="radio-custom"></span>
+                                Disposed Medicines History
+                            </label>
                         </div>
                     </div>
 
@@ -300,7 +326,7 @@ try {
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" id="cancelReport">Cancel</button>
                     <button type="submit" class="btn-generate">
-                        <i class="fas fa-download"></i> Generate PDF Report
+                        <i class="fas fa-download"></i> Generate Excel Report
                     </button>
                 </div>
             </form>

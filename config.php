@@ -305,6 +305,7 @@ try {
         manufacturing_date DATE,
         expiration_date DATE,
         stocks INT DEFAULT 0,
+        initial_stocks INT DEFAULT 0,
         stock_status ENUM('In Stock', 'Out of Stock') DEFAULT 'In Stock',
         expiry_status ENUM('Valid', 'Expiring within a month', 'Expiring within a week', 'Expired') DEFAULT 'Valid',
         source VARCHAR(255),

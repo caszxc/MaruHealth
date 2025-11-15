@@ -324,12 +324,69 @@ $emailLogs = $conn->query("
                         <h3>Statistics and Reports</h3>
                     </div>
                     <div class="stats-card-container">
-                        <a href="users_stats.php" class="stats-card user-stats-card">
+                        <a href="user_stats.php" class="stats-card user-stats-card">
                             <div class="stats-icon">
                                 <img src="images/icons/dashboard/user_stats_icon.png" alt="User Stats">
                             </div>
                             <div class="stats-content">
                                 <h4>User Statistics</h4>
+                                <div class="stats-numbers">
+                                    <div class="stat-line">
+                                        <span class="label">Total Users</span>
+                                        <span class="value"><?= number_format($stats['total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Pending Approval</span>
+                                        <span class="value pending"><?= number_format($stats['pending']) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+                        <a href="patient_stats.php" class="stats-card user-stats-card">
+                            <div class="stats-icon">
+                                <img src="images/icons/dashboard/user_stats_icon.png" alt="User Stats">
+                            </div>
+                            <div class="stats-content">
+                                <h4>Patient Statistics</h4>
+                                <div class="stats-numbers">
+                                    <div class="stat-line">
+                                        <span class="label">Total Users</span>
+                                        <span class="value"><?= number_format($stats['total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Pending Approval</span>
+                                        <span class="value pending"><?= number_format($stats['pending']) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+                        <a href="consultation_stats.php" class="stats-card user-stats-card">
+                            <div class="stats-icon">
+                                <img src="images/icons/dashboard/user_stats_icon.png" alt="User Stats">
+                            </div>
+                            <div class="stats-content">
+                                <h4>Consultation Statistics</h4>
+                                <div class="stats-numbers">
+                                    <div class="stat-line">
+                                        <span class="label">Total Users</span>
+                                        <span class="value"><?= number_format($stats['total']) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Pending Approval</span>
+                                        <span class="value pending"><?= number_format($stats['pending']) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+                        <a href="medicine_stats.php" class="stats-card user-stats-card">
+                            <div class="stats-icon">
+                                <img src="images/icons/dashboard/user_stats_icon.png" alt="User Stats">
+                            </div>
+                            <div class="stats-content">
+                                <h4>Medicine Statistics</h4>
                                 <div class="stats-numbers">
                                     <div class="stat-line">
                                         <span class="label">Total Users</span>

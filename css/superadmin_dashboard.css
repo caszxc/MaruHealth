@@ -395,7 +395,8 @@ section h3 {
 .stats-reports-section { background: #fafafa  }
 
 .stats-card-container {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 20px;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }

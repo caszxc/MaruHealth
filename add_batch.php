@@ -75,10 +75,10 @@ try {
     $insertStmt = $conn->prepare("
         INSERT INTO medicine_batches (
             catalog_id, batch_lot_number, pono, manufacturing_date, 
-            expiration_date, stocks, stock_status, expiry_status, source
+            expiration_date, stocks, initial_stocks, stock_status, expiry_status, source
         ) VALUES (
             :catalog_id, :batch_lot_number, :pono, :manufacturing_date, 
-            :expiration_date, :stocks, :stock_status, :expiry_status, :source
+            :expiration_date, :stocks, :stocks, :stock_status, :expiry_status, :source
         )
     ");
     $insertStmt->execute([
@@ -88,6 +88,7 @@ try {
         ':manufacturing_date' => $manufacturing_date,
         ':expiration_date' => $expiration_date,
         ':stocks' => $stocks,
+        ':initial_stocks' => $stocks,
         ':stock_status' => $stock_status,
         ':expiry_status' => $expiry_status,
         ':source' => $source

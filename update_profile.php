@@ -80,18 +80,28 @@ if (!$is_dependent) {
     }
 
     // uniqueness checks for primary accounts
-    $check = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ? AND primary_user_id IS NULL");
-    $check->execute([$email, $active_user_id]);
-    if ($check->rowCount()) {
-        $response['message'] = 'Email already used by another primary account.';
-        echo json_encode($response);
-        exit();
+    $errors = [];
+
+    // Email uniqueness
+    if (!$is_dependent) {
+        $check = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ? AND primary_user_id IS NULL");
+        $check->execute([$email, $active_user_id]);
+        if ($check->rowCount()) {
+            $errors['email'] = 'This email is already used by another primary account.';
+        }
+
+        // Phone uniqueness
+        $check = $conn->prepare("SELECT id FROM users WHERE phone_number = ? AND id != ? AND primary_user_id IS NULL");
+        $check->execute([$phone_number, $active_user_id]);
+        if ($check->rowCount()) {
+            $errors['phone_number'] = 'This phone number is already used by another primary account.';
+        }
     }
 
-    $check = $conn->prepare("SELECT id FROM users WHERE phone_number = ? AND id != ? AND primary_user_id IS NULL");
-    $check->execute([$phone_number, $active_user_id]);
-    if ($check->rowCount()) {
-        $response['message'] = 'Phone number already used by another primary account.';
+    // If any field errors, return them
+    if (!empty($errors)) {
+        $response['success'] = false;
+        $response['field_errors'] = $errors;
         echo json_encode($response);
         exit();
     }

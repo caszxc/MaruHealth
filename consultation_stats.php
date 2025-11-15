@@ -1,293 +1,117 @@
 <?php
+// patient_stats.php
 session_start();
 require_once "config.php";
+include 'settings.php';
 
-// Check if user is logged in as super admin or health staff
-if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'health_staff'])) {
+// ---------------------------------------------------------------------
+// 1. AUTHENTICATION
+// ---------------------------------------------------------------------
+if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin', 'admin', 'health_staff'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
 
-// Initialize filters
-$period = isset($_GET['period']) ? $_GET['period'] : 'all';
-$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d', strtotime('-30 days'));
-$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
-
-// Fetch admin/staff info
-$adminId = $_SESSION['admin_id'];
+$adminId   = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
-$adminStmt->bindParam(':id', $adminId);
-$adminStmt->execute();
-$admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
-$adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
-$adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
+$adminStmt->execute([':id' => $adminId]);
+$admin     = $adminStmt->fetch(PDO::FETCH_ASSOC);
+$adminName = $admin['full_name'] ?? $_SESSION['admin_name'];
+$adminRole = $admin['role'] ?? $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
-// Handle date range based on period selection
-switch ($period) {
-    case 'today':
-        $startDate = date('Y-m-d');
-        $endDate = date('Y-m-d');
-        break;
-    case 'this_week':
-        $startDate = date('Y-m-d', strtotime('monday this week'));
-        $endDate = date('Y-m-d', strtotime('sunday this week'));
-        break;
-    case 'this_month':
-        $startDate = date('Y-m-01');
-        $endDate = date('Y-m-t');
-        break;
-    case 'this_year':
-        $startDate = date('Y-01-01');
-        $endDate = date('Y-12-31');
-        break;
-    case 'custom':
-        // startDate and endDate already set from GET parameters
-        break;
-    case 'all':
-    default:
-        $startDate = '';
-        $endDate = '';
-        break;
-}
+// ---------------------------------------------------------------------
+// 2. FETCH PATIENT STATISTICS
+// ---------------------------------------------------------------------
+try {
+    $today = date('Y-m-d');
+    $this_month = date('Y-m');
+    $last_month = date('Y-m', strtotime('-1 month'));
 
-// Function to count total consultations
-function countTotalConsultations($conn, $startDate = '', $endDate = '') {
-    try {
-        $sql = "SELECT COUNT(*) as count FROM consultations";
-        $params = [];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " WHERE consultation_date BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate;
-            $params[':end_date'] = $endDate;
+    // Key Metrics
+    $total_consultations     = $conn->query("SELECT COUNT(*) FROM consultations")->fetchColumn();
+    $today_consultations     = $conn->query("SELECT COUNT(*) FROM consultations WHERE DATE(consultation_date) = '$today'")->fetchColumn();
+    $this_month_count        = $conn->query("SELECT COUNT(*) FROM consultations WHERE DATE_FORMAT(consultation_date, '%Y-%m') = '$this_month'")->fetchColumn();
+    $last_month_count        = $conn->query("SELECT COUNT(*) FROM consultations WHERE DATE_FORMAT(consultation_date, '%Y-%m') = '$last_month'")->fetchColumn();
+    $growth_rate = $last_month_count > 0 ? round((($this_month_count - $last_month_count) / $last_month_count) * 100, 1) : 0;
+    $growth_class = $growth_rate >= 0 ? 'positive' : 'negative';
+
+    // Daily average this month
+    $days_in_month = date('j');
+    $daily_avg = $days_in_month > 0 ? round($this_month_count / $days_in_month, 1) : 0;
+
+    // Consultation Type Breakdown
+    $type_breakdown = $conn->query("
+        SELECT consultation_type, COUNT(*) as count 
+        FROM consultations 
+        GROUP BY consultation_type 
+        ORDER BY count DESC
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Top 10 Diagnoses
+    $top_diagnoses = $conn->query("
+        SELECT diagnosis, COUNT(*) as freq 
+        FROM consultations 
+        GROUP BY diagnosis 
+        ORDER BY freq DESC LIMIT 10
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Top 10 Prescribed Medicines (from text field)
+    $top_meds = $conn->query("
+        SELECT TRIM(SUBSTRING_INDEX(prescribed_medicine, ',', 1)) as med,
+               COUNT(*) as freq
+        FROM consultations 
+        WHERE prescribed_medicine IS NOT NULL AND prescribed_medicine != ''
+        GROUP BY med
+        ORDER BY freq DESC LIMIT 8
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Monthly Trend (Last 12 months)
+    $trend_query = $conn->query("
+        SELECT DATE_FORMAT(consultation_date, '%Y-%m') as month,
+               COUNT(*) as total
+        FROM consultations
+        WHERE consultation_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        GROUP BY month
+        ORDER BY month
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    // Prepare trend data
+    $trend_labels = [];
+    $trend_data   = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $month = date('Y-m', strtotime("-$i month"));
+        $trend_labels[] = date('M Y', strtotime("-$i month"));
+        $found = false;
+        foreach ($trend_query as $row) {
+            if ($row['month'] == $month) {
+                $trend_data[] = (int)$row['total'];
+                $found = true;
+                break;
+            }
         }
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-    } catch (PDOException $e) {
-        return 0;
+        if (!$found) $trend_data[] = 0;
     }
-}
 
-// Function to count consultations by type
-function countConsultationsByType($conn, $type, $startDate = '', $endDate = '') {
-    try {
-        $sql = "SELECT COUNT(*) as count FROM consultations WHERE consultation_type = :type";
-        $params = [':type' => $type];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " AND consultation_date BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate;
-            $params[':end_date'] = $endDate;
-        }
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-    } catch (PDOException $e) {
-        return 0;
-    }
-}
+    // Busiest Day of Week
+    $day_of_week = $conn->query("
+        SELECT DAYNAME(consultation_date) as day, COUNT(*) as count
+        FROM consultations
+        GROUP BY DAYOFWEEK(consultation_date), day
+        ORDER BY count DESC LIMIT 1
+    ")->fetch(PDO::FETCH_ASSOC);
 
-// Function to get consultation type distribution
-function getConsultationTypeDistribution($conn, $startDate = '', $endDate = '') {
-    try {
-        $sql = "SELECT consultation_type, COUNT(*) as count FROM consultations";
-        $params = [];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " WHERE consultation_date BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate;
-            $params[':end_date'] = $endDate;
-        }
-        
-        $sql .= " GROUP BY consultation_type";
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return [];
-    }
-}
+    // Staff Performance (who recorded the most consultations)
+    $staff_performance = $conn->query("
+        SELECT consulting_physician_nurse as staff, COUNT(*) as consultations
+        FROM consultations
+        WHERE consulting_physician_nurse IS NOT NULL AND consulting_physician_nurse != ''
+        GROUP BY consulting_physician_nurse
+        ORDER BY consultations DESC LIMIT 6
+    ")->fetchAll(PDO::FETCH_ASSOC);
 
-// Function to get top diagnosed conditions
-function getTopDiagnosedConditions($conn, $startDate = '', $endDate = '', $limit = 5) {
-    try {
-        $sql = "SELECT diagnosis, COUNT(*) as count 
-                FROM consultations";
-        $params = [];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " WHERE consultation_date BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate;
-            $params[':end_date'] = $endDate;
-        }
-        
-        $sql .= " GROUP BY diagnosis 
-                  ORDER BY count DESC 
-                  LIMIT :limit";
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return [];
-    }
-}
-
-// Function to get monthly consultation data
-function getMonthlyConsultations($conn, $year = null) {
-    if ($year === null) {
-        $year = date('Y');
-    }
-    
-    try {
-        $sql = "SELECT 
-                    MONTH(consultation_date) as month, 
-                    COUNT(*) as count 
-                FROM consultations 
-                WHERE YEAR(consultation_date) = :year 
-                GROUP BY MONTH(consultation_date)
-                ORDER BY month";
-                
-        $stmt = $conn->prepare($sql);
-        $stmt->bindValue(':year', $year);
-        $stmt->execute();
-        
-        // Initialize all months with zero counts
-        $monthlyData = array_fill(1, 12, 0);
-        
-        // Fill in actual data
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $monthlyData[$row['month']] = (int)$row['count'];
-        }
-        
-        return $monthlyData;
-    } catch (PDOException $e) {
-        return array_fill(1, 12, 0);
-    }
-}
-
-// Function to get consultation list
-function getConsultationList($conn, $startDate = '', $endDate = '', $limit = 10, $offset = 0) {
-    try {
-        $sql = "SELECT c.id, CONCAT(p.first_name, ' ', p.last_name) as patient_name, 
-                       c.consultation_type, c.consultation_date, c.diagnosis
-                FROM consultations c
-                JOIN patients p ON c.patient_id = p.id";
-        $params = [];
-        
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " WHERE c.consultation_date BETWEEN :start_date AND :end_date";
-            $params[':start_date'] = $startDate;
-            $params[':end_date'] = $endDate;
-        }
-        
-        $sql .= " ORDER BY c.consultation_date DESC LIMIT :limit OFFSET :offset";
-        
-        $stmt = $conn->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        return [];
-    }
-}
-
-
-// Get statistics
-$totalConsultations = countTotalConsultations($conn, $startDate, $endDate);
-$generalCheckups = countConsultationsByType($conn, 'General Check Up', $startDate, $endDate);
-$vaccinations = countConsultationsByType($conn, 'Vaccination', $startDate, $endDate);
-$prenatal = countConsultationsByType($conn, 'Prenatal', $startDate, $endDate);
-$dentistry = countConsultationsByType($conn, 'Dentistry', $startDate, $endDate);
-$familyPlanning = countConsultationsByType($conn, 'Family Planning', $startDate, $endDate);
-$consultationTypeDistribution = getConsultationTypeDistribution($conn, $startDate, $endDate);
-$topDiagnosedConditions = getTopDiagnosedConditions($conn, $startDate, $endDate);
-$monthlyConsultations = getMonthlyConsultations($conn);
-
-// Process consultation type distribution for chart
-$consultationTypeLabels = [];
-$consultationTypeData = [];
-foreach ($consultationTypeDistribution as $item) {
-    $consultationTypeLabels[] = $item['consultation_type'];
-    $consultationTypeData[] = (int)$item['count'];
-}
-
-// Process top diagnosed conditions for chart
-$topDiagnosesLabels = [];
-$topDiagnosesData = [];
-foreach ($topDiagnosedConditions as $item) {
-    $topDiagnosesLabels[] = strlen($item['diagnosis']) > 30 ? substr($item['diagnosis'], 0, 27) . '...' : $item['diagnosis'];
-    $topDiagnosesData[] = (int)$item['count'];
-}
-
-// Handle Excel export
-if (isset($_GET['export']) && $_GET['export'] == 'excel') {
-    header('Content-Type: application/vnd.ms-excel');
-    header('Content-Disposition: attachment;filename="consultation_report_' . date('Y-m-d') . '.xls"');
-    header('Cache-Control: max-age=0');
-    
-    $allConsultations = getConsultationList($conn, $startDate, $endDate, 100000, 0);
-    
-    echo '<!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Consultation Report</title>
-    </head>
-    <body>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th colspan="5">Maru-Health Consultation Report - ' . ($period != 'custom' ? ucfirst(str_replace('_', ' ', $period)) : date('M d, Y', strtotime($startDate)) . ' to ' . date('M d, Y', strtotime($endDate))) . '</th>
-                </tr>
-                <tr>
-                    <th>ID</th>
-                    <th>Patient Name</th>
-                    <th>Consultation Type</th>
-                    <th>Consultation Date</th>
-                    <th>Diagnosis</th>
-                </tr>
-            </thead>
-            <tbody>';
-    
-    foreach ($allConsultations as $consultation) {
-        echo '<tr>
-                <td>' . $consultation['id'] . '</td>
-                <td>' . htmlspecialchars($consultation['patient_name']) . '</td>
-                <td>' . htmlspecialchars($consultation['consultation_type']) . '</td>
-                <td>' . htmlspecialchars($consultation['consultation_date']) . '</td>
-                <td>' . htmlspecialchars($consultation['diagnosis']) . '</td>
-            </tr>';
-    }
-    
-    echo '</tbody>
-        </table>
-    </body>
-    </html>';
-    
-    exit;
+} catch(Exception $e) {
+    error_log("Consultation Stats Error: " . $e->getMessage());
 }
 ?>
 
@@ -296,29 +120,31 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultation Statistics - Admin Dashboard</title>
-    <link rel="stylesheet" href="css/admin_dashboard.css">
+    <title>Consultation Statistics | MaruHealth</title>
+    <link rel="stylesheet" href="css/consultation_stats.css">
     <link rel="stylesheet" href="css/nav_footer.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+
+    <!-- ====================== NAVBAR & SIDEBAR ====================== -->
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png">
+            <img src="<?= $logo_url ?>" alt="Logo">
             <div>
-                <h1>Maru-Health</h1>
-                <p>Barangay Marulas 3S Health Station</p>
+                <h1>
+                    <span class="maruhealth"><?= htmlspecialchars($site_name) ?></span>
+                    <span class="barangay-title">Barangay Marulas 3S Health Center</span>
+                </h1>
             </div>
         </div>
     </nav>
 
     <div class="sidebar">
         <div class="profile">
-            <img src="images/profile-placeholder.png" alt="Admin">
+            <img src="images/profile-placeholder.png" alt="Staff">
             <div class="profile-details">
                 <p class="admin_name"><strong><?= htmlspecialchars($adminName) ?></strong></p>
                 <p class="role"><?= htmlspecialchars($displayRole) ?></p>
@@ -326,325 +152,217 @@ if (isset($_GET['export']) && $_GET['export'] == 'excel') {
         </div>
         <div class="menu">
             <?php 
-                $current_page = basename($_SERVER['PHP_SELF']); 
-
-                // Determine dashboard URL based on role
-                $dashboard_url = ''; // Default
-                if ($adminRole === 'super_admin') {
-                    $dashboard_url = 'superadmin_dashboard.php';
-                } elseif ($adminRole === 'admin') {
-                    $dashboard_url = 'admin_dashboard.php';
-                } elseif ($adminRole === 'health_staff') {
-                    $dashboard_url = 'healthstaff_dashboard.php';
-                }
+            $current_page = basename($_SERVER['PHP_SELF']);
+            $dashboard_url = $adminRole === 'super_admin' ? 'superadmin_dashboard.php' : 'healthstaff_dashboard.php';
             ?>
             <p class="menu-header">ANALYTICS</p>
-
             <div class="menu-link-active">
                 <img class="menu-icon" src="images/icons/dashboard_icon_active.png" alt="">
                 <a href="<?= htmlspecialchars($dashboard_url) ?>" class="<?= $current_page == 'consultation_stats.php' ? 'active' : '' ?>">Dashboard</a>
             </div>
-            
+
             <p class="menu-header">BASE</p>
-
             <?php if ($adminRole == 'super_admin'): ?>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/account_approval_icon.png" alt=""><a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Admin Account Management</a></div>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/account_approval_icon.png" alt=""><a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">User Account Management</a></div>
             <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="manage_staff.php" class="<?= $current_page == 'manage_staff.php' ? 'active' : '' ?>">Manage Staff</a>
+                <img class="menu-icon" src="images/icons/settings_icon.png" alt="">
+                <a href="system_settings.php" class="<?= $current_page == 'system_settings.php' ? 'active' : '' ?>">
+                    System Settings
+                </a>
             </div>
             <?php endif; ?>
-            
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'admin'): ?>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/account_approval_icon.png" alt="">
-                <a href="account_approval.php" class="<?= $current_page == 'account_approval.php' ? 'active' : '' ?>">Account Approval</a>
-            </div>
-            
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/announcement_icon.png" alt="">
-                <a href="announcements.php" class="<?= $current_page == 'announcements.php' ? 'active' : '' ?>">Announcement</a>
-            </div>
-            
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
-                <a href="edit_calendar.php" class="<?= $current_page == 'edit_calendar.php' ? 'active' : '' ?>">Calendar</a>
-            </div>
-
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/calendar_icon.png" alt="">
-                <a href="service_management.php" class="<?= $current_page == 'service_management.php' ? 'active' : '' ?>">Service Management</a>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($adminRole == 'super_admin' || $adminRole == 'health_staff'): ?>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/patient_icon.png" alt="">
-                <a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a>
-            </div>
-            
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/med_icon.png" alt="">
-                <a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a>
-            </div>
-            
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/reqmd_icon.png" alt="">
-                <a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a>
-            </div>
+            <?php if ($adminRole == 'health_staff'): ?>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/patient_icon.png" alt=""><a href="patient_management.php" class="<?= $current_page == 'patient_management.php' ? 'active' : '' ?>">Patient Management</a></div>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/med_icon.png" alt=""><a href="medicine_management.php" class="<?= $current_page == 'medicine_management.php' ? 'active' : '' ?>">Medicine Management</a></div>
+            <div class="menu-link"><img class="menu-icon" src="images/icons/reqmd_icon.png" alt=""><a href="medicine_requests.php" class="<?= $current_page == 'medicine_requests.php' ? 'active' : '' ?>">Medicine Requests</a></div>
             <?php endif; ?>
 
             <p class="menu-header">OTHERS</p>
-            <div class="menu-link">
-                <img class="menu-icon" src="images/icons/logout_icon.png" alt="">
-                <a href="logout.php" class="logout-button">Log Out</a>
-            </div>
-            
+            <div class="menu-link"><img class="menu-icon" src="images/icons/logout_icon.png" alt=""><a href="logout.php" class="logout-button">Log Out</a></div>
         </div>
     </div>
 
+    <!-- ====================== MAIN CONTENT ====================== -->
     <div class="dashboard-content">
         <div class="title-con">
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <a href="#" class="back-button" onclick="history.back(); return false;">← Back</a>
+            <div style="display:flex;gap:15px;align-items:center;">
+                <a href="<?= $dashboard_url ?>" class="back-button">Back</a>
                 <h2>Consultation Statistics</h2>
             </div>
-            <div class="stats-actions">
-                <a href="?<?= http_build_query(array_merge($_GET, ['export' => 'excel'])) ?>" class="export-btn">
-                    Export to Excel
-                </a>
-            </div>
+            <small class="stat-desc">Last updated: <?= date('M d, Y h:i A') ?></small>
         </div>
-        
-        <div class="stats-header">
-            <div class="filter-form">
-                <form id="periodForm" method="GET" action="">
-                    <label for="period">Time Period:</label>
-                    <select name="period" id="period" onchange="toggleCustomDate()">
-                        <option value="all" <?= $period == 'all' ? 'selected' : '' ?>>All Time</option>
-                        <option value="today" <?= $period == 'today' ? 'selected' : '' ?>>Today</option>
-                        <option value="this_week" <?= $period == 'this_week' ? 'selected' : '' ?>>This Week</option>
-                        <option value="this_month" <?= $period == 'this_month' ? 'selected' : '' ?>>This Month</option>
-                        <option value="this_year" <?= $period == 'this_year' ? 'selected' : '' ?>>This Year</option>
-                        <option value="custom" <?= $period == 'custom' ? 'selected' : '' ?>>Custom Date Range</option>
-                    </select>
-                    
-                    <div id="custom-date-container" style="<?= $period == 'custom' ? 'display: flex;' : '' ?> display: none;">
-                        <input type="date" name="start_date" value="<?= htmlspecialchars($startDate) ?>">
-                        <span>-</span>
-                        <input type="date" name="end_date" value="<?= htmlspecialchars($endDate) ?>">
+
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card card-total">
+                    <div>
+                        <div class="stat-title">Total Consultations</div>
+                        <div class="stat-value"><?= number_format($total_consultations) ?></div>
+                        <small class="stat-desc">All time recorded</small>
                     </div>
-                    
-                    <button type="submit" class="generate-btn">Apply Filter</button>
-                </form>
+                    <i class="fas fa-stethoscope stat-icon" style="color: #198754;"></i>
+                </div>
+
+                <div class="stat-card card-today">
+                    <div>
+                        <div class="stat-title">Today's Consultations</div>
+                        <div class="stat-value"><?= number_format($today_consultations) ?></div>
+                        <small class="stat-desc"><?= date('l, M j') ?></small>
+                    </div>
+                    <i class="fas fa-calendar-day stat-icon" style="color: #0d6efd;"></i>
+                </div>
+
+                <div class="stat-card card-month">
+                    <div>
+                        <div class="stat-title">This Month</div>
+                        <div class="stat-value"><?= number_format($this_month_count) ?></div>
+                        <small class="stat-desc <?= $growth_class ?>">
+                            <?= $growth_rate >= 0 ? '+' : '' ?><?= $growth_rate ?>% vs last month
+                        </small>
+                    </div>
+                    <i class="fas fa-chart-line stat-icon" style="color: #fd7e14;"></i>
+                </div>
+
+                <div class="stat-card card-avg">
+                    <div>
+                        <div class="stat-title">Daily Average</div>
+                        <div class="stat-value"><?= $daily_avg ?></div>
+                        <small class="stat-desc">consultations per day (<?= date('F') ?>)</small>
+                    </div>
+                    <i class="fas fa-tachometer-alt stat-icon" style="color: #6f42c1;"></i>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container full-width">
+                    <h5>Consultation Trend (Last 12 Months)</h5>
+                    <canvas id="trendChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h5>Consultation Types</h5>
+                    <canvas id="typeChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h5>Top 10 Diagnoses</h5>
+                    <canvas id="diagnosisChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h5>Top Prescribed Medicines</h5>
+                    <canvas id="medicineChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h5>Staff Performance</h5>
+                    <canvas id="staffChart"></canvas>
+                </div>
+
+                <div class="chart-container highlight">
+                    <h5>Busiest Day This Year</h5>
+                    <div style="text-align:center; padding:20px 0; font-size:1.8rem; color:#0d6efd;">
+                        <i class="fas fa-calendar-week fa-2x"></i><br><br>
+                        <strong><?= $day_of_week['day'] ?? 'N/A' ?></strong>
+                        <p style="font-size:1rem; margin-top:10px; color:#666;">
+                            with <?= $day_of_week['count'] ?? 0 ?> consultations recorded
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="summary-tiles">
-            <div class="summary-tile">
-                <h3>Total Consultations</h3>
-                <div class="number"><?= number_format($totalConsultations) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>General Check Ups</h3>
-                <div class="number"><?= number_format($generalCheckups) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Vaccinations</h3>
-                <div class="number"><?= number_format($vaccinations) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Prenatal Consultations</h3>
-                <div class="number"><?= number_format($prenatal) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Dentistry Consultations</h3>
-                <div class="number"><?= number_format($dentistry) ?></div>
-            </div>
-            <div class="summary-tile">
-                <h3>Family Planning</h3>
-                <div class="number"><?= number_format($familyPlanning) ?></div>
-            </div>
-        </div>
-        
-        <div class="chart-row">
-            <div class="chart-container">
-                <h3>Consultation Type Distribution</h3>
-                <canvas id="consultationTypeChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Top Diagnosed Conditions</h3>
-                <canvas id="topDiagnosesChart"></canvas>
-            </div>
-        </div>
-        
-        <div class="chart-container">
-            <h3>Monthly Consultations (<?= date('Y') ?>)</h3>
-            <canvas id="consultationChart"></canvas>
-        </div>
-        
     </div>
 
+
+    <!-- ====================== CHARTS SCRIPT ====================== -->
     <script>
-        function toggleCustomDate() {
-            const periodSelect = document.getElementById('period');
-            const customDateContainer = document.getElementById('custom-date-container');
-            
-            if (periodSelect.value === 'custom') {
-                customDateContainer.style.display = 'flex';
-            } else {
-                customDateContainer.style.display = 'none';
+        // 1. Trend Line Chart
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: <?= json_encode($trend_labels) ?>,
+                datasets: [{
+                    label: 'Consultations',
+                    data: <?= json_encode($trend_data) ?>,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
             }
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Consultation type distribution chart
-            const consultationTypeCtx = document.getElementById('consultationTypeChart');
-            if (consultationTypeCtx) {
-                const consultationTypeChart = new Chart(consultationTypeCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: <?= json_encode($consultationTypeLabels) ?>,
-                        datasets: [{
-                            data: <?= json_encode($consultationTypeData) ?>,
-                            backgroundColor: [
-                                '#2196F3', // General Check Up
-                                '#4CAF50', // Vaccination
-                                '#FF9800', // Prenatal
-                                '#F44336', // Dentistry
-                                '#9C27B0'  // Family Planning
-                            ],
-                            borderColor: '#ffffff',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 20,
-                                    font: {
-                                        size: 14
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.formattedValue;
-                                        const dataset = context.dataset;
-                                        const total = dataset.data.reduce((acc, data) => acc + data, 0);
-                                        const percentage = Math.round((context.raw / total) * 100);
-                                        return `${label}: ${value} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+        });
+
+        // 2. Consultation Types (Doughnut)
+        new Chart(document.getElementById('typeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: [<?= "'" . implode("','", array_column($type_breakdown, 'consultation_type')) . "'" ?>],
+                datasets: [{
+                    data: [<?= implode(',', array_column($type_breakdown, 'count')) ?>],
+                    backgroundColor: ['#ff6b6b','#4ecdc4','#a29bfe','#ffe66d','#ff9ff3','#51cf66','#74c0fc','#ff8787']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // 3. Top Diagnoses (Horizontal Bar)
+        new Chart(document.getElementById('diagnosisChart'), {
+            type: 'bar',
+            data: {
+                labels: [<?= "'" . implode("','", array_map(fn($d) => substr($d['diagnosis'],0,30).(strlen($d['diagnosis'])>30?'...':''), $top_diagnoses)) . "'" ?>],
+                datasets: [{
+                    label: 'Frequency',
+                    data: [<?= implode(',', array_column($top_diagnoses, 'freq')) ?>],
+                    backgroundColor: '#e74c3c'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } }
             }
-            
-            // Top diagnosed conditions chart
-            const topDiagnosesCtx = document.getElementById('topDiagnosesChart');
-            if (topDiagnosesCtx) {
-                const topDiagnosesChart = new Chart(topDiagnosesCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: <?= json_encode($topDiagnosesLabels) ?>,
-                        datasets: [{
-                            label: 'Number of Diagnoses',
-                            data: <?= json_encode($topDiagnosesData) ?>,
-                            backgroundColor: 'rgba(139, 0, 0, 0.6)',
-                            borderColor: '#8B0000',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Number of Diagnoses'
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Diagnosis'
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `${context.label}: ${context.formattedValue}`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
+        });
+
+        // 4. Top Medicines
+        new Chart(document.getElementById('medicineChart'), {
+            type: 'bar',
+            data: {
+                labels: [<?= "'" . implode("','", array_column($top_meds, 'med')) . "'" ?>],
+                datasets: [{
+                    label: 'Times Prescribed',
+                    data: [<?= implode(',', array_column($top_meds, 'freq')) ?>],
+                    backgroundColor: '#27ae60'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
             }
-            
-            // Monthly consultations chart
-            const consultationCtx = document.getElementById('consultationChart');
-            if (consultationCtx) {
-                const consultationChart = new Chart(consultationCtx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                        datasets: [{
-                            label: 'Consultations',
-                            data: <?= json_encode(array_values($monthlyConsultations)) ?>,
-                            backgroundColor: 'rgba(165, 42, 42, 0.2)',
-                            borderColor: '#8B0000',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: true,
-                            pointBackgroundColor: '#8B0000',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            pointRadius: 5
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    precision: 0
-                                }
-                            }
-                        },
-                        plugins: {
-                            tooltip: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                titleFont: {
-                                    size: 14
-                                },
-                                bodyFont: {
-                                    size: 14
-                                }
-                            }
-                        }
-                    }
-                });
+        });
+
+        // 5. Staff Performance
+        new Chart(document.getElementById('staffChart'), {
+            type: 'bar',
+            data: {
+                labels: [<?= "'" . implode("','", array_column($staff_performance, 'staff')) . "'" ?>],
+                datasets: [{
+                    label: 'Consultations Handled',
+                    data: [<?= implode(',', array_column($staff_performance, 'consultations')) ?>],
+                    backgroundColor: '#9b59b6'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
             }
         });
     </script>

@@ -1,6 +1,6 @@
 <?php
 /* --------------------------------------------------------------
-   add_stock.php  –  JSON response (same as update_batch.php)
+   add_stock.php 
    -------------------------------------------------------------- */
 session_start();
 require_once "config.php";
@@ -77,8 +77,16 @@ try {
 
     /* 4. Log to medicine_history */
     $details = "Added $quantity unit(s) to Batch #{$batch['batch_lot_number']}. " .
-               "Previous: $oldStocks → New: $newStocks." .
-               (!empty($remarks) ? " Remarks: $remarks" : '');
+           "Previous: $oldStocks → New: $newStocks." .
+           (!empty($remarks) ? " Remarks: $remarks" : '');
+
+    // Replace with structured details:
+    $details = json_encode([
+        'quantity' => (int)$quantity,
+        'previous_stock' => $oldStocks,
+        'new_stock' => $newStocks,
+        'remarks' => $remarks
+    ], JSON_UNESCAPED_UNICODE);
 
     $log = $conn->prepare("
         INSERT INTO medicine_history

@@ -222,32 +222,22 @@
     border-left:5px solid #0d6efd;
 }
 
-.stat-card.card-stock{
+.stat-card.card-new{
     background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
     border-left:5px solid #198754;
 }
 
-.stat-card.card-low{
-    background: linear-gradient(135deg, #fff8e1, #ffecb3);
-    border-left:5px solid #ffc107;
-}
-
-.stat-card.card-out{
-    background: linear-gradient(135deg, #fff8e1, #ffecb3);
-    border-left:5px solid #dc3545;
-}
-
-.stat-card.card-expiring{
+.stat-card.card-pending{
     background: linear-gradient(135deg, #fff3e0, #ffe0b2);
     border-left:5px solid #fd7e14;
 }
 
-.stat-card.card-batches{
+.stat-card.card-primary{
     background: linear-gradient(135deg, #f3e8ff, #e0cffc);
     border-left:5px solid #6f42c1;
 }
 
-.stat-card.card-expired{
+.stat-card.card-dependent{
     background: linear-gradient(135deg, #fce4ec, #f8bbd0);
     border-left:5px solid #d63384;
 }

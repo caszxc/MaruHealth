@@ -1,4 +1,5 @@
 <?php
+//medicine_stats.php
 session_start();
 require_once "config.php";
 include 'settings.php';
@@ -99,7 +100,8 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- ====================== NAVBAR & SIDEBAR (unchanged) ====================== -->
@@ -162,77 +164,146 @@ try {
                 <a href="<?= $dashboard_url ?>" class="back-button">Back</a>
                 <h2>Medicine Statistics</h2>
             </div>
+
+            <!-- ADD THIS BUTTON -->
+            <button type="button" class="generate-report-btn" id="openReportModal">
+                <i class="fas fa-file-export"></i> Generate Reports
+            </button>
+
+            <small class="stat-desc">Last updated: <?= date('M d, Y h:i A') ?></small>
         </div>
 
         <div class="stats-container">
             <div class="stats-grid">
                 <div class="stat-card card-total">
-                    <i class="fas fa-capsules stat-icon"></i>
-                    <div class="stat-title">Total Medicines</div>
-                    <div class="stat-value"><?= number_format($total_medicines) ?></div>
-                    <div class="stat-desc">In catalog</div>
+                    <div>
+                        <div class="stat-title">Total Medicines</div>
+                        <div class="stat-value"><?= number_format($total_medicines) ?></div>
+                        <small class="stat-desc">In catalog</small>
+                    </div>
+                    <i class="fas fa-capsules stat-icon" style="color: #0d6efd; "></i>
                 </div>
 
                 <div class="stat-card card-stock">
-                    <i class="fas fa-boxes-stacked stat-icon"></i>
-                    <div class="stat-title">Total Stock</div>
-                    <div class="stat-value"><?= number_format($total_stock) ?></div>
-                    <div class="stat-desc">Units available</div>
+                    <div>
+                        <div class="stat-title">Total Stock</div>
+                        <div class="stat-value"><?= number_format($total_stock) ?></div>
+                        <small class="stat-desc">Units available</small>
+                    </div>
+                    <i class="fas fa-boxes-stacked stat-icon" style="color: #198754; "></i>
                 </div>
 
                 <div class="stat-card card-low">
-                    <i class="fas fa-exclamation-triangle stat-icon"></i>
-                    <div class="stat-title">Low Stock</div>
-                    <div class="stat-value"><?= $low_stock ?></div>
-                    <div class="stat-desc">Need restock</div>
+                    <div>
+                        <div class="stat-title">Low Stock</div>
+                        <div class="stat-value"><?= $low_stock ?></div>
+                        <small class="stat-desc">Need restock</small>
+                    </div>
+                    <i class="fas fa-exclamation-triangle stat-icon" style="color: #ffc107;"></i></i>
                 </div>
 
                 <div class="stat-card card-out">
-                    <i class="fas fa-ban stat-icon"></i>
-                    <div class="stat-title">Out of Stock</div>
-                    <div class="stat-value"><?= $out_of_stock ?></div>
-                    <div class="stat-desc">Unavailable</div>
+                    <div>
+                        <div class="stat-title">Out of Stock</div>
+                        <div class="stat-value"><?= $out_of_stock ?></div>
+                        <small class="stat-desc">Unavailable</small>
+                    </div>
+                    <i class="fas fa-ban stat-icon" style="color: #dc3545;"></i></i>
                 </div>
 
                 <div class="stat-card card-expiring">
-                    <i class="fas fa-hourglass-half stat-icon"></i>
-                    <div class="stat-title">Expiring Soon</div>
-                    <div class="stat-value"><?= $expiring_soon ?></div>
-                    <div class="stat-desc">Within 30 days</div>
+                    <div>
+                        <div class="stat-title">Expiring Soon</div>
+                        <div class="stat-value"><?= $expiring_soon ?></div>
+                        <small class="stat-desc">Within 30 days</small>
+                    </div>
+                    <i class="fas fa-hourglass-half stat-icon" style="color: #fd7e14;"></i></i>
                 </div>
 
                 <div class="stat-card card-batches">
-                    <i class="fas fa-prescription-bottle-alt stat-icon"></i>
-                    <div class="stat-title">Active Batches</div>
-                    <div class="stat-value"><?= $total_batches ?></div>
-                    <div class="stat-desc">Not disposed</div>
+                    <div>
+                        <div class="stat-title">Active Batches</div>
+                        <div class="stat-value"><?= $total_batches ?></div>
+                        <small class="stat-desc">Not disposed</small>
+                    </div>
+                    <i class="fas fa-prescription-bottle-alt stat-icon" style="color: #6f42c1;"></i></i>
                 </div>
 
                 <div class="stat-card card-expired">
-                    <i class="fas fa-skull-crossbones stat-icon"></i>
-                    <div class="stat-title">Expired</div>
-                    <div class="stat-value"><?= $expired ?></div>
-                    <div class="stat-desc">Requires disposal</div>
+                    <div>
+                        <div class="stat-title">Expired</div>
+                        <div class="stat-value"><?= $expired ?></div>
+                        <small class="stat-desc">Requires disposal</small>
+                    </div>
+                    <i class="fas fa-skull-crossbones stat-icon " style="color: #d63384; "></i></i>
                 </div>
             </div>
 
             <!-- Charts -->
             <div class="charts-grid">
                 <div class="chart-container">
-                    <div class="chart-title">Stock Status Distribution</div>
+                    <h5><i class="fas fa-chart-pie"></i> Stock Status Distribution</h5>
                     <canvas id="stockStatusChart"></canvas>
                 </div>
 
                 <div class="chart-container">
-                    <div class="chart-title">Top 5 Most Stocked Medicines</div>
+                    <h5><i class="fas fa-medal"></i> Top 5 Most Stocked Medicines</h5>
                     <canvas id="topMedicinesChart"></canvas>
                 </div>
 
                 <div class="chart-container full-width">
-                    <div class="chart-title">Medicine Distribution Trend (Last 6 Months)</div>
+                    <h5><i class="fas fa-chart-line"></i> Medicine Distribution Trend (Last 6 Months)</h5>
                     <canvas id="monthlyTrendChart"></canvas>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Generate Reports Modal -->
+    <div id="reportModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-alt"></i> Generate Medicine Report</h3>
+                <span class="close-modal" id="closeReportModal">&times;</span>
+            </div>
+
+            <form id="reportForm" action="generate_report.php" method="POST" target="_blank">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label><strong>Select Report Type</strong></label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="report_type" value="total_stock" required> Total Stock Medicines</label>
+                            <label><input type="radio" name="report_type" value="out_of_stock"> Out of Stock Medicines</label>
+                            <label><input type="radio" name="report_type" value="low_stock"> Low Stock Medicines</label>
+                            <label><input type="radio" name="report_type" value="disposed"> Disposed Medicines</label>
+                            <label><input type="radio" name="report_type" value="expired"> Expired Medicines</label>
+                            <label><input type="radio" name="report_type" value="expiring_soon"> Expiring Medicines (Next 30 Days)</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><strong>Date Range Filter</strong> (Optional)</label>
+                        <div class="date-range">
+                            <div>
+                                <label for="date_from">From Date</label>
+                                <input type="date" name="date_from" id="date_from">
+                            </div>
+                            <div>
+                                <label for="date_to">To Date</label>
+                                <input type="date" name="date_to" id="date_to" value="<?= date('Y-m-d') ?>">
+                            </div>
+                        </div>
+                        <small style="color:#666;">Leave blank to include all records</small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="cancelReport">Cancel</button>
+                    <button type="submit" class="btn-generate">
+                        <i class="fas fa-download"></i> Generate PDF Report
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -248,16 +319,13 @@ try {
                 datasets: [{
                     data: [<?php foreach($status_data as $s) echo $s['count'].","; ?>],
                     backgroundColor: ['#198754', '#ffc107', '#dc3545'],
-                    borderWidth: 3,
-                    borderColor: '#fff',
-                    hoverOffset: 10
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
                 responsive: true,
-                plugins: {
-                    legend: { position: 'bottom', labels: { padding: 20, font: { size: 14 } } }
-                }
+                plugins: { legend: { position: 'bottom' } }
             }
         });
 
@@ -265,26 +333,22 @@ try {
         new Chart(document.getElementById('topMedicinesChart'), {
             type: 'bar',
             data: {
-                labels: [<?php foreach($top_meds as $med){
-                    $name = $med['generic_name'] . ($med['brand_name'] ? ' ('.$med['brand_name'].')' : '');
-                    echo "'".substr($name, 0, 25).(strlen($name)>25?'...':'')."',";
+                labels: [<?php foreach($top_meds as $med) {
+                    $name = $med['generic_name'].($med['brand_name'] ? ' ('.$med['brand_name'].')' : '');
+                    echo "'".substr($name, 0, 30).(strlen($name) > 30 ? '...' : '')."',";
                 } ?>],
                 datasets: [{
-                    label: 'Stock',
+                    label: 'Total Stock',
                     data: [<?php foreach($top_meds as $med) echo $med['total_stock'].","; ?>],
-                    backgroundColor: 'rgba(13, 110, 253, 0.85)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.8)',
                     borderColor: '#0d6efd',
-                    borderWidth: 2,
-                    borderRadius: 6
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-                    x: { grid: { display: false } }
-                }
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false } }
             }
         });
 
@@ -332,6 +396,32 @@ try {
                 }
             }
         });
+    </script>
+
+    <script>
+        // Open & Close Modal
+        document.getElementById('openReportModal').addEventListener('click', function() {
+            document.getElementById('reportModal').classList.add('active');
+        });
+
+        document.getElementById('closeReportModal').addEventListener('click', closeModal);
+        document.getElementById('cancelReport').addEventListener('click', closeModal);
+
+        function closeModal() {
+            document.getElementById('reportModal').classList.remove('active');
+            document.getElementById('reportForm').reset();
+        }
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('reportModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Set default "To Date" to today
+        document.getElementById('date_to').valueAsDate = new Date();
     </script>
 </body>
 </html>

@@ -534,9 +534,10 @@ try {
                     <div class="group-col">
                         <label>Password <span class="required">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" name="password" required>
+                            <input type="password" name="password" id="primary_password" required>
                             <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
                         </div>
+                        <span class="field-error" id="primaryPasswordError" style="color:#d32f2f; font-size:12px; display:none; margin-top:4px;"></span>
                     </div>
                 </form>
             </div>
@@ -579,9 +580,10 @@ try {
                     <div class="group-col">
                         <label>Your Password (Primary) <span class="required">*</span></label>
                         <div class="password-wrapper">
-                            <input type="password" name="password" required>
+                            <input type="password" name="password" id="dep_password" required>
                             <i class="toggle-password fas fa-eye-slash" onclick="togglePass(this)"></i>
                         </div>
+                        <span class="field-error" id="depPasswordError" style="color:#d32f2f; font-size:12px; display:none;"></span>
                     </div>
                 </form>
             </div>
@@ -1132,8 +1134,22 @@ try {
             document.getElementById("primaryDeletionForm").reset();
         }
 
-         document.getElementById("primaryDeletionForm").addEventListener("submit", function (e) {
+        document.getElementById("primaryDeletionForm").addEventListener("submit", function (e) {
             e.preventDefault();
+
+            // Clear any previous error
+            const errorEl = document.getElementById("primaryPasswordError");
+            errorEl.style.display = "none";
+            errorEl.textContent = "";
+
+            const submitBtn = document.querySelector("#primaryDeletionModal .confirm-btn");
+            const cancelBtn = document.querySelector("#primaryDeletionModal .cancel-btn");
+            const originalText = submitBtn.textContent;
+
+            // Show spinner + disable both buttons
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
             const fd = new FormData(this);
             fd.append('type', 'primary');
@@ -1144,10 +1160,9 @@ try {
             })
             .then(r => r.json())
             .then(d => {
-                closePrimaryDeletionModal(); // close form
-
                 if (d.success) {
-                    // SHOW SUCCESS MODAL
+                    // SUCCESS → show success modal with countdown
+                    closePrimaryDeletionModal();
                     const successModal = document.getElementById("primaryDeletionSuccessModal");
                     const countdownEl = document.getElementById("countdown");
                     successModal.classList.add("show");
@@ -1155,7 +1170,6 @@ try {
                     let seconds = 5;
                     countdownEl.textContent = seconds;
 
-                    // AUTO COUNTDOWN + LOGOUT
                     const timer = setInterval(() => {
                         seconds--;
                         countdownEl.textContent = seconds;
@@ -1165,25 +1179,36 @@ try {
                         }
                     }, 1000);
 
-                    // INSTANT LOGOUT IF USER CLICKS OK
-                    const okBtn = document.getElementById("primarySuccessOkBtn");
-                    okBtn.onclick = () => {
+                    document.getElementById("primarySuccessOkBtn").onclick = () => {
                         clearInterval(timer);
                         performLogout();
                     };
 
-                    // ALSO: prevent back button from keeping session alive
+                    // Prevent back button from keeping session
                     history.pushState(null, null, location.href);
                     window.onpopstate = () => history.go(1);
 
                 } else {
-                    openPrimaryDeletionModal();
-                    alert(d.message);
+                    // ERROR → re-enable buttons
+                    submitBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+
+                    // Show password error under the field
+                    if (d.message && d.message.includes("password")) {
+                        errorEl.textContent = "Incorrect password. Please try again.";
+                        errorEl.style.display = "block";
+                    } else {
+                        alert(d.message || "Failed to submit request.");
+                    }
                 }
             })
-            .catch(() => {
-                closePrimaryDeletionModal();
-                alert("Network error – please try again.");
+            .catch(err => {
+                console.error(err);
+                submitBtn.disabled = false;
+                cancelBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                alert("Network error. Please try again.");
             });
         });
     </script>
@@ -1202,6 +1227,20 @@ try {
         document.getElementById("dependentDeletionForm").addEventListener("submit", function (e) {
             e.preventDefault();
 
+            // Clear previous error
+            const errorEl = document.getElementById("depPasswordError");
+            errorEl.style.display = "none";
+            errorEl.textContent = "";
+
+            const submitBtn = document.querySelector("#dependentDeletionModal .confirm-btn");
+            const cancelBtn = document.querySelector("#dependentDeletionModal .cancel-btn");
+            const originalText = submitBtn.textContent;
+
+            // Show spinner + disable buttons
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
             const fd = new FormData(this);
             fd.append('type', 'dependent');
 
@@ -1211,28 +1250,35 @@ try {
             })
             .then(r => r.json())
             .then(d => {
-                closeDependentDeletionModal(); // close the form modal
-
                 if (d.success) {
-                    // SHOW SUCCESS MODAL
+                    closeDependentDeletionModal();
                     const successModal = document.getElementById("dependentDeletionSuccessModal");
                     successModal.classList.add("show");
-
-                    // OK BUTTON → reload page to update dependents list
-                    document.getElementById("dependentSuccessOkBtn").onclick = function () {
+                    document.getElementById("dependentSuccessOkBtn").onclick = () => {
                         successModal.classList.remove("show");
-                        location.reload(); // refresh to remove dependent from list
+                        location.reload();
                     };
-
                 } else {
-                    // FAILURE: reopen form and show error
-                    openDependentDeletionModal(document.getElementById("depDelId").value);
-                    alert(d.message);
+                    // Re-enable buttons
+                    submitBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+
+                    // Show specific password error under field
+                    if (d.message && d.message.includes("password")) {
+                        errorEl.textContent = "Incorrect password. Please try again.";
+                        errorEl.style.display = "block";
+                    } else {
+                        alert(d.message || "Failed to submit request.");
+                    }
                 }
             })
-            .catch(() => {
-                closeDependentDeletionModal();
-                alert("Network error – please try again.");
+            .catch(err => {
+                console.error(err);
+                submitBtn.disabled = false;
+                cancelBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                alert("Network error. Please try again.");
             });
         });
 
@@ -1250,37 +1296,34 @@ try {
             hideModal('cancelDepDelModal');
         }
 
-        document.getElementById('confirmCancelDepDelBtn').addEventListener('click', function () {
+        document.getElementById('confirmCancelDepDelBtn')?.addEventListener('click', function () {
             const depId = this.dataset.depId;
             if (!depId) return;
 
-            fetch('cancel_deletion.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'dependent_user_id=' + depId
-            })
-            .then(r => r.json())
-            .then(d => {
-                // Close confirmation modal
-                closeCancelDepDelModal();
-
-                if (d.success) {
-                    // SHOW SUCCESS MODAL
-                    const successModal = document.getElementById('cancelDepDelSuccessModal');
-                    successModal.classList.add('show');
-
-                    // OK → reload page
-                    document.getElementById('cancelDepDelSuccessOkBtn').onclick = () => {
-                        successModal.classList.remove('show');
-                        location.reload();
-                    };
-                } else {
-                    alert(d.message);
-                }
-            })
-            .catch(() => {
-                closeCancelDepDelModal();
-                alert('Network error – try again later.');
+            delayedConfirm(this, 2000, () => {
+                return fetch('cancel_deletion.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'dependent_user_id=' + depId
+                })
+                .then(r => r.json())
+                .then(d => {
+                    closeCancelDepDelModal();
+                    if (d.success) {
+                        const successModal = document.getElementById('cancelDepDelSuccessModal');
+                        successModal.classList.add('show');
+                        document.getElementById('cancelDepDelSuccessOkBtn').onclick = () => {
+                            successModal.classList.remove('show');
+                            location.reload();
+                        };
+                    } else {
+                        alert(d.message || 'Failed to cancel deletion request');
+                    }
+                })
+                .catch(() => {
+                    closeCancelDepDelModal();
+                    alert('Network error – please try again.');
+                });
             });
         });
     </script>
@@ -1946,12 +1989,31 @@ try {
             });
         }
 
-        document.getElementById("confirmCancelDependentBtn")?.addEventListener("click", function() {
-            const dependentId = this.getAttribute('data-id');
-            if (dependentId) {
-                cancelDependent(dependentId);
-                closeCancelDependentModal();
-            }
+        document.getElementById('confirmCancelDependentBtn')?.addEventListener('click', function () {
+            const dependentId = this.dataset.id;
+            if (!dependentId) return;
+
+            delayedConfirm(this, 2000, () => {
+                return fetch(`cancel_pending_dependent.php?id=${dependentId}`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        closeCancelDependentModal();
+                        if (data.success) {
+                            const successModal = document.getElementById('cancelPendingDepSuccessModal');
+                            successModal.classList.add('show');
+                            document.getElementById('cancelPendingDepSuccessOkBtn').onclick = () => {
+                                successModal.classList.remove('show');
+                                location.reload();
+                            };
+                        } else {
+                            alert('Failed to cancel: ' + (data.message || 'Unknown error'));
+                        }
+                    })
+                    .catch(() => {
+                        closeCancelDependentModal();
+                        alert('Network error – please try again.');
+                    });
+            });
         });
     </script>
 

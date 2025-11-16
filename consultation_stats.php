@@ -120,12 +120,13 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consultation Statistics | MaruHealth</title>
+    <title>Consultation Statistics</title>
     <link rel="stylesheet" href="css/consultation_stats.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
 </head>
 <body>
 
@@ -187,7 +188,7 @@ try {
     <div class="dashboard-content">
         <div class="title-con">
             <div style="display:flex;gap:15px;align-items:center;">
-                <a href="<?= $dashboard_url ?>" class="back-button">Back</a>
+                <a href="<?= $dashboard_url ?>" class="back-button">← Back</a>
                 <h2>Consultation Statistics</h2>
             </div>
             <small class="stat-desc">Last updated: <?= date('M d, Y h:i A') ?></small>

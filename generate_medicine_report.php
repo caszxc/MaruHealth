@@ -225,27 +225,71 @@ try {
             break;
 
         case 'disposed':
-            fputcsv($output, ['Date Disposed','Item','Brand','Batch','Qty','Reason','Performed By','Witness']);
-            $stmt = $conn->query("
-                SELECT md.disposal_date, mc.generic_name, mc.dosage, mc.brand_name,
-                       mb.batch_lot_number, md.quantity, md.reason, a.full_name, md.witness_name
+            fputcsv($output, [
+                'Date Disposed',
+                'Item (Generic + Dosage)',
+                'Brand',
+                'Batch/Lot No.',
+                'Quantity Disposed',
+                'Reason',
+                'Performed By',
+                'Witness'
+            ]);
+
+            // Base query
+            $sql = "
+                SELECT 
+                    md.disposal_date,
+                    mc.generic_name,
+                    COALESCE(mc.dosage, '') AS dosage,
+                    COALESCE(mc.brand_name, 'N/A') AS brand_name,
+                    mb.batch_lot_number,
+                    md.quantity,
+                    md.reason,
+                    a.full_name AS performed_by_name,
+                    md.witness_name
                 FROM medicine_disposals md
                 JOIN medicine_batches mb ON md.batch_id = mb.id
                 JOIN medicines_catalog mc ON mb.catalog_id = mc.id
                 JOIN admin_staff a ON md.performed_by = a.id
-                ORDER BY md.disposal_date DESC
-            ");
+                WHERE 1=1
+            ";
+
+            $params = [];
+
+            // Apply date filter only if both dates are provided (or at least one)
+            if (!empty($date_from)) {
+                $sql .= " AND DATE(md.disposal_date) >= :date_from";
+                $params[':date_from'] = $date_from;
+            }
+            if (!empty($date_to)) {
+                $sql .= " AND DATE(md.disposal_date) <= :date_to";
+                $params[':date_to'] = $date_to;
+            }
+
+            $sql .= " ORDER BY md.disposal_date DESC";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->execute($params);
+
+            $hasData = false;
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $hasData = true;
                 fputcsv($output, [
                     date('M d, Y g:i A', strtotime($row['disposal_date'])),
-                    $row['generic_name'].' '.$row['dosage'],
-                    $row['brand_name'] ?: 'N/A',
+                    $row['generic_name'] . ($row['dosage'] ? ' ' . $row['dosage'] : ''),
+                    $row['brand_name'],
                     $row['batch_lot_number'],
                     $row['quantity'],
-                    ucwords(str_replace('_',' ',$row['reason'])),
-                    $row['full_name'],
+                    ucwords(str_replace('_', ' ', $row['reason'])),
+                    $row['performed_by_name'],
                     $row['witness_name']
                 ]);
+            }
+
+            // If no records found in the date range
+            if (!$hasData) {
+                fputcsv($output, ['No disposed medicines found for the selected date range.']);
             }
             break;
 

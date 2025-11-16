@@ -326,9 +326,12 @@ canvas {
     background: white;
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     animation: modalFadeIn 0.3s ease;
 }
 
@@ -362,7 +365,16 @@ canvas {
 }
 
 .modal-body {
+    flex: 1;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
     padding: 25px;
+    overflow: hidden;
+}
+
+.form-scroll{
+    overflow-y: auto;
 }
 
 .form-group {

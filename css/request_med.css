@@ -204,6 +204,7 @@ input[type="file"]::file-selector-button:hover {
     max-width: 420px;
     width: 90%;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    animation: popUp 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
 }
 
 .modal-content h2 {
@@ -250,46 +251,23 @@ input[type="file"]::file-selector-button:hover {
     transition: all 0.3s ease;
 }
 
-.modal.info .modal-icon {
-    background: linear-gradient(135deg, #1976D2, #42A5F5);
-    box-shadow: 0 6px 16px rgba(25, 118, 210, 0.3);
+.modal .modal-icon {
+    background: linear-gradient(135deg, #D32F2F, #E57373);
+    box-shadow: 0 6px 16px rgba(211, 47, 47, 0.3);
 }
 
-/* INFO MODAL (Login Required)   */
-.modal.info h2 {
-    color: #0d47a1;
+.modal h2 {
+    color: #B71C1C;
 }
 
-.btn-primary {
-    background: #1976D2;
+.btn, .btn-primary {
+    background: #D32F2F;
     color: white;
 }
 
-.btn-primary:hover {
-    background: #1565c0;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(25, 118, 210, 0.3);
-}
-
-/* Success Modal */
-.modal.success .modal-icon {
-    background: linear-gradient(135deg, #4CAF50, #66BB6A);
-    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
-}
-
-.modal.success h2 {
-    color: #2e7d32;
-}
-
-.btn-success {
-    background: #4CAF50;
-    color: white;
-}
-
-.btn-success:hover {
-    background: #43a047;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+.btn:hover, .btn-primary:hover {
+    background: #C62828;
+    box-shadow: 0 6px 12px rgba(198, 40, 40, 0.3);
 }
 
 .error-message {
@@ -437,9 +415,4 @@ input[type="file"]::file-selector-button:hover {
     .form-box {
         width: 70%;
     }
-}
-
-/* Animations */
-.info .modal-content  {
-    animation: popUp 600ms cubic-bezier(0.18, 0.89, 0.32, 1.28) 200ms both;
 }

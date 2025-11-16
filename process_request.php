@@ -3,6 +3,7 @@
 session_start();
 require_once "config.php";
 require_once "email_function.php";
+require_once "semaphore_sms.php";
 
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['health_staff'])) {
     header("Location: admin_dashboard.php");
@@ -95,6 +96,17 @@ try {
                 <p>Best regards,<br>MaruHealth Team</p>";
         sendEmail($recipientEmail, $recipientName, $subject, $message);
 
+        $phoneStmt = $conn->prepare("SELECT phone_number FROM users WHERE id = (SELECT user_id FROM medicine_requests WHERE id = :id)");
+        $phoneStmt->execute([':id' => $requestId]);
+        $userPhone = $phoneStmt->fetchColumn();
+
+        if ($userPhone) {
+            $smsDecline = "Hi $recipientName, your medicine request #$requestIdValue was DECLINED. " .
+                          ($adminNote ? substr(strip_tags($adminNote), 0, 100) : "Your request could not be fulfilled at this time.") .
+                          " Please contact MaruHealth for clarification.";
+            sendSMS($userPhone, $smsDecline);
+        }
+
         $_SESSION['request_message'] = "Medicine request declined successfully!";
         echo "declined";
         exit();
@@ -151,7 +163,6 @@ try {
         SET stocks = stocks - :qty,
             stock_status = CASE 
                 WHEN stocks - :qty <= 0 THEN 'Out of Stock'
-                WHEN stocks - :qty <= (SELECT min_stock FROM medicines_catalog WHERE id = catalog_id) THEN 'Low Stock'
                 ELSE 'In Stock'
             END
         WHERE id = :batch_id
@@ -222,7 +233,7 @@ try {
             ]);
 
             // === UPDATE APPROVED LIST TO SHOW BATCH LOT NUMBER ===
-            $approvedList[count($approvedList) - 1] .= " → Batch Lot Number #{$batch['batch_lot_number']}, Quantity: $qty";
+            $approvedList[count($approvedList) - 1] .= " - Batch Lot Number #{$batch['batch_lot_number']}, Quantity: $qty";
         }
     }
 
@@ -278,6 +289,20 @@ try {
                 <p>Best regards,<br>Maru-Health Team</p>
     ";
     sendEmail($recipientEmail, $recipientName, $subject, $message);
+
+    $phoneStmt = $conn->prepare("SELECT phone_number FROM users WHERE id = (SELECT user_id FROM medicine_requests WHERE id = :id)");
+    $phoneStmt->execute([':id' => $requestId]);
+    $userPhone = $phoneStmt->fetchColumn();
+
+    if ($userPhone) {
+        $claimDate = date('M j, Y', strtotime($claimUntil));
+        $itemText  = $approvedCount == $totalMeds ? "all items" : "$approvedCount of $totalMeds items";
+        
+        $smsApprove = "Hi $recipientName! Your medicine request #$requestIdValue is APPROVED ($itemText). " .
+                      "Claim until $claimDate 6PM at Marulas 3S Health Center, Marulas. Bring valid ID. Thank you!";
+        
+        sendSMS($userPhone, $smsApprove);
+    }
 
     $_SESSION['request_message'] = "Medicine request processed successfully!";
 

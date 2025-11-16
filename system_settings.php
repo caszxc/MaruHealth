@@ -87,6 +87,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="stylesheet" href="css/settings.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
     <style>
         /* ---------- ALERTS ---------- */
         .alert {

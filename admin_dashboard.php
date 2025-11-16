@@ -39,7 +39,7 @@ $activityStmt = $conn->prepare("
     LEFT JOIN admin_staff a ON al.admin_id = a.id
     WHERE a.role = 'admin'
     ORDER BY al.created_at DESC
-    LIMIT 8;
+    LIMIT 10;
 ");
 $activityStmt->execute();
 $activities = $activityStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -73,6 +73,8 @@ function timeAgo($datetime) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" href="images/3s logo.png" type="image/x-icon">
 </head>
 <body>
     <nav>
@@ -169,15 +171,15 @@ function timeAgo($datetime) {
 
     <div class="dashboard-content">
         <div class="title-con">
-            <h2>Dashboard Overview</h2>
+            <h2>Admin Dashboard</h2>
         </div>
 
         <div class="dashboard-sections">
             <div class="section-wrapper">
-                <!-- Alert Section Cards-->
-                 
                 <section class="summary-section">
-                    <h3>Summary</h3>
+                    <div class="section-header">
+                        <h3>Summary</h3>
+                    </div>
                     <div class="stat-bars">
                         <!-- 3. Active Announcements -->
                         <div class="stat-item">
@@ -198,76 +200,77 @@ function timeAgo($datetime) {
                         </div>
                     </div>
                 </section>
-
-                <section class="quick-actions-section">
-                    <h3>Quick Actions</h3>
-                    <div class="actions-container">
-                        <!-- Create Announcement -->
-                        <a href="announcements.php" class="action-btn announce-btn">
-                            <img src="images/icons/announcement_icon.png" alt="Announcement">
-                            <span>Create Announcement</span>
-                        </a>
-
-                        <!-- Add Event -->
-                        <a href="edit_calendar.php" class="action-btn event-btn">
-                            <img src="images/icons/calendar_icon.png" alt="Add Event">
-                            <span>Add Event</span>
-                        </a>
-
-                        <!-- Add New Service -->
-                        <a href="service_management.php" class="action-btn service-btn">
-                            <img src="images/icons/service_icon.png" alt="Add Service">
-                            <span>Add New Service</span>
-                        </a>
-                    </div>
-                </section>
     
                 <section class="recent-activities-section">
-                    <h3>Recent Activities</h3>
-                    <div class="activity-list">
-                        <?php if (empty($activities)): ?>
-                            <p class="no-activity">No recent activity.</p>
-                        <?php else: ?>
-                            <?php foreach ($activities as $act): ?>
-                                <?php
-                                    // Map action type to icon & color
-                                    $iconMap = [
-                                        'announcement_create' => ['icon' => 'dashboard/active_announcement_icon.png', 'color' => '#9b59b6'],
-                                        'announcement_update' => ['icon' => 'dashboard/active_announcement_icon.png', 'color' => '#8e44ad'],
-                                        'announcement_toggle' => ['icon' => 'dashboard/active_announcement_icon.png', 'color' => '#71368a'],
-                                        'event_create'        => ['icon' => 'dashboard/upcoming_events_icon.png', 'color' => '#e67e22'],
-                                        'event_delete'        => ['icon' => 'dashboard/upcoming_events_icon.png', 'color' => '#d35400'],
-                                        'user_approval'       => ['icon' => 'dashboard/approved_user_icon.png', 'color' => '#27ae60'],
-                                        'user_rejection'      => ['icon' => 'dashboard/reject_user_icon.png', 'color' => '#c0392b'],
-                                        'service_create'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#2980b9'],
-                                        'service_update'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#3498db'],
-                                        'service_delete'      => ['icon' => 'dashboard/service_icon.png', 'color' => '#3498db'],
-                                    ];
-                                    $type = $act['action_type'];
-                                    $info = $iconMap[$type] ?? ['icon' => 'dashboard_icon_active.png', 'color' => '#7f8c8d'];
-                                    
-                                    // Humanize action
-                                    $actionText = ucwords(str_replace('_', ' ', $type));
-                                    $actionText = str_replace('User Approval', 'Approved User', $actionText);
-                                    $actionText = str_replace('User Rejection', 'Rejected User', $actionText);
-                                ?>
-                                <details class="activity-item" style="border-left: 4px solid <?= $info['color'] ?>;">
-                                    <summary>
-                                        <img src="images/icons/<?= $info['icon'] ?>" alt="" class="activity-icon">
-                                        <div class="activity-content">
-                                            <p class="activity-desc">
-                                                <strong><?= htmlspecialchars($act['admin_name'] ?? 'System') ?></strong>
-                                                <?= htmlspecialchars($actionText) ?>
-                                            </p>
-                                            <p class="activity-time"><?= timeAgo($act['created_at']) ?></p>
-                                        </div>
-                                    </summary>
-                                    <div class="activity-details">
-                                        <p><?= nl2br(htmlspecialchars($act['action_details'] ?? 'No details recorded.')) ?></p>
-                                    </div>
-                                </details>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                    <div class="section-header">
+                        <h3>Recent Activities</h3>
+                    </div>
+                    <div class="activity-container">
+                        <div class="activity-list">
+                            <?php if (empty($activities)): ?>
+                                <p class="no-activity">No recent activity.</p>
+                            <?php else: ?>
+                                <?php foreach ($activities as $act): ?>
+                                    <?php
+                                        // Map action type to icon & color
+                                            $iconMap = [
+                                                'user_approval'           => ['label' => 'Approved User Account',           'icon' => 'fas fa-user-check',      'color' => '#27ae60'],
+                                                'user_rejection'          => ['label' => 'Rejected User Account',          'icon' => 'fas fa-user-slash',      'color' => '#e74c3c'],
+                                                'announcement_create'     => ['label' => 'Created Announcement',           'icon' => 'fas fa-bullhorn',        'color' => '#9b59b6'],
+                                                'announcement_update'     => ['label' => 'Updated Announcement',           'icon' => 'fas fa-edit',            'color' => '#8e44ad'],
+                                                'announcement_toggle'     => ['label' => 'Toggled Announcement Status',    'icon' => 'fas fa-toggle-on',       'color' => '#71368a'],
+                                                'event_create'            => ['label' => 'Created Event',                  'icon' => 'fas fa-calendar-plus',   'color' => '#e67e22'],
+                                                'event_delete'            => ['label' => 'Deleted Event',                  'icon' => 'fas fa-calendar-minus',  'color' => '#d35400'],
+                                                'service_create'          => ['label' => 'Created Service',                'icon' => 'fas fa-plus-circle',     'color' => '#2980b9'],
+                                                'service_update'          => ['label' => 'Updated Service',                'icon' => 'fas fa-cogs',            'color' => '#3498db'],
+                                                'service_delete'          => ['label' => 'Deleted Service',                'icon' => 'fas fa-trash-alt',       'color' => '#c0392b'],
+                                                'add_patient_record'      => ['label' => 'Added Patient Record',           'icon' => 'fas fa-user-plus',       'color' => '#3498db'],
+                                                'update_patient_record'   => ['label' => 'Updated Patient Record',         'icon' => 'fas fa-edit',            'color' => '#f39c12'],
+                                                'archive_patient'         => ['label' => 'Archived Patient',               'icon' => 'fas fa-archive',         'color' => '#95a5a6'],
+                                                'restore_patient'         => ['label' => 'Restored Patient',               'icon' => 'fas fa-undo',            'color' => '#1abc9c'],
+                                                'approve_request'         => ['label' => 'Approved Medicine Request',      'icon' => 'fas fa-check-circle',    'color' => '#27ae60'],
+                                                'decline_request'         => ['label' => 'Declined Medicine Request',      'icon' => 'fas fa-times-circle',    'color' => '#e74c3c'],
+                                                'mark_request_claimed'    => ['label' => 'Marked Request as Claimed',      'icon' => 'fas fa-prescription-bottle', 'color' => '#2ecc71'],
+                                                'return_unclaimed_request'=> ['label' => 'Returned Unclaimed Medicines',   'icon' => 'fas fa-undo',            'color' => '#e67e22'],
+                                                'add_medicine'            => ['label' => 'Added Medicine to Catalog',      'icon' => 'fas fa-pills',           'color' => '#27ae60'],
+                                                'update_medicine'         => ['label' => 'Updated Medicine Catalog',       'icon' => 'fas fa-edit',            'color' => '#f39c12'],
+                                                'delete_medicine'         => ['label' => 'Deleted Medicine from Catalog',  'icon' => 'fas fa-trash',           'color' => '#e74c3c'],
+                                                'add_batch'               => ['label' => 'Added Medicine Batch',           'icon' => 'fas fa-box',             'color' => '#27ae60'],
+                                                'update_batch'            => ['label' => 'Updated Medicine Batch',         'icon' => 'fas fa-edit',            'color' => '#f39c12'],
+                                                'delete_batch'            => ['label' => 'Deleted Medicine Batch',         'icon' => 'fas fa-trash',           'color' => '#e74c3c'],
+                                                'add_family_member'       => ['label' => 'Added Family Member',            'icon' => 'fas fa-users',           'color' => '#9b59b6'],
+                                                'add_consultation'        => ['label' => 'Added Consultation Record',      'icon' => 'fas fa-notes-medical',   'color' => '#3498db'],
+                                                'delete_consultation'     => ['label' => 'Deleted Consultation Record',    'icon' => 'fas fa-trash',           'color' => '#e74c3c'],
+                                                'delete_user'             => ['label' => 'Deleted User Account',           'icon' => 'fas fa-user-times',      'color' => '#c0392b'],
+                                            ];
+                                            $type = $act['action_type'];
+                                            $info = $iconMap[$type] ?? [
+                                                'label' => ucwords(str_replace('_', ' ', $type)),
+                                                'icon'  => 'fas fa-cube',
+                                                'color' => '#7f8c8d'
+                                            ];
+
+                                            // Use the clean label from iconMap, fallback to formatted type
+                                            $actionText = $info['label'];
+                                        ?>
+                                        <details class="activity-item" style="border-left: 4px solid <?= $info['color'] ?>;">
+                                            <summary>
+                                                <i class="<?= $info['icon'] ?>" style="color: <?= $info['color'] ?>; font-size: 1.2rem; font-size: 2rem;"></i>
+                                                <div class="activity-content">
+                                                    <p class="activity-desc">
+                                                        <strong><?= htmlspecialchars($act['admin_name'] ?? 'System') ?></strong>
+                                                        <?= htmlspecialchars($actionText) ?>
+                                                    </p>
+                                                    <p class="activity-time"><?= timeAgo($act['created_at']) ?></p>
+                                                </div>
+                                            </summary>
+                                            <div class="activity-details">
+                                                <p><?= nl2br(htmlspecialchars($act['action_details'] ?? 'No details recorded.')) ?></p>
+                                            </div>
+                                        </details>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </section>
             </div>

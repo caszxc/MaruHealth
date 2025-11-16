@@ -41,6 +41,7 @@ $adminName = $admin ? $admin['first_name'] . ' ' . $admin['last_name'] : 'Admin'
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
 
     <title>Terms and Conditions</title>
 </head>

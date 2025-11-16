@@ -100,7 +100,7 @@ try {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
 </head>
 <body>
     <nav>
@@ -568,7 +568,7 @@ try {
                 <h2>Request Dependent Deletion</h2>
             </div>
             <div class="form-scroll">
-                <p></p>
+                <p>This will delete the dependent accounts permanently once approved.</p>
                 <form id="dependentDeletionForm">
                     <input type="hidden" name="dependent_id" id="depDelId">
                     <input type="hidden" name="primary_id" value="<?= $primary_user_id ?>">
@@ -704,9 +704,8 @@ try {
             <div class="modal-title-bar">
                 <h2>Change Password</h2>
             </div>
-            <div class="error-message" id="changePasswordError"></div>
-                <div class="form-scroll">
-                    <form id="changePasswordForm" action="change_password.php" method="POST" novalidate>
+            <div class="form-scroll">
+                <form id="changePasswordForm" action="change_password.php" method="POST" novalidate>
                     <!-- Current Password -->
                     <div class="group-col">
                         <label for="current_password">Current Password <span class="required">*</span></label>
@@ -740,7 +739,10 @@ try {
             </div>
             <div class="modal-footer">
                 <button type="button" class="cancel-btn" onclick="closeChangePasswordModal()">Cancel</button>
-                <button type="submit" form="changePasswordForm" class="save-btn" id="changePasswordSubmitBtn" disabled>Save</button>
+                <button type="submit" form="changePasswordForm" class="save-btn" id="changePasswordSubmitBtn" disabled>
+                    <span class="btn-text">Save</span>
+                    <i class="fas fa-spinner fa-spin" style="display:none;"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -822,8 +824,11 @@ try {
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="cancel-btn" onclick="closeAddDependentModal()">Cancel</button>
-                <button type="submit" form="addDependentForm" class="save-btn">Add Dependent</button>
+                <button type="button" class="cancel-btn" id="addDepCancelBtn" onclick="closeAddDependentModal()">Cancel</button>
+                <button type="submit" form="addDependentForm" class="save-btn" id="addDepSaveBtn">
+                    <span class="btn-text">Add Dependent</span>
+                    <i class="fas fa-spinner fa-spin" style="display:none; margin-left:8px;"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -1470,13 +1475,22 @@ try {
     <script>
         function openChangePasswordModal() {
             document.getElementById("changePasswordModal").classList.add("show");
-            document.getElementById("changePasswordError").textContent = "";
         }
 
         function closeChangePasswordModal() {
             document.getElementById("changePasswordModal").classList.remove("show");
             document.getElementById("changePasswordForm").reset();
-            document.getElementById("changePasswordError").textContent = "";
+
+            // Reset button state
+            const btn = document.getElementById("changePasswordSubmitBtn");
+            const btnText = btn.querySelector(".btn-text");
+            const spinner = btn.querySelector(".fa-spinner");
+            const cancelBtn = document.querySelector("#changePasswordModal .cancel-btn");
+
+            btn.disabled = true; // stays disabled until valid input
+            if (btnText) btnText.textContent = "Save";
+            if (spinner) spinner.style.display = "none";
+            if (cancelBtn) cancelBtn.disabled = false;
         }
 
         function togglePass(icon) {
@@ -1580,30 +1594,43 @@ try {
 
         document.getElementById("changePasswordForm")?.addEventListener("submit", function(e) {
             e.preventDefault();
-            
+
+            const submitBtn = document.getElementById("changePasswordSubmitBtn");
+            const btnText = submitBtn.querySelector(".btn-text");
+            const spinner = submitBtn.querySelector(".fa-spinner");
+            const cancelBtn = document.querySelector("#changePasswordModal .cancel-btn");
+
+            // Disable buttons + show spinner
+            submitBtn.disabled = true;
+            cancelBtn.disabled = true;
+            btnText.textContent = "Saving…";
+            spinner.style.display = "inline-block";
+
             const formData = new FormData(this);
-            
+
             fetch("change_password.php", {
                 method: "POST",
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                const errorDiv = document.getElementById("changePasswordError");
-                errorDiv.textContent = data.message;
-                
                 if (data.success) {
-                    errorDiv.style.color = "#28a745"; // Green for success
-                    setTimeout(() => {
-                        closeChangePasswordModal();
-                    }, 1700);
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    errorDiv.style.color = "#FF0000"; // Red for error
+                    // Re-enable UI on error
+                    submitBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    btnText.textContent = "Save";
+                    spinner.style.display = "none";
                 }
             })
             .catch(error => {
-                document.getElementById("changePasswordError").textContent = "An error occurred. Please try again.";
                 console.error(error);
+                // Re-enable on network error
+                submitBtn.disabled = false;
+                cancelBtn.disabled = false;
+                btnText.textContent = "Save";
+                spinner.style.display = "none";
             });
         });
 
@@ -1617,59 +1644,191 @@ try {
             document.getElementById("addDependentForm").reset();
             document.getElementById("dep_file_name").textContent = "No file chosen";
             document.getElementById("dep_familyNumberContainer").style.display = "none";
+            // Clear all field errors
+            document.querySelectorAll(".field-error").forEach(el => el.remove());
+            document.querySelectorAll("input, select").forEach(el => el.style.borderColor = "");
         }
 
         function closeAddDependentModal() {
             document.getElementById("addDependentModal").classList.remove("show");
             document.getElementById("addDependentForm").reset();
             document.getElementById("addDependentError").textContent = "";
+            document.getElementById("dep_file_name").textContent = "No file chosen";
+            document.getElementById("dep_familyNumberContainer").style.display = "none";
+            document.querySelectorAll(".field-error").forEach(el => el.remove());
+            document.querySelectorAll("input, select").forEach(el => el.style.borderColor = "");
         }
 
-        document.getElementById("addDependentForm")?.addEventListener("submit", function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            fetch("add_dependent.php", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                const errorDiv = document.getElementById("addDependentError");
-                errorDiv.textContent = data.message;
-                
-                if (data.success) {
-                    errorDiv.style.color = "#28a745"; // Green for success
-                    setTimeout(() => {
-                        location.reload(); // Reload to reflect new dependent
-                    }, 1700);
-                } else {
-                    errorDiv.style.color = "#FF0000"; // Red for error
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("addDependentForm");
+            const saveBtn = document.getElementById("addDepSaveBtn");
+            const cancelBtn = document.getElementById("addDepCancelBtn");
+            const btnText = saveBtn?.querySelector(".btn-text");
+            const spinner = saveBtn?.querySelector(".fa-spinner");
+
+            // Elements for validation
+            const depFirstName       = document.getElementById("dep_first_name");
+            const depLastName        = document.getElementById("dep_last_name");
+            const depMiddleName      = document.getElementById("dep_middle_name");
+            const depGender          = document.getElementById("dep_gender");
+            const depBirthday        = document.getElementById("dep_birthday");
+            const depAddress         = document.getElementById("dep_address");
+            const depRelationship    = document.getElementById("dep_relationship");
+            const depHasFamily       = document.getElementById("dep_hasFamilyNumber");
+            const depFamilyContainer = document.getElementById("dep_familyNumberContainer");
+            const depFamilyNumber    = document.getElementById("dep_familyNumber");
+            const depValidID         = document.getElementById("dep_validID_front");
+            const depFileNameSpan    = document.getElementById("dep_file_name");
+
+            // Validation rules
+            const depFields = {
+                first_name: { element: depFirstName, errorMsg: "First name is required", validator: v => v.trim().length > 0 },
+                last_name:  { element: depLastName,  errorMsg: "Last name is required",  validator: v => v.trim().length > 0 },
+                middle_name:{ element: depMiddleName, validator: () => true },
+                gender:     { element: depGender,     errorMsg: "Please select a gender", validator: v => v === "Male" || v === "Female" },
+                birthday:   { 
+                    element: depBirthday, 
+                    errorMsg: "Date of birth is required", 
+                    validator: v => v && new Date(v) <= new Date(),
+                    customErrorMsg: () => "Invalid date of birth"
+                },
+                address:    { element: depAddress,    errorMsg: "Address is required",    validator: v => v.trim().length > 0 },
+                relationship:{ element: depRelationship, errorMsg: "Please select relationship", validator: v => v && v !== "" },
+                familyNumber:{ 
+                    element: depFamilyNumber,
+                    validator: v => !depHasFamily.checked || (v.trim() && /^[A-Za-z0-9-]{1,50}$/.test(v.trim())),
+                    customErrorMsg: () => depHasFamily.checked ? "Family number is required and must be letters, numbers, or hyphens only" : ""
+                },
+                validID_front:{ 
+                    element: depValidID,
+                    errorMsg: "Please upload a valid ID (JPEG/PNG, max 5MB)",
+                    validator: () => {
+                        if (!depValidID.files?.[0]) return false;
+                        const file = depValidID.files[0];
+                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                        const maxSize = 5 * 1024 * 1024;
+                        return validTypes.includes(file.type) && file.size <= maxSize;
+                    }
                 }
-            })
-            .catch(error => {
-                document.getElementById("addDependentError").textContent = "An error occurred. Please try again.";
-                console.error(error);
+            };
+
+            function showFieldError(element, message) {
+                if (!element) return;
+                removeFieldError(element);
+                const err = document.createElement("span");
+                err.className = "field-error";
+                err.textContent = message;
+                err.style.color = "#FF0000";
+                err.style.fontSize = "12px";
+                err.style.display = "block";
+                err.style.marginTop = "4px";
+                element.style.borderColor = "#FF0000";
+                element.closest(".group-col")?.appendChild(err);
+            }
+
+            function removeFieldError(element) {
+                if (!element) return;
+                const group = element.closest(".group-col");
+                const old = group?.querySelector(".field-error");
+                if (old) old.remove();
+                element.style.borderColor = "";
+            }
+
+            function validateDepField(name) {
+                const field = depFields[name];
+                if (!field.element) return true;
+                const value = field.element.value;
+                const valid = field.validator(value);
+                if (!valid) {
+                    const msg = field.customErrorMsg ? field.customErrorMsg(value) : field.errorMsg;
+                    showFieldError(field.element, msg);
+                } else {
+                    removeFieldError(field.element);
+                }
+                return valid;
+            }
+
+            function validateDependentModal() {
+                return Object.keys(depFields).every(key => validateDepField(key));
+            }
+
+            // Real-time validation
+            Object.keys(depFields).forEach(key => {
+                const el = depFields[key].element;
+                if (el) {
+                    el.addEventListener("input", () => validateDepField(key));
+                    el.addEventListener("change", () => validateDepField(key));
+                    el.addEventListener("blur", () => validateDepField(key));
+                }
+            });
+
+            // Family number toggle
+            depHasFamily?.addEventListener("change", function () {
+                depFamilyContainer.style.display = this.checked ? "flex" : "none";
+                if (!this.checked) {
+                    depFamilyNumber.value = "";
+                    removeFieldError(depFamilyNumber);
+                }
+                validateDepField("familyNumber");
+            });
+
+            // File upload display + validation
+            depValidID?.addEventListener("change", function () {
+                const file = this.files[0];
+                if (file) {
+                    depFileNameSpan.textContent = file.name;
+                    validateDepField("validID_front");
+                } else {
+                    depFileNameSpan.textContent = "No file chosen";
+                }
+            });
+
+            // MAIN FORM SUBMIT – AJAX with spinner + disable buttons + reload
+            form.addEventListener("submit", function (e) {
+                e.preventDefault(); // Critical: stops page navigation
+
+                if (!validateDependentModal()) {
+                    document.getElementById("addDependentError").textContent = "Please fix the errors above.";
+                    document.getElementById("addDependentError").style.color = "#FF0000";
+                    return;
+                }
+
+                // Disable buttons + show spinner
+                saveBtn.disabled = true;
+                cancelBtn.disabled = true;
+                btnText.textContent = "Adding…";
+                spinner.style.display = "inline-block";
+
+                const formData = new FormData(form);
+
+                fetch("add_dependent.php", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        throw new Error(data.message || "Unknown error");
+                    }
+                })
+                .catch(err => {
+                    console.error("Add dependent error:", err);
+                    // Re-enable buttons
+                    saveBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    btnText.textContent = "Add Dependent";
+                    spinner.style.display = "none";
+
+                    document.getElementById("addDependentError").textContent = 
+                        err.message || "Failed to add dependent. Please try again.";
+                    document.getElementById("addDependentError").style.color = "#FF0000";
+                });
             });
         });
 
-        document.getElementById("dep_hasFamilyNumber")?.addEventListener("change", function() {
-            document.getElementById("dep_familyNumberContainer").style.display = this.checked ? "flex" : "none";
-            if (!this.checked) {
-                document.getElementById("dep_familyNumber").value = "";
-            }
-        });
-
-        document.getElementById("dep_validID_front")?.addEventListener("change", function() {
-            const fileNameSpan = document.getElementById("dep_file_name");
-            if (this.files.length > 0) {
-                fileNameSpan.textContent = this.files[0].name;
-            } else {
-                fileNameSpan.textContent = "No file chosen";
-            }
-        });
-
+        // Optional: for switching accounts
         function switchAccount(dependentId) {
             window.location.href = `switch_account.php?switch_to=${dependentId}`;
         }

@@ -37,7 +37,6 @@ try {
         SET stocks = stocks + :qty,
             stock_status = CASE 
                 WHEN stocks + :qty <= 0 THEN 'Out of Stock'
-                WHEN stocks + :qty <= (SELECT min_stock FROM medicines_catalog WHERE id = catalog_id) THEN 'Low Stock'
                 ELSE 'In Stock'
             END
         WHERE id = :batch_id

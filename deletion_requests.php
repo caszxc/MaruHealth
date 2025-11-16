@@ -1,5 +1,4 @@
 <?php
-// deletion_requests.php
 session_start();
 require_once "config.php";
 require_once "email_function.php";
@@ -12,6 +11,7 @@ if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_
     header("Location: admin_dashboard.php");
     exit();
 }
+
 $adminId   = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
 $adminStmt->execute([':id' => $adminId]);
@@ -21,74 +21,105 @@ $adminRole = $admin['role'] ?? $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
 // ---------------------------------------------------------------------
-// 2. HANDLE APPROVE / REJECT (GET)
+// 2. HANDLE APPROVE / REJECT ACTIONS
 // ---------------------------------------------------------------------
+$searchTerm = $_GET['search'] ?? '';
+
 if (isset($_GET['action']) && isset($_GET['id'])) {
-    $reqId     = (int)$_GET['id'];
-    $searchTerm = $_GET['search'] ?? '';
-
-    // ----- FETCH REQUEST -----
-    $reqStmt = $conn->prepare("
-        SELECT dr.*, u.email, u.first_name, u.last_name,
-               pu.first_name AS pu_fn, pu.last_name AS pu_ln
-        FROM account_deletion_requests dr
-        JOIN users u ON dr.user_id = u.id
-        LEFT JOIN users pu ON dr.primary_user_id = pu.id
-        WHERE dr.id = :id AND dr.status = 'pending'
-    ");
-    $reqStmt->execute([':id' => $reqId]);
-    $request = $reqStmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$request) {
-        $_SESSION['request_message'] = "Request not found or already processed.";
-        header("Location: deletion_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
-        exit();
-    }
-
-    $targetUserId = $request['user_id'];
-    $primaryId    = $request['primary_user_id'] ?? $targetUserId;
-    $isPrimary    = ($targetUserId == $primaryId);
+    $requestId = (int)$_GET['id'];
 
     try {
         $conn->beginTransaction();
 
-        // -------------------------------------------------------------
-        // APPROVE → DELETE (same logic as approvedAcc_requests.php)
-        // -------------------------------------------------------------
-        if ($_GET['action'] === 'approve') {
-            // 1. FETCH USER + FILES
-            $userStmt = $conn->prepare("
-                SELECT u.*, CONCAT(pu.first_name,' ',pu.last_name) AS primary_name
-                FROM users u
-                LEFT JOIN users pu ON u.primary_user_id = pu.id
-                WHERE u.id = :id
-            ");
-            $userStmt->execute([':id' => $targetUserId]);
-            $user = $userStmt->fetch(PDO::FETCH_ASSOC);
-            if (!$user) throw new Exception("User not found.");
+        // Fetch deletion request + user info
+        $reqStmt = $conn->prepare("
+            SELECT adr.*, 
+                   u.id AS user_id, u.first_name, u.last_name, u.email,
+                   u.primary_user_id, u.profile_picture, u.valid_id_front,
+                   pu.first_name AS pu_fn, pu.last_name AS pu_ln
+            FROM account_deletion_requests adr
+            JOIN users u ON adr.user_id = u.id
+            LEFT JOIN users pu ON u.primary_user_id = pu.id
+            WHERE adr.id = :rid AND adr.status = 'pending'
+        ");
+        $reqStmt->execute([':rid' => $requestId]);
+        $request = $reqStmt->fetch(PDO::FETCH_ASSOC);
 
-            $uploadDirs = [
-                'profile_picture' => 'images/uploads/profile_pictures/',
-                'valid_id_front'  => 'images/uploads/IDs/'
-            ];
-            $deletedUserIds = [$targetUserId];
-            $dependentCount = 0;
+        if (!$request) {
+            throw new Exception("Deletion request not found or already processed.");
+        }
 
-            // ---- delete files (current user) ----
-            foreach ($uploadDirs as $field => $dir) {
-                if (!empty($user[$field])) {
-                    $path = $dir . basename($user[$field]);
-                    if (file_exists($path)) unlink($path);
+        $userId       = $request['user_id'];
+        $userName     = $request['first_name'] . ' ' . $request['last_name'];
+        $userEmail    = $request['email'];
+        $isPrimary    = is_null($request['primary_user_id']);
+        $primaryName  = $request['pu_fn'] && $request['pu_ln'] ? $request['pu_fn'] . ' ' . $request['pu_ln'] : null;
+
+        $uploadDirs = [
+            'profile_picture' => 'images/uploads/profile_pictures/',
+            'valid_id_front'  => 'images/uploads/IDs/'
+        ];
+
+        $deletedUserIds = [$userId];
+        $dependentCount = 0;
+
+        // Helper: handle medicine requests (same as in approvedAcc_requests.php)
+        function handleUserMedicineRequests($conn, $uid, $adminId) {
+            $reqStmt = $conn->prepare("SELECT id, request_status FROM medicine_requests WHERE user_id = ?");
+            $reqStmt->execute([$uid]);
+            $requests = $reqStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($requests as $mr) {
+                $reqId = $mr['id'];
+                $status = $mr['request_status'];
+
+                if ($status === 'pending') {
+                    $conn->prepare("UPDATE medicine_requests SET request_status = 'declined', declined_date = NOW() WHERE id = ?")->execute([$reqId]);
+                    $conn->prepare("UPDATE requested_medicines SET status = 'declined' WHERE request_id = ?")->execute([$reqId]);
+
+                } elseif ($status === 'to be claimed') {
+                    $conn->prepare("UPDATE medicine_requests SET request_status = 'cancelled', cancelled_date = NOW() WHERE id = ?")->execute([$reqId]);
+                    $conn->prepare("UPDATE requested_medicines SET status = 'cancelled' WHERE request_id = ?")->execute([$reqId]);
+
+                    // Return reserved medicines
+                    $distStmt = $conn->prepare("
+                        SELECT batch_id, quantity FROM medicine_distributions 
+                        WHERE request_id = ? AND status = 'reserved'
+                    ");
+                    $distStmt->execute([$reqId]);
+                    $distributions = $distStmt->fetchAll();
+
+                    $returnStmt = $conn->prepare("
+                        UPDATE medicine_batches 
+                        SET stocks = stocks + ?, 
+                            stock_status = CASE WHEN stocks + ? > 0 THEN 'In Stock' ELSE 'Out of Stock' END
+                        WHERE id = ?
+                    ");
+                    $historyStmt = $conn->prepare("
+                        INSERT INTO medicine_history (catalog_id, batch_id, action_type, details, performed_by)
+                        SELECT catalog_id, id, 'return', ?, ?
+                        FROM medicine_batches WHERE id = ?
+                    ");
+
+                    foreach ($distributions as $dist) {
+                        $returnStmt->execute([$dist['quantity'], $dist['quantity'], $dist['batch_id']]);
+                        $details = "Returned due to approved account deletion (request #$reqId)";
+                        $historyStmt->execute([$details, $adminId, $dist['batch_id']]);
+                    }
+
+                    $conn->prepare("UPDATE medicine_distributions SET status = 'returned' WHERE request_id = ? AND status = 'reserved'")->execute([$reqId]);
                 }
             }
+        }
 
-            // ---- dependents (only primary) ----
+        if ($_GET['action'] === 'approve') {
+            // === DELETE DEPENDENTS FIRST (if primary) ===
             if ($isPrimary) {
                 $depStmt = $conn->prepare("
-                    SELECT id, first_name, last_name, email, valid_id_front, profile_picture
-                    FROM users WHERE primary_user_id = :pid
+                    SELECT id, first_name, last_name, email, profile_picture, valid_id_front
+                    FROM users WHERE primary_user_id = ?
                 ");
-                $depStmt->execute([':pid' => $targetUserId]);
+                $depStmt->execute([$userId]);
                 $dependents = $depStmt->fetchAll(PDO::FETCH_ASSOC);
                 $dependentCount = count($dependents);
 
@@ -96,6 +127,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                     $depId = $dep['id'];
                     $deletedUserIds[] = $depId;
 
+                    // Delete files
                     foreach ($uploadDirs as $field => $dir) {
                         if (!empty($dep[$field])) {
                             $path = $dir . basename($dep[$field]);
@@ -103,103 +135,78 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                         }
                     }
 
-                    // delete medicine requests
-                    $reqIds = $conn->prepare("SELECT id FROM medicine_requests WHERE user_id = ?");
-                    $reqIds->execute([$depId]);
-                    foreach ($reqIds->fetchAll(PDO::FETCH_COLUMN) as $rId) {
-                        $conn->prepare("DELETE FROM medicine_distributions WHERE request_id = ?")->execute([$rId]);
-                        $conn->prepare("DELETE FROM requested_medicines WHERE request_id = ?")->execute([$rId]);
-                    }
-                    $conn->prepare("DELETE FROM medicine_requests WHERE user_id = ?")->execute([$depId]);
-
+                    handleUserMedicineRequests($conn, $depId, $adminId);
                     $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$depId]);
                     $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$depId]);
                 }
             }
 
-            // ---- main user ----
-            $reqIds = $conn->prepare("SELECT id FROM medicine_requests WHERE user_id = ?");
-            $reqIds->execute([$targetUserId]);
-            foreach ($reqIds->fetchAll(PDO::FETCH_COLUMN) as $rId) {
-                $conn->prepare("DELETE FROM medicine_distributions WHERE request_id = ?")->execute([$rId]);
-                $conn->prepare("DELETE FROM requested_medicines WHERE request_id = ?")->execute([$rId]);
+            // === DELETE MAIN USER FILES & REQUESTS ===
+            foreach ($uploadDirs as $field => $dir) {
+                if (!empty($request[$field])) {
+                    $path = $dir . basename($request[$field]);
+                    if (file_exists($path)) unlink($path);
+                }
             }
-            $conn->prepare("DELETE FROM medicine_requests WHERE user_id = ?")->execute([$targetUserId]);
-            $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$targetUserId]);
-            $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$targetUserId]);
 
-            // ---- EMAIL ----
-            $subject = "MaruHealth Account Permanently Deleted";
-            if ($isPrimary && $dependentCount) {
-                $msg = "<h2>Your Maru-Health Account Has Been Deleted</h2>
-                        <p>Dear {$user['first_name']} {$user['last_name']},</p>
-                        <p>Your account **and all $dependentCount dependent account(s)** have been permanently deleted.</p>
-                        <p>All associated data (profile picture, ID, medicine requests…) has been erased.</p>
-                        <p>This action is irreversible.</p>
+            handleUserMedicineRequests($conn, $userId, $adminId);
+            $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$userId]);
+            $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
+
+            // === UPDATE DELETION REQUEST STATUS ===
+            $conn->prepare("UPDATE account_deletion_requests SET status = 'deleted' WHERE id = ?")->execute([$requestId]);
+
+            // === SEND EMAIL ===
+            $subject = "MaruHealth Account Deletion Approved";
+            if ($isPrimary && $dependentCount > 0) {
+                $msg = "<h2>Your Account Has Been Deleted</h2>
+                        <p>Dear $userName,</p>
+                        <p>Your deletion request has been <strong>approved</strong>. Your primary account and all $dependentCount dependent account(s) have been permanently deleted.</p>
+                        <p>All pending medicine requests were declined and reserved items returned to inventory.</p>
+                        <p>Thank you for using MaruHealth.</p>
                         <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
             } elseif ($isPrimary) {
-                $msg = "<h2>Your Maru-Health Account Has Been Deleted</h2>
-                        <p>Dear {$user['first_name']} {$user['last_name']},</p>
-                        <p>Your account has been permanently deleted.</p>
-                        <p>All data has been erased.</p>
+                $msg = "<h2>Your Account Has Been Deleted</h2>
+                        <p>Dear $userName,</p>
+                        <p>Your deletion request has been approved and your account is now permanently deleted.</p>
                         <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
             } else {
-                $primaryName = $request['pu_fn'] . ' ' . $request['pu_ln'];
                 $msg = "<h2>Your Dependent Account Has Been Deleted</h2>
-                        <p>Dear {$user['first_name']} {$user['last_name']},</p>
-                        <p>Your dependent account under **$primaryName** has been permanently deleted.</p>
-                        <p>All your data has been erased.</p>
+                        <p>Dear $userName,</p>
+                        <p>Your deletion request has been approved. Your dependent account under <strong>$primaryName</strong> has been permanently removed.</p>
                         <p>The primary account remains active.</p>
                         <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
             }
-            sendEmail($request['email'], $user['first_name'] . ' ' . $user['last_name'], $subject, $msg);
+            sendEmail($userEmail, $userName, $subject, $msg);
 
-            // ---- LOG ----
+            // === LOG ACTIVITY ===
             $logDetails = $isPrimary
-                ? ($dependentCount ? "Deleted primary {$user['first_name']} {$user['last_name']} and $dependentCount dependent(s)" : "Deleted primary {$user['first_name']} {$user['last_name']}")
-                : "Deleted dependent {$user['first_name']} {$user['last_name']} under primary {$request['pu_fn']} {$request['pu_ln']}";
+                ? ($dependentCount ? "Approved deletion: $userName + $dependentCount dependents" : "Approved deletion: $userName")
+                : "Approved deletion: dependent $userName (under $primaryName)";
+
             $logStmt = $conn->prepare("
                 INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-                VALUES (:aid, 'delete_user', :det, :tid)
+                VALUES (?, 'delete_user', ?, ?)
             ");
-            $logStmt->execute([
-                ':aid' => $adminId,
-                ':det' => $logDetails,
-                ':tid' => $targetUserId
-            ]);
+            $logStmt->execute([$adminId, $logDetails, $userId]);
 
-            // ---- UPDATE REQUEST STATUS ----
-            $conn->prepare("UPDATE account_deletion_requests SET status = 'deleted' WHERE id = ?")
-                 ->execute([$reqId]);
-
-            $_SESSION['request_message'] = "Account(s) deleted successfully.";
+            $_SESSION['request_message'] = "Account deletion approved and completed successfully.";
         }
 
-        // -------------------------------------------------------------
-        // REJECT → CANCEL
-        // -------------------------------------------------------------
-        if ($_GET['action'] === 'reject') {
-            $conn->prepare("UPDATE account_deletion_requests SET status = 'cancelled' WHERE id = ?")
-                 ->execute([$reqId]);
+        elseif ($_GET['action'] === 'reject') {
+            $conn->prepare("UPDATE account_deletion_requests SET status = 'cancelled' WHERE id = ?")->execute([$requestId]);
 
             $subject = "Account Deletion Request Rejected";
             $msg = "<h2>Deletion Request Rejected</h2>
-                    <p>Dear {$request['first_name']} {$request['last_name']},</p>
-                    <p>Your request to delete the account has been **rejected**.</p>
-                    <p>Reason (admin): <em>None provided</em></p>
+                    <p>Dear $userName,</p>
+                    <p>Your request to delete your MaruHealth account has been <strong>rejected</strong> by the administrator.</p>
                     <p>Your account remains active.</p>
+                    <p>If you have concerns, please contact the health center.</p>
                     <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
-            sendEmail($request['email'], $request['first_name'] . ' ' . $request['last_name'], $subject, $msg);
+            sendEmail($userEmail, $userName, $subject, $msg);
 
-            $logStmt = $conn->prepare("
-                INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-                VALUES (:aid, 'user_rejection', :det, :tid)
-            ");
-            $logStmt->execute([
-                ':aid' => $adminId,
-                ':det' => "Rejected deletion request for user ID $targetUserId",
-                ':tid' => $targetUserId
-            ]);
+            $logDetails = "Rejected deletion request for $userName";
+            $conn->prepare("INSERT INTO activity_logs (admin_id, action_type, action_details, target_id) VALUES (?, 'delete_user', ?, ?)")->execute([$adminId, $logDetails, $userId]);
 
             $_SESSION['request_message'] = "Deletion request rejected.";
         }
@@ -210,35 +217,36 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $_SESSION['request_message'] = "Error: " . $e->getMessage();
     }
 
-    header("Location: deletion_requests.php" . (!empty($searchTerm) ? "?search=" . urlencode($searchTerm) : ""));
+    header("Location: deletion_requests.php" . ($searchTerm ? "?search=" . urlencode($searchTerm) : ""));
     exit();
 }
 
 // ---------------------------------------------------------------------
-// 3. FETCH PENDING REQUESTS (with optional search)
+// 3. FETCH PENDING DELETION REQUESTS
 // ---------------------------------------------------------------------
 $searchTerm = $_GET['search'] ?? '';
-$where = "WHERE dr.status = 'pending'";
-$params = [];
+$query = "
+    SELECT adr.id, adr.user_id, adr.reason, adr.requested_at,
+           u.first_name, u.last_name, u.primary_user_id,
+           pu.first_name AS pu_fn, pu.last_name AS pu_ln,
+           (u.primary_user_id IS NULL) AS is_primary
+    FROM account_deletion_requests adr
+    JOIN users u ON adr.user_id = u.id
+    LEFT JOIN users pu ON u.primary_user_id = pu.id
+    WHERE adr.status = 'pending'
+";
 
 if ($searchTerm !== '') {
-    $where .= " AND (u.first_name LIKE :s OR u.last_name LIKE :s OR u.email LIKE :s OR u.phone_number LIKE :s)";
-    $params[':s'] = "%$searchTerm%";
+    $query .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search)";
 }
 
-$sql = "
-    SELECT dr.id, dr.user_id, dr.reason, dr.requested_at,
-           u.first_name, u.last_name, u.email,
-           pu.first_name AS pu_fn, pu.last_name AS pu_ln,
-           (dr.user_id = dr.primary_user_id) AS is_primary
-    FROM account_deletion_requests dr
-    JOIN users u ON dr.user_id = u.id
-    LEFT JOIN users pu ON dr.primary_user_id = pu.id
-    $where
-    ORDER BY dr.requested_at DESC
-";
-$stmt = $conn->prepare($sql);
-foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+$query .= " ORDER BY adr.requested_at DESC";
+
+$stmt = $conn->prepare($query);
+if ($searchTerm !== '') {
+    $param = "%$searchTerm%";
+    $stmt->bindParam(':search', $param);
+}
 $stmt->execute();
 $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -248,10 +256,11 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deletion Requests</title>
+    <title>User Account Management</title>
     <link rel="stylesheet" href="css/account_approval.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
     <style>
         .message{padding:10px;border-radius:5px;text-align:center;transition:opacity .5s;}
         .message.success{background:#dff0d8;color:#3c763d;}
@@ -409,15 +418,15 @@ $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <td><?=htmlspecialchars($r['reason'])?></td>
                                             <td><?=date('M j, Y g:i A', strtotime($r['requested_at']))?></td>
                                             <td>
-                                                <a href="deletion_requests.php?action=approve&id=<?=$r['id']?>&search=<?=urlencode($searchTerm)?>"
-                                                   class="approve-btn"
-                                                   onclick="return confirm('APPROVE DELETION?\n\nThis will PERMANENTLY delete the account<?=$r['is_primary']?' and ALL dependents':''?>.');">
-                                                   Approve
+                                                <a href="deletion_requests.php?action=approve&id=<?= $r['id'] ?>&search=<?= urlencode($searchTerm) ?>"
+                                                    class="approve-btn"
+                                                    onclick="return confirm('APPROVE DELETION?\n\nThis will permanently delete the account<?= $r['is_primary'] ? ' and ALL dependents' : '' ?>.\n\nAll files and data will be removed.\nThis action is IRREVERSIBLE.');">
+                                                        Approve
                                                 </a>
-                                                <a href="deletion_requests.php?action=reject&id=<?=$r['id']?>&search=<?=urlencode($searchTerm)?>"
-                                                   class="reject-btn"
-                                                   onclick="return confirm('REJECT deletion request?');">
-                                                   Reject
+                                                <a href="deletion_requests.php?action=reject&id=<?= $r['id'] ?>&search=<?= urlencode($searchTerm) ?>"
+                                                    class="reject-btn"
+                                                    onclick="return confirm('Reject this deletion request?');">
+                                                        Reject
                                                 </a>
                                             </td>
                                         </tr>

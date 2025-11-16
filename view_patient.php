@@ -60,6 +60,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
     <style>
         .message {
             padding: 10px;
@@ -197,7 +198,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
                             <p class="value">
                                 <?php if (!empty($patient['family_number'])): ?>
                                     <?= htmlspecialchars($patient['family_number']) ?>
-                                    <a href="family_number.php?family_number=<?= urlencode($patient['family_number']) ?>" class="view-fam-btn">View</a>
+                                    <a href="view_family.php?family_number=<?= urlencode($patient['family_number']) ?>" class="view-fam-btn">View</a>
                                 <?php else: ?>
                                     Not Provided
                                 <?php endif; ?>
@@ -262,7 +263,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
             <div class="consultation-history">
                 <h3>Consultation History</h3>
                 <div class="sort-control">
-                    <button class="add-btn" onclick="openModal()">Add Consultation</button>
+                    <?php if ($patient['status'] !== 'archived'): ?>
+                        <button class="add-btn" onclick="openModal()">Add Consultation</button>
+                    <?php else: ?>
+                        <div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 5px; font-size: 0.9em;">
+                            <strong>Note:</strong> This patient is archived. No new consultations can be added.
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="consultation-content">

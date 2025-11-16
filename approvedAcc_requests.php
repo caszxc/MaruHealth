@@ -5,23 +5,27 @@ require_once "config.php";
 require_once "email_function.php";
 include 'settings.php';
 
-// Check if user is logged in as super admin or admin
+// Only super_admin can access this page
 if (!isset($_SESSION['admin_id']) || !in_array($_SESSION['admin_role'], ['super_admin'])) {
     header("Location: admin_dashboard.php");
     exit();
 }
 
-// === HANDLE DELETE ACTION ===
+// ===================================================================
+// HANDLE DELETE ACTION
+// ===================================================================
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
-    $deleteUserId = intval($_GET['id']);
-    $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $deleteUserId = (int)$_GET['id'];
+    $searchTerm   = $_GET['search'] ?? '';
 
     try {
         $conn->beginTransaction();
 
-        // Fetch user data
+        // ---------------------------------------------------------------
+        // 1. Fetch user + primary info
+        // ---------------------------------------------------------------
         $userStmt = $conn->prepare("
-            SELECT u.*, CONCAT(pu.first_name, ' ', pu.last_name) AS primary_name
+            SELECT u.*, CONCAT(pu.first_name,' ',pu.last_name) AS primary_name
             FROM users u
             LEFT JOIN users pu ON u.primary_user_id = pu.id
             WHERE u.id = :id
@@ -31,10 +35,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 
         if (!$user) throw new Exception("User not found.");
 
-        $userId = $user['id'];
-        $userName = $user['first_name'] . ' ' . $user['last_name'];
-        $userEmail = $user['email'];
-        $isPrimary = !$user['primary_user_id'];
+        $userId     = $user['id'];
+        $userName   = $user['first_name'] . ' ' . $user['last_name'];
+        $userEmail  = $user['email'];
+        $isPrimary  = is_null($user['primary_user_id']);
         $uploadDirs = [
             'profile_picture' => 'images/uploads/profile_pictures/',
             'valid_id_front'  => 'images/uploads/IDs/'
@@ -43,24 +47,92 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
         $deletedUserIds = [$userId];
         $dependentCount = 0;
 
-        // === 1. Delete Files (current user) ===
-        foreach ($uploadDirs as $field => $dir) {
-            if (!empty($user[$field])) {
-                $filePath = $dir . basename($user[$field]);
-                if (file_exists($filePath)) {
-                    unlink($filePath);
+        // ---------------------------------------------------------------
+        // 2. Helper: cancel pending / return to-be-claimed medicines
+        // ---------------------------------------------------------------
+        function handleUserMedicineRequests($conn, $uid, $adminId) {
+            $reqStmt = $conn->prepare("SELECT id, request_status FROM medicine_requests WHERE user_id = ?");
+            $reqStmt->execute([$uid]);
+            $requests = $reqStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($requests as $mr) {
+                $reqId        = $mr['id'];
+                $currentStatus = $mr['request_status'];
+
+                if ($currentStatus === 'pending') {
+                    // Decline pending requests
+                    $conn->prepare("UPDATE medicine_requests SET request_status = 'declined', declined_date = NOW() WHERE id = ?")
+                         ->execute([$reqId]);
+                    $conn->prepare("UPDATE requested_medicines SET status = 'declined' WHERE request_id = ?")
+                         ->execute([$reqId]);
+
+                } elseif ($currentStatus === 'to be claimed') {
+                    // Cancel + return reserved medicines to inventory
+                    $conn->prepare("UPDATE medicine_requests SET request_status = 'cancelled', cancelled_date = NOW() WHERE id = ?")
+                         ->execute([$reqId]);
+                    $conn->prepare("UPDATE requested_medicines SET status = 'cancelled' WHERE request_id = ?")
+                         ->execute([$reqId]);
+
+                    // Get reserved distributions
+                    $distStmt = $conn->prepare("
+                        SELECT md.batch_id, md.quantity
+                        FROM medicine_distributions md
+                        WHERE md.request_id = ? AND md.status = 'reserved'
+                    ");
+                    $distStmt->execute([$reqId]);
+                    $distributions = $distStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    // Return stock + log history
+                    $returnStmt = $conn->prepare("
+                        UPDATE medicine_batches 
+                        SET stocks = stocks + ?,
+                            stock_status = CASE WHEN stocks + ? > 0 THEN 'In Stock' ELSE 'Out of Stock' END
+                        WHERE id = ?
+                    ");
+                    $historyStmt = $conn->prepare("
+                        INSERT INTO medicine_history (catalog_id, batch_id, action_type, details, performed_by)
+                        SELECT mb.catalog_id, mb.id, 'return', ?, ?
+                        FROM medicine_batches mb WHERE mb.id = ?
+                    ");
+
+                    foreach ($distributions as $dist) {
+                        $qty     = $dist['quantity'];
+                        $batchId = $dist['batch_id'];
+
+                        $returnStmt->execute([$qty, $qty, $batchId]);
+
+                        $details = "Returned $qty unit(s) due to account deletion (request #$reqId cancelled)";
+                        $historyStmt->execute([$details, $adminId, $batchId]);
+                    }
+
+                    // Mark distributions as returned
+                    $conn->prepare("UPDATE medicine_distributions SET status = 'returned' WHERE request_id = ? AND status = 'reserved'")
+                         ->execute([$reqId]);
                 }
+                // claimed / declined / cancelled / unclaimed → do nothing
             }
         }
 
-        // === 2. Handle Dependents (only if Primary) ===
+        // ---------------------------------------------------------------
+        // 3. Delete files of the target user
+        // ---------------------------------------------------------------
+        foreach ($uploadDirs as $field => $dir) {
+            if (!empty($user[$field])) {
+                $path = $dir . basename($user[$field]);
+                if (file_exists($path)) unlink($path);
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // 4. If PRIMARY → handle all dependents first
+        // ---------------------------------------------------------------
         if ($isPrimary) {
-            $dependentsStmt = $conn->prepare("
+            $depStmt = $conn->prepare("
                 SELECT id, first_name, last_name, email, valid_id_front, profile_picture
-                FROM users WHERE primary_user_id = :primary_id
+                FROM users WHERE primary_user_id = :pid
             ");
-            $dependentsStmt->execute([':primary_id' => $userId]);
-            $dependents = $dependentsStmt->fetchAll(PDO::FETCH_ASSOC);
+            $depStmt->execute([':pid' => $userId]);
+            $dependents = $depStmt->fetchAll(PDO::FETCH_ASSOC);
             $dependentCount = count($dependents);
 
             foreach ($dependents as $dep) {
@@ -70,114 +142,80 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
                 // Delete files
                 foreach ($uploadDirs as $field => $dir) {
                     if (!empty($dep[$field])) {
-                        $filePath = $dir . basename($dep[$field]);
-                        if (file_exists($filePath)) unlink($filePath);
+                        $path = $dir . basename($dep[$field]);
+                        if (file_exists($path)) unlink($path);
                     }
                 }
 
-                // Delete medicine requests
-                $reqIdsStmt = $conn->prepare("SELECT id FROM medicine_requests WHERE user_id = :uid");
-                $reqIdsStmt->execute([':uid' => $depId]);
-                foreach ($reqIdsStmt->fetchAll(PDO::FETCH_COLUMN) as $reqId) {
-                    $conn->prepare("DELETE FROM medicine_distributions WHERE request_id = ?")->execute([$reqId]);
-                    $conn->prepare("DELETE FROM requested_medicines WHERE request_id = ?")->execute([$reqId]);
-                }
-                $conn->prepare("DELETE FROM medicine_requests WHERE user_id = ?")->execute([$depId]);
+                // Handle medicine requests of dependent
+                handleUserMedicineRequests($conn, $depId, $_SESSION['admin_id']);
 
-                // Delete tokens
+                // Clean tokens & user record
                 $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$depId]);
-
-                // Delete user (cascade deletes relationship)
                 $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$depId]);
             }
         }
 
-        // === 3. Delete Main User Data ===
-        $reqIdsStmt = $conn->prepare("SELECT id FROM medicine_requests WHERE user_id = :uid");
-        $reqIdsStmt->execute([':uid' => $userId]);
-        foreach ($reqIdsStmt->fetchAll(PDO::FETCH_COLUMN) as $reqId) {
-            $conn->prepare("DELETE FROM medicine_distributions WHERE request_id = ?")->execute([$reqId]);
-            $conn->prepare("DELETE FROM requested_medicines WHERE request_id = ?")->execute([$reqId]);
-        }
-        $conn->prepare("DELETE FROM medicine_requests WHERE user_id = ?")->execute([$userId]);
+        // ---------------------------------------------------------------
+        // 5. Handle medicine requests of the main user being deleted
+        // ---------------------------------------------------------------
+        handleUserMedicineRequests($conn, $userId, $_SESSION['admin_id']);
+
+        // ---------------------------------------------------------------
+        // 6. Final cleanup for the main user
+        // ---------------------------------------------------------------
         $conn->prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")->execute([$userId]);
         $conn->prepare("DELETE FROM users WHERE id = ?")->execute([$userId]);
 
-        // === 4. DETERMINE DELETION TYPE & SEND CUSTOM EMAIL ===
+        // ---------------------------------------------------------------
+        // 7. Send appropriate email
+        // ---------------------------------------------------------------
         $subject = "MaruHealth Account Permanently Deleted";
-        $logDetails = "";
-        $emailMessage = "";
 
         if ($isPrimary && $dependentCount > 0) {
-            // PRIMARY + DEPENDENTS
-            $logDetails = "Deleted primary account: $userName and $dependentCount dependent(s)";
-            $emailMessage = "
-                <h2>Your Maru-Health Account Has Been Deleted</h2>
-                <p>Dear $userName,</p>
-                <p>Your account and <strong>all $dependentCount dependent account(s)</strong> have been <strong>permanently deleted</strong> by the administrator.</p>
-                <p><strong>All associated data has been erased, including:</strong></p>
-                <ul>
-                    <li>Profile picture</li>
-                    <li>Valid ID</li>
-                    <li>All medicine requests and distribution records</li>
-                    <li>Account access and login credentials</li>
-                </ul>
-                <p>This action is irreversible. If you believe this was a mistake, please contact the health center immediately.</p>
-                <p>Best regards,<br><strong>MaruHealth Team</strong></p>
-            ";
+            $msg = "<h2>Your MaruHealth Account Has Been Deleted</h2>
+                    <p>Dear $userName,</p>
+                    <p>Your primary account and all $dependentCount dependent account(s) have been permanently deleted by the administrator.</p>
+                    <p>All data and pending/to-be-claimed medicine requests have been processed (reserved medicines returned to inventory).</p>
+                    <p>This action is irreversible.</p>
+                    <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
         } elseif ($isPrimary) {
-            // PRIMARY ONLY (no dependents)
-            $logDetails = "Deleted primary account: $userName";
-            $emailMessage = "
-                <h2>Your Maru-Health Account Has Been Deleted</h2>
-                <p>Dear $userName,</p>
-                <p>Your Account has been <strong>permanently deleted</strong> by the administrator.</p>
-                <p><strong>All your data has been erased, including:</strong></p>
-                <ul>
-                    <li>Profile picture</li>
-                    <li>Valid ID</li>
-                    <li>All medicine requests and records</li>
-                    <li>Login credentials</li>
-                </ul>
-                <p>This action is irreversible. Contact the health center if this was in error.</p>
-                <p>Best regards,<br><strong>MaruHealth Team</strong></p>
-            ";
+            $msg = "<h2>Your MaruHealth Account Has Been Deleted</h2>
+                    <p>Dear $userName,</p>
+                    <p>Your account has been permanently deleted by the administrator.</p>
+                    <p>Pending requests were declined and reserved medicines returned to inventory.</p>
+                    <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
         } else {
-            // DEPENDENT ONLY
-            $primaryName = $user['primary_name'] ?? 'Unknown Primary';
-            $logDetails = "Deleted dependent account: $userName under primary account: $primaryName";
-            $emailMessage = "
-                <h2>Your Dependent Account Has Been Deleted</h2>
-                <p>Dear $userName,</p>
-                <p>Your <strong>dependent account</strong> under <strong>$primaryName</strong> has been <strong>permanently deleted</strong> by the administrator.</p>
-                <p><strong>All your data has been erased, including:</strong></p>
-                <ul>
-                    <li>Profile picture</li>
-                    <li>Valid ID</li>
-                    <li>All medicine requests</li>
-                    <li>Access to the platform</li>
-                </ul>
-                <p>The primary account remains active. Contact the health center if needed.</p>
-                <p>Best regards,<br><strong>Maru-Health Team</strong></p>
-            ";
+            $primaryName = $user['primary_name'] ?? 'the primary account holder';
+            $msg = "<h2>Your Dependent Account Has Been Deleted</h2>
+                    <p>Dear $userName,</p>
+                    <p>Your dependent account under <strong>$primaryName</strong> has been permanently deleted.</p>
+                    <p>Pending requests were declined and reserved medicines returned to inventory.</p>
+                    <p>The primary account remains active.</p>
+                    <p>Best regards,<br><strong>MaruHealth Team</strong></p>";
         }
 
-        // Send Email
-        sendEmail($userEmail, $userName, $subject, $emailMessage);
+        sendEmail($userEmail, $userName, $subject, $msg);
 
-        // === 5. Log Activity ===
+        // ---------------------------------------------------------------
+        // 8. Log activity
+        // ---------------------------------------------------------------
+        $logDetails = $isPrimary
+            ? ($dependentCount ? "Deleted primary $userName and $dependentCount dependent(s)" : "Deleted primary $userName")
+            : "Deleted dependent $userName under primary " . ($user['primary_name'] ?? 'unknown');
+
         $logStmt = $conn->prepare("
             INSERT INTO activity_logs (admin_id, action_type, action_details, target_id)
-            VALUES (:admin_id, 'delete_user', :details, :target_id)
+            VALUES (:aid, 'delete_user', :det, :tid)
         ");
         $logStmt->execute([
-            ':admin_id' => $_SESSION['admin_id'],
-            ':details' => $logDetails,
-            ':target_id' => $userId
+            ':aid' => $_SESSION['admin_id'],
+            ':det' => $logDetails,
+            ':tid' => $userId
         ]);
 
         $conn->commit();
-        $_SESSION['approval_message'] = "Account(s) deleted successfully.";
+        $_SESSION['approval_message'] = "Account(s) deleted successfully. Reserved medicines have been returned to inventory where applicable.";
     } catch (Exception $e) {
         $conn->rollBack();
         $_SESSION['approval_message'] = "Error: " . $e->getMessage();
@@ -187,8 +225,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
     exit();
 }
 
-// === FETCH USERS (same as before) ===
-$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
+// ===================================================================
+// FETCH APPROVED USERS (unchanged)
+// ===================================================================
+$searchTerm = $_GET['search'] ?? '';
 
 $query = "
     SELECT 
@@ -203,27 +243,26 @@ $query = "
     LEFT JOIN users pu ON u.primary_user_id = pu.id
     WHERE u.role != 'admin'
 ";
-if (!empty($searchTerm)) {
+if ($searchTerm !== '') {
     $query .= " AND (u.first_name LIKE :search OR u.last_name LIKE :search OR u.email LIKE :search OR u.phone_number LIKE :search OR u.family_number LIKE :search)";
 }
 $query .= " ORDER BY u.date_registered DESC";
 
-$approvedUsersStmt = $conn->prepare($query);
-if (!empty($searchTerm)) {
-    $searchParam = "%$searchTerm%";
-    $approvedUsersStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+$stmt = $conn->prepare($query);
+if ($searchTerm !== '') {
+    $param = "%$searchTerm%";
+    $stmt->bindParam(':search', $param);
 }
-$approvedUsersStmt->execute();
-$approvedUsers = $approvedUsersStmt->fetchAll(PDO::FETCH_ASSOC);
+$stmt->execute();
+$approvedUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Admin info
-$adminId = $_SESSION['admin_id'];
+// Admin info (unchanged)
+$adminId   = $_SESSION['admin_id'];
 $adminStmt = $conn->prepare("SELECT * FROM admin_staff WHERE id = :id");
-$adminStmt->bindParam(':id', $adminId);
-$adminStmt->execute();
-$admin = $adminStmt->fetch(PDO::FETCH_ASSOC);
-$adminName = $admin ? $admin['full_name'] : $_SESSION['admin_name'];
-$adminRole = $admin ? $admin['role'] : $_SESSION['admin_role'];
+$adminStmt->execute([':id' => $adminId]);
+$admin     = $adminStmt->fetch(PDO::FETCH_ASSOC);
+$adminName = $admin['full_name'] ?? $_SESSION['admin_name'];
+$adminRole = $admin['role'] ?? $_SESSION['admin_role'];
 $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 ?>
 
@@ -412,7 +451,7 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 
                                                 <a href="approvedAcc_requests.php?action=delete&id=<?= $user['id'] . (!empty($searchTerm) ? '&search=' . urlencode($searchTerm) : '') ?>"
                                                    class="delete-btn"
-                                                   onclick="return confirm('DELETE USER?\n\nThis will permanently delete:\n• This account\n• All files (ID, profile pic)\n• Medicine requests\n<?php if (!$user['primary_user_id']): ?>• ALL DEPENDENTS<?php endif; ?>\n\nThis cannot be undone.')">
+                                                   onclick="return confirm('DELETE THIS ACCOUNT?\n\n• Pending requests → declined\n• To-be-claimed → cancelled & medicines returned to inventory\n• All files will be removed\n<?= $u['primary_user_id'] ? '' : '• ALL DEPENDENTS will also be deleted' ?>\n\nThis action is irreversible.');">
                                                    Delete
                                                 </a>
                                             </td>

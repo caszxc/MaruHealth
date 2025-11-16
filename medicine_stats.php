@@ -269,67 +269,68 @@ try {
                 <span class="close-modal" id="closeReportModal">&times;</span>
             </div>
 
-            <form id="reportForm" action="generate_medicine_report.php" method="POST" target="_blank">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label><strong>Select Report Type</strong></label>
-                        <div class="radio-group">
-                            <label class="radio-label">
-                                <input type="radio" name="report_type" value="total_stock" required>
-                                <span class="radio-custom"></span>
-                                Total Stock Medicines (All Available)
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="report_type" value="out_of_stock">
-                                <span class="radio-custom"></span>
-                                Out of Stock Medicines
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="report_type" value="low_stock">
-                                <span class="radio-custom"></span>
-                                Low Stock Medicines (Below Minimum)
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="report_type" value="expiring_soon">
-                                <span class="radio-custom"></span>
-                                Expiring Soon (Next 30 Days)
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="report_type" value="expired">
-                                <span class="radio-custom"></span>
-                                Expired Medicines (For Disposal)
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="report_type" value="disposed">
-                                <span class="radio-custom"></span>
-                                Disposed Medicines History
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label><strong>Date Range Filter</strong> (Optional)</label>
-                        <div class="date-range">
-                            <div>
-                                <label for="date_from">From Date</label>
-                                <input type="date" name="date_from" id="date_from">
-                            </div>
-                            <div>
-                                <label for="date_to">To Date</label>
-                                <input type="date" name="date_to" id="date_to" value="<?= date('Y-m-d') ?>">
+            <div class="modal-body">
+                <label><strong>Select Report Type</strong></label>
+                <div class="form-scroll">
+                    <form id="reportForm" action="generate_medicine_report.php" method="POST" target="_blank">
+                        <div class="form-group">
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="report_type" value="total_stock" required>
+                                    <span class="radio-custom"></span>
+                                    Total Stock Medicines (All Available)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="report_type" value="out_of_stock">
+                                    <span class="radio-custom"></span>
+                                    Out of Stock Medicines
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="report_type" value="low_stock">
+                                    <span class="radio-custom"></span>
+                                    Low Stock Medicines (Below Minimum)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="report_type" value="expiring_soon">
+                                    <span class="radio-custom"></span>
+                                    Expiring Soon (Next 30 Days)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="report_type" value="expired">
+                                    <span class="radio-custom"></span>
+                                    Expired Medicines (For Disposal)
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="report_type" value="disposed">
+                                    <span class="radio-custom"></span>
+                                    Disposed Medicines History
+                                </label>
                             </div>
                         </div>
-                        <small style="color:#666;">Leave blank to include all records</small>
-                    </div>
-                </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" id="cancelReport">Cancel</button>
-                    <button type="submit" class="btn-generate">
-                        <i class="fas fa-download"></i> Generate Excel Report
-                    </button>
+                        <div class="form-group" id="dateRangeSection" style="display:none;">
+                            <label><strong>Date Range Filter</strong> (Optional)</label>
+                            <div class="date-range">
+                                <div>
+                                    <label for="date_from">From Date</label>
+                                    <input type="date" name="date_from" id="date_from">
+                                </div>
+                                <div>
+                                    <label for="date_to">To Date</label>
+                                    <input type="date" name="date_to" id="date_to" value="<?= date('Y-m-d') ?>">
+                                </div>
+                            </div>
+                            <small style="color:#666;">Leave blank to include all records. Only applies to Disposed Medicines History.</small>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" id="cancelReport">Cancel</button>
+                <button type="submit" form="reportForm" class="btn-generate">
+                    <i class="fas fa-download"></i> Generate Excel Report
+                </button>
+            </div>
         </div>
     </div>
 
@@ -437,6 +438,29 @@ try {
             document.getElementById('reportModal').classList.remove('active');
             document.getElementById('reportForm').reset();
         }
+
+        // Toggle Date Range visibility based on report type
+        document.querySelectorAll('input[name="report_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const dateSection = document.getElementById('dateRangeSection');
+                if (this.value === 'disposed') {
+                    dateSection.style.display = 'block';
+                } else {
+                    dateSection.style.display = 'none';
+                    // Optional: clear the dates when hidden
+                    document.getElementById('date_from').value = '';
+                    document.getElementById('date_to').value = '<?= date("Y-m-d") ?>';
+                }
+            });
+        });
+
+        // Also trigger on page load in case a radio is pre-checked
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkedRadio = document.querySelector('input[name="report_type"]:checked');
+            if (checkedRadio && checkedRadio.value === 'disposed') {
+                document.getElementById('dateRangeSection').style.display = 'block';
+            }
+        });
 
         // Close modal when clicking outside
         window.addEventListener('click', function(e) {

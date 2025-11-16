@@ -1,134 +1,170 @@
+
 .switch-account-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
+    padding: 50px;
     margin-top: 80px;
     min-height: calc(100vh - 80px);
-    background: linear-gradient(rgba(220, 0, 0, 0.8), /* top: strong red with opacity */ rgba(220, 0, 0, 0.6) /* bottom: lighter red with opacity */), url(../images/calendar-banner.jpg) center / cover no-repeat;
+    justify-content: center;
+    gap: 40px;
     overflow: hidden;
+    background: linear-gradient(
+        135deg, /* Top-left to bottom-right */
+        rgba(190, 4, 4, 0.65) 65%,    /* #BE0404 with 65% opacity */
+        rgba(150, 1, 1, 0.75) 75%,    /* #960101 with 75% opacity */
+        rgba(189, 0, 0, 0.85) 85%,    /* #BD0000 with 85% opacity */
+        rgba(128, 0, 0, 0.95) 95%     /* #800000 with 95% opacity */
+    ), url("../images/calendar-banner.jpg") center/cover no-repeat;
 }
 
-.switch-header{
-    flex: 1;
-    color: white;
+.switch-header {
     text-align: center;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #fff;
+}
+
+.page-subtitle {
+    font-size: 15px;
+    opacity: 0.95;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 420px;
+}
+
+/* Error Message */
+.error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border-left: 5px solid #c62828;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 480px;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Account List */
+.account-list {
+    width: 100%;
+    max-width: 480px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.page-title{
-    font-size: 3rem;
-}
-
-.account-list {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
+    gap: 16px;
 }
 
 .account-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 16px;
+    padding: 16px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-around;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 20px;
-    width: 300px;
-    text-align: center;
+    gap: 16px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
     cursor: pointer;
-    background-color: #FFF8F6;
-    gap: 10px;
+    border: 2px solid transparent;
+    backdrop-filter: blur(8px);
 }
+
+.account-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    border-color: #b71c1c;
+}
+
+.account-card:active {
+    transform: translateY(-2px);
+}
+
 .account-card img {
-    width: 90%;
-    height: 200px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #800000;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.account-card p {
-    margin: 5px 0;
-    font-size: 14px;
+.account-card > div {
+    flex: 1;
 }
+
 .account-card .name {
-    font-weight: bold;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #1a1a1a;
 }
 
-.error-message {
-    color: #FF0000;
-    text-align: center;
-    margin-bottom: 20px;
+.account-card p:last-child {
+    margin: 0;
+    font-size: 14px;
+    color: #d32f2f;
+    font-weight: 500;
+    text-transform: capitalize;
 }
 
+/* Special badge for Primary Account */
+.account-card:first-child p:last-child {
+    background: linear-gradient(90deg, #b71c1c, #d32f2f);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: inline-block;
+    font-weight: 600;
+}
 
-/* ============================= */
-/* RESPONSIVE STYLES */
-/* ============================= */
-
-/* ===== Small Devices (≤600px) ===== */
-@media (max-width: 600px) {
+/* Responsive */
+@media (max-width: 480px) {
     .switch-account-container {
         margin-top: 70px;
-        padding: 15px;
-        background-position: center;
-        gap: 15px;
     }
 
     .page-title {
-        font-size: 2rem;
-    }
-
-    .account-list {
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
+        font-size: 24px;
     }
 
     .account-card {
-        width: 90%;
-        padding: 20px;
+        padding: 14px;
     }
 
     .account-card img {
-        width: 100px;
-        height: 100px;
+        width: 60px;
+        height: 60px;
+    }
+
+    .account-card .name {
+        font-size: 17px;
     }
 }
 
-/* ===== Tablets (601px–1024px) ===== */
-@media (min-width: 601px) and (max-width: 1024px) {
-    .switch-account-container {
-        background-attachment: fixed;
-    }
-
-    .page-title {
-        font-size: 2.3rem;
-    }
-
-    .account-list {
-        gap: 30px;
-    }
-
-    .account-card {
-        width: 45%;
-    }
+/* Optional: Add a small back button if needed later */
+.back-btn {
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    background: rgba(255,255,255,0.9);
+    padding: 10px 14px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    color: #900;
+    font-size: 20px;
+    z-index: 10;
+    transition: 0.3s;
 }
 
-/* ===== Desktops (≥1025px) ===== */
-@media (min-width: 1025px) {
-    .page-title {
-        font-size: 2.8rem;
-    }
-
-    .account-card {
-        width: 280px;
-    }
+.back-btn:hover {
+    background: white;
+    transform: scale(1.1);
 }
-

@@ -1,4 +1,5 @@
 <?php
+include 'settings.php';
 // deletion_notice.php
 if (!isset($conn) || !isset($_SESSION['user_id'])) {
     return;   // silently ignore if called too early
@@ -49,8 +50,13 @@ if ($delReq) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deletion Notice – MaruHealth</title>
+    <title>Deletion Notice</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="css/nav_footer.css">
+    <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="$logo_url" type="image/x-icon">
     <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:"Istok Web";}
     .deletion-notice-overlay{
@@ -64,10 +70,6 @@ if ($delReq) {
         align-items:center;padding:10px 20px;width:100%;height:80px;
         box-shadow:0 4px 8px rgba(0,0,0,.2);
     }
-    .logo-container{display:flex;align-items:center;gap:10px;}
-    .logo-container img{height:70px;}
-    .logo-container div h1,.logo-container div p{color:#fff;}
-    .logo-container div p{font-size:11px;}
     .nav-links{list-style:none;display:flex;align-items:center;gap:15px;}
     .nav-links a{color:#fff;text-decoration:none;}
     .nav-profile-pic {
@@ -78,6 +80,7 @@ if ($delReq) {
         border:2px solid #fff;
     }
     .deletion-container{
+        margin-top: 80px;
         flex:1;width:100%;display:flex;justify-content:center;align-items:center;
     }
     .deletion-notice-box{
@@ -87,9 +90,15 @@ if ($delReq) {
     .deletion-notice-box i{font-size:3rem;color:#e74c3c;margin-bottom:.8rem;}
     .deletion-notice-box h2{font-size:1.6rem;margin-bottom:.8rem;}
     .deletion-notice-box p{font-size:1rem;line-height:1.5;margin-bottom:1rem;}
+    .deletion-notice-actions{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: .4rem;
+    }
     .deletion-notice-actions button,
     .deletion-notice-actions a{
-        display:inline-block;margin:0 .4rem;padding:.6rem 1.2rem;
+        display:inline-block;padding:.6rem 1.2rem;
         border:none;border-radius:6px;font-weight:600;
         cursor:pointer;text-decoration:none;
     }
@@ -141,6 +150,12 @@ if ($delReq) {
     .confirm-btn:hover { background: #219150; }
     .cancel-btn { background: #95a5a6; color: #fff; }
     .cancel-btn:hover { background: #7f8c8d; }
+
+    @media (max-width: 480px) {
+        .deletion-notice-box{
+            width: 80%;
+        }
+    }
     </style>
 </head>
 <body>
@@ -150,10 +165,10 @@ if ($delReq) {
     <!-- NAVIGATION -->
     <nav>
         <div class="logo-container">
-            <img src="images/3s logo.png" alt="Logo">
+            <img src="$logo_url" alt="Logo">
             <div>
                 <h1>
-                    <span sclass="maruhealth">MaruHealth</span>
+                    <span class="maruhealth">$site_name</span>
                     <span class="barangay-title">Barangay Marulas 3S Health Center</span>
                 </h1>
             </div>

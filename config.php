@@ -334,7 +334,7 @@ try {
     $sql = "CREATE TABLE IF NOT EXISTS medicine_requests (
         id INT AUTO_INCREMENT PRIMARY KEY,
         request_id VARCHAR(50) UNIQUE NOT NULL,
-        user_id INT NOT NULL,
+        user_id INT NULL,
         full_name VARCHAR(100) NOT NULL,
         gender ENUM('Male', 'Female', 'Other') NOT NULL,
         birthdate DATE NOT NULL,
@@ -350,7 +350,7 @@ try {
         declined_date DATETIME NULL,
         cancelled_date DATETIME NULL,
         note TEXT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )";
     $conn->exec($sql);
 
@@ -409,7 +409,7 @@ try {
     // Create Patient Table
     $sql = "CREATE TABLE IF NOT EXISTS patients (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        family_number VARCHAR(50) NOT NULL,
+        family_number VARCHAR(50),
         first_name VARCHAR(100) NOT NULL,
         middle_name VARCHAR(100),
         last_name VARCHAR(100) NOT NULL,

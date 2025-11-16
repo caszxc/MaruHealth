@@ -1,4 +1,5 @@
 <?php
+//add_dependent.php
 session_start();
 require_once "config.php";
 
@@ -131,9 +132,11 @@ try {
     // Commit transaction
     $conn->commit();
 
-    echo json_encode(['success' => true, 'message' => 'Dependent added successfully. Pending approval.']);
+    echo json_encode(['success' => true]);
+    exit();
 } catch (PDOException $e) {
     $conn->rollBack();
     echo json_encode(['success' => false, 'message' => 'Registration failed: ' . $e->getMessage()]);
+    exit();
 }
 ?>

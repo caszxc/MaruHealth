@@ -99,7 +99,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Batches - <?php echo htmlspecialchars($medicine['generic_name'] . ($medicine['brand_name'] ? ' (' . $medicine['brand_name'] . ')' : '')); ?></title>
+    <title>Medicine Management</title>
     <link rel="stylesheet" href="css/medicine_management.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,6 +107,7 @@ $batches = $batchStmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
     <style>
         .message {
             padding: 10px;

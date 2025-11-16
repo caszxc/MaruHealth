@@ -173,26 +173,26 @@
 section {
     background: #ffffff;
     border-radius: 14px;
-    padding: 20px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     gap: 10px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #800000;
 }
 
 .section-header {
     display: flex;
     background-color: #800000;
     justify-content: space-between;
-    border-radius: 12px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
     align-items: center;
-    padding: 10px;
+    padding: 10px 15px;
 }
 
 .view-all-link {
     font-size: 14px;
-    color: #3498db;
+    color: #fff;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
@@ -202,7 +202,6 @@ section {
 }
 
 .view-all-link:hover {
-    color: #2980b9;
     text-decoration: underline;
 }
 
@@ -223,6 +222,9 @@ section h3 {
    1. ALERTS
    ============================================================== */
 .alert-section { background: #fafafa }
+.alert-cards {
+    padding: 20px;
+}
 .alert-card {
     background: #ffffff;
     border-radius: 12px;
@@ -267,7 +269,7 @@ section h3 {
    ============================================================== */
 .summary-section { background: #fafafa }
 
-.stat-bars { display: flex; flex-direction: column; gap: 14px; }
+.stat-bars { display: flex; flex-direction: column; gap: 14px; padding: 20px;}
 .stat-item {
     background: #ffffff;
     border-radius: 12px;
@@ -276,9 +278,7 @@ section h3 {
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: all 0.2s;
 }
-.stat-item:hover { transform: translateX(4px); }
 
 .stat-label {
     display: flex;
@@ -307,6 +307,10 @@ section h3 {
     background: #fafafa ;
 }
 
+.activity-container{
+    padding: 20px;
+}
+
 .activity-list {
     background: #ffffff;
     border-radius: 12px;
@@ -326,6 +330,7 @@ section h3 {
     list-style: none;
     padding: 16px 20px;
     display: flex;
+    gap: 25px;
     align-items: center;
     cursor: pointer;
     user-select: none;
@@ -338,13 +343,6 @@ section h3 {
 
 .activity-item summary::-webkit-details-marker {
     display: none;
-}
-
-.activity-icon {
-    width: 34px;
-    height: 34px;
-    margin-right: 16px;
-    flex-shrink: 0;
 }
 
 .activity-content {
@@ -397,6 +395,7 @@ section h3 {
 .stats-card-container {
     display: flex;
     flex-direction: column;
+    padding: 20px;
     gap: 20px;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
@@ -412,24 +411,13 @@ section h3 {
     color: inherit;
 }
 
-.stats-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 32px rgba(0,0,0,0.16);
-}
-
 .stats-icon {
     width: 100px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #f17676 0%, #b83c3c 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-}
-
-.stats-icon img {
-    width: 50px;
-    height: 50px;
-    filter: brightness(0) invert(1);
 }
 
 .stats-content {
@@ -457,6 +445,19 @@ section h3 {
 .stat-line .value { font-weight: 700; color: #2c3e50; }
 .stat-line .value.pending { color: #e67e22; font-weight: 800; }
 
+.stats-icon i {
+    font-size: 2.8rem;
+    color: #fff;
+}
+
+.stat-line .label { color: #7f8c8d; }
+.stat-line .value { font-weight: 700; color: #2c3e50; }
+.stats-numbers .value.success { color: #27ae60; font-weight: 600; }
+.stats-numbers .value.warning { color: #e67e22; font-weight: 600; }
+.stats-numbers .value.danger  { color: #e74c3c; font-weight: 600; }
+.stats-numbers .value.pending { color: #f39c12; font-weight: 600; }
+.stats-numbers .value.highlight { color: #3498db; font-weight: 700; font-size: 1.1em; }
+
 .view-more {
     color: #3498db;
     font-weight: 600;
@@ -469,7 +470,7 @@ section h3 {
 /* ==============================================================
    6. SYSTEM LOGS
    ============================================================== */
-.system-logs-section { background: #fafafa  }
+.system-logs-section { background: #fafafa;  gap: 0;}
 
 .log-tabs {
     display: flex;
@@ -479,7 +480,7 @@ section h3 {
 }
 
 .tab-btn {
-    padding: 10px 20px;
+    padding: 15px 25px;
     background: none;
     border: none;
     font-weight: 600;
@@ -487,7 +488,6 @@ section h3 {
     cursor: pointer;
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
-    border-radius: 8px 8px 0 0;
 }
 
 .tab-btn.active {
@@ -563,6 +563,7 @@ section h3 {
 .no-logs {
     text-align: center;
     padding: 32px;
+    background-color: #fff;
     color: #95a5a6;
     font-style: italic;
 }

@@ -155,6 +155,8 @@ $medEmailLogs = $conn->query("
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
     
 </head>
 <body>
@@ -217,7 +219,9 @@ $medEmailLogs = $conn->query("
             <div class="section-wrapper">
                 <!-- ==================== ALERTS ==================== -->
                 <section class="alert-section">
-                    <h3>Alerts</h3>
+                    <div class="section-header">
+                        <h3>Alerts</h3>
+                    </div>
                     <div class="alert-grid">
                         <div class="alert-card <?= $overdueCount > 0 ? 'has-pending' : '' ?>" data-type="overdue">
                             <div class="alert-header">
@@ -237,7 +241,7 @@ $medEmailLogs = $conn->query("
                             <p class="pending-info">
                                 <span class="pending-number"><?= $expiredCount ?></span> Medicine Batches
                             </p>
-                            <a href="view_expiring.php?filter=expired" class="manage-link">Dispose</a>
+                            <a href="view_expiring.php?filter=expired" class="manage-link">View</a>
                         </div>
 
                         <div class="alert-card <?= $outOfStockCount > 0 ? 'has-pending' : '' ?>" data-type="out-of-stock">
@@ -248,7 +252,7 @@ $medEmailLogs = $conn->query("
                             <p class="pending-info">
                                 <span class="pending-number"><?= $outOfStockCount ?></span> Medicines
                             </p>
-                            <a href="medicine_management.php?filter=out" class="manage-link">Restock</a>
+                            <a href="medicine_management.php?filter=out" class="manage-link">View</a>
                         </div>
 
                         <div class="alert-card <?= $lowStockCount > 0 ? 'has-pending' : '' ?>" data-type="low-stock">
@@ -259,7 +263,7 @@ $medEmailLogs = $conn->query("
                             <p class="pending-info">
                                 <span class="pending-number"><?= $lowStockCount ?></span> Medicines
                             </p>
-                            <a href="medicine_management.php?filter=low" class="manage-link">Restock</a>
+                            <a href="medicine_management.php?filter=low" class="manage-link">View</a>
                         </div>
 
                         <div class="alert-card <?= $expiringWeekCount > 0 ? 'has-pending' : '' ?>" data-type="expiring-week">
@@ -310,7 +314,9 @@ $medEmailLogs = $conn->query("
 
                 <!-- ==================== SUMMARY ==================== -->
                 <section class="summary-section">
-                    <h3>Summary</h3>
+                    <div class="section-header">
+                        <h3>Summary</h3>
+                    </div>
                     <div class="stat-bars">
                         <div class="stat-item">
                             <div class="stat-label">
@@ -350,149 +356,175 @@ $medEmailLogs = $conn->query("
                     </div>
                 </section>
 
-                <!-- ==================== QUICK ACTIONS ==================== -->
-                <section class="quick-actions-section">
-                    <h3>Quick Actions</h3>
-                    <div class="actions-container">
-                        <a href="medicine_management.php?action=add" class="action-btn medicine-btn">
-                            <img src="images/icons/med_icon.png" alt="Add Medicine">
-                            <span>Add Medicine</span>
-                        </a>
-                        <a href="patient_management.php?action=add" class="action-btn patient-btn">
-                            <img src="images/icons/patient_icon.png" alt="Add Patient">
-                            <span>Add Patient</span>
-                        </a>
-                    </div>
-                </section>
-
                 <!-- ==================== RECENT ACTIVITIES ==================== -->
                 <section class="recent-activities-section">
-                    <h3>Recent Activities</h3>
-                    <div class="activity-list">
-                        <?php if (empty($activities)): ?>
-                            <p class="no-activity">No recent activity.</p>
-                        <?php else: ?>
-                            <?php foreach ($activities as $act): ?>
-                                <?php
-                                    // ICON MAP: action_type → [icon, color]
-                                    $iconMap = [
-                                        // MEDICINE CATALOG
-                                        'add_medicine'        => ['icon' => 'dashboard/add_medicine_icon.png',           'color' => '#27ae60'], // Green - Add
-                                        'update_medicine'     => ['icon' => 'dashboard/update_medicine_icon.png',          'color' => '#f39c12'], // Orange - Edit
-                                        'delete_medicine'     => ['icon' => 'dashboard/delete_medicine_icon.png',        'color' => '#e74c3c'], // Red - Delete
+                    <div class="section-header">
+                        <h3>Recent Activities</h3>
+                    </div>
+                    <div class="activity-container">
+                        <div class="activity-list">
+                            <?php if (empty($activities)): ?>
+                                <p class="no-activity">No recent activity.</p>
+                            <?php else: ?>
+                                <?php foreach ($activities as $act): ?>
+                                    <?php
+                                        // ICON MAP: action_type → [icon, color]
+                                        $iconMap = [
+                                            'user_approval'           => ['label' => 'Approved User Account',           'icon' => 'fas fa-user-check',      'color' => '#27ae60'],
+                                            'user_rejection'          => ['label' => 'Rejected User Account',          'icon' => 'fas fa-user-slash',      'color' => '#e74c3c'],
+                                            'announcement_create'     => ['label' => 'Created Announcement',           'icon' => 'fas fa-bullhorn',        'color' => '#9b59b6'],
+                                            'announcement_update'     => ['label' => 'Updated Announcement',           'icon' => 'fas fa-edit',            'color' => '#8e44ad'],
+                                            'announcement_toggle'     => ['label' => 'Toggled Announcement Status',    'icon' => 'fas fa-toggle-on',       'color' => '#71368a'],
+                                            'event_create'            => ['label' => 'Created Event',                  'icon' => 'fas fa-calendar-plus',   'color' => '#e67e22'],
+                                            'event_delete'            => ['label' => 'Deleted Event',                  'icon' => 'fas fa-calendar-minus',  'color' => '#d35400'],
+                                            'service_create'          => ['label' => 'Created Service',                'icon' => 'fas fa-plus-circle',     'color' => '#2980b9'],
+                                            'service_update'          => ['label' => 'Updated Service',                'icon' => 'fas fa-cogs',            'color' => '#3498db'],
+                                            'service_delete'          => ['label' => 'Deleted Service',                'icon' => 'fas fa-trash-alt',       'color' => '#c0392b'],
+                                            'add_patient_record'      => ['label' => 'Added Patient Record',           'icon' => 'fas fa-user-plus',       'color' => '#3498db'],
+                                            'update_patient_record'   => ['label' => 'Updated Patient Record',         'icon' => 'fas fa-edit',            'color' => '#f39c12'],
+                                            'archive_patient'         => ['label' => 'Archived Patient',               'icon' => 'fas fa-archive',         'color' => '#95a5a6'],
+                                            'restore_patient'         => ['label' => 'Restored Patient',               'icon' => 'fas fa-undo',            'color' => '#1abc9c'],
+                                            'approve_request'         => ['label' => 'Approved Medicine Request',      'icon' => 'fas fa-check-circle',    'color' => '#27ae60'],
+                                            'decline_request'         => ['label' => 'Declined Medicine Request',      'icon' => 'fas fa-times-circle',    'color' => '#e74c3c'],
+                                            'mark_request_claimed'    => ['label' => 'Marked Request as Claimed',      'icon' => 'fas fa-prescription-bottle', 'color' => '#2ecc71'],
+                                            'return_unclaimed_request'=> ['label' => 'Returned Unclaimed Medicines',   'icon' => 'fas fa-undo',            'color' => '#e67e22'],
+                                            'add_medicine'            => ['label' => 'Added Medicine to Catalog',      'icon' => 'fas fa-pills',           'color' => '#27ae60'],
+                                            'update_medicine'         => ['label' => 'Updated Medicine Catalog',       'icon' => 'fas fa-edit',            'color' => '#f39c12'],
+                                            'delete_medicine'         => ['label' => 'Deleted Medicine from Catalog',  'icon' => 'fas fa-trash',           'color' => '#e74c3c'],
+                                            'add_batch'               => ['label' => 'Added Medicine Batch',           'icon' => 'fas fa-box',             'color' => '#27ae60'],
+                                            'update_batch'            => ['label' => 'Updated Medicine Batch',         'icon' => 'fas fa-edit',            'color' => '#f39c12'],
+                                            'delete_batch'            => ['label' => 'Deleted Medicine Batch',         'icon' => 'fas fa-trash',           'color' => '#e74c3c'],
+                                            'add_family_member'       => ['label' => 'Added Family Member',            'icon' => 'fas fa-users',           'color' => '#9b59b6'],
+                                            'add_consultation'        => ['label' => 'Added Consultation Record',      'icon' => 'fas fa-notes-medical',   'color' => '#3498db'],
+                                            'delete_consultation'     => ['label' => 'Deleted Consultation Record',    'icon' => 'fas fa-trash',           'color' => '#e74c3c'],
+                                            'delete_user'             => ['label' => 'Deleted User Account',           'icon' => 'fas fa-user-times',      'color' => '#c0392b'],
+                                        ];
+                                        $type = $act['action_type'];
+                                        $info = $iconMap[$type] ?? [
+                                            'label' => ucwords(str_replace('_', ' ', $type)),
+                                            'icon'  => 'fas fa-cube',
+                                            'color' => '#7f8c8d'
+                                        ];
 
-                                        // MEDICINE BATCHES
-                                        'add_batch'           => ['icon' => 'dashboard/add_batch_icon.png',     'color' => '#27ae60'], // Green
-                                        'update_batch'        => ['icon' => 'dashboard/update_batch_icon.png',    'color' => '#f39c12'], // Orange
-                                        'delete_batch'        => ['icon' => 'dashboard/delete_batch_icon.png',  'color' => '#e74c3c'], // Red
-
-                                        // PATIENT RECORDS
-                                        'add_patient_record'  => ['icon' => 'dashboard/patient_add_icon.png',   'color' => '#3498db'], // Blue - Add Patient
-                                        'update_patient_record' => ['icon' => 'dashboard/edit_patient_icon.png',       'color' => '#f39c12'], // Orange - Edit
-                                        'add_family_member'   => ['icon' => 'dashboard/family_add_icon.png',    'color' => '#9b59b6'], // Purple - Family
-                                        'archive_patient'     => ['icon' => 'dashboard/archive_patient_icon.png',       'color' => '#95a5a6'], // Gray - Archive
-                                        'restore_patient'     => ['icon' => 'dashboard/restore_patient_icon.png',       'color' => '#1abc9c'], // Teal - Restore
-
-                                        // MEDICINE REQUESTS
-                                        'approve_request'     => ['icon' => 'dashboard/approve_request_icon.png',       'color' => '#27ae60'], // Green - Approve
-                                        'decline_request'     => ['icon' => 'dashboard/decline_request_icon.png',       'color' => '#e74c3c'], // Red - Decline
-                                        'mark_request_claimed'=> ['icon' => 'dashboard/claimed_request_icon.png',       'color' => '#2ecc71'], // Bright Green
-                                        'return_unclaimed_request' => ['icon' => 'dashboard/return_request_icon.png','color' => '#e67e22'], // Carrot Orange
-
-                                        // CONSULTATIONS
-                                        'add_consultation'    => ['icon' => 'dashboard/add_consultation_icon.png',    'color' => '#3498db'], // Blue - Add
-                                        'delete_consultation' => ['icon' => 'dashboard/delete_consultation_icon.png', 'color' => '#e74c3c'], // Red - Delete
-                                    ];
-                                    $type = $act['action_type'];
-                                    $info = $iconMap[$type] ?? ['icon' => 'dashboard_icon_active.png', 'color' => '#7f8c8d'];
-
-                                    // Humanize action
-                                    $actionText = ucwords(str_replace('_', ' ', $type));
-                                ?>
-                                <details class="activity-item" style="border-left: 4px solid <?= $info['color'] ?>;">
-                                    <summary>
-                                        <img src="images/icons/<?= $info['icon'] ?>" alt="" class="activity-icon">
-                                        <div class="activity-content">
-                                            <p class="activity-desc">
-                                                <strong><?= htmlspecialchars($act['admin_name'] ?? 'System') ?></strong>
-                                                <?= htmlspecialchars($actionText) ?>
-                                            </p>
-                                            <p class="activity-time"><?= timeAgo($act['created_at']) ?></p>
+                                        // Use the clean label from iconMap, fallback to formatted type
+                                        $actionText = $info['label'];
+                                    ?>
+                                    <details class="activity-item" style="border-left: 4px solid <?= $info['color'] ?>;">
+                                        <summary>
+                                            <i class="<?= $info['icon'] ?>" style="color: <?= $info['color'] ?>; font-size: 1.2rem; font-size: 2rem;"></i>
+                                            <div class="activity-content">
+                                                <p class="activity-desc">
+                                                    <strong><?= htmlspecialchars($act['admin_name'] ?? 'System') ?></strong>
+                                                    <?= htmlspecialchars($actionText) ?>
+                                                </p>
+                                                <p class="activity-time"><?= timeAgo($act['created_at']) ?></p>
+                                            </div>
+                                        </summary>
+                                        <div class="activity-details">
+                                            <p><?= nl2br(htmlspecialchars($act['action_details'] ?? 'No details recorded.')) ?></p>
                                         </div>
-                                    </summary>
-                                    <div class="activity-details">
-                                        <p><?= nl2br(htmlspecialchars($act['action_details'] ?? 'No details recorded.')) ?></p>
-                                    </div>
-                                </details>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                                    </details>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </section>
 
                 <!-- ==================== STATISTICS & REPORTS ==================== -->
                 <section class="stats-reports-section">
-                    <h3>Statistics and Reports</h3>
+                    <div class="section-header">
+                        <h3>Statistics and Reports</h3>
+                    </div>
                     <div class="stats-card-container">
-                        <a href="patient_stats.php" class="stats-card">
+                        <a href="patient_stats.php" class="stats-card patient-stats-card">
                             <div class="stats-icon">
-                                <img src="images/icons/patient_icon.png" alt="">
+                                <i class="fas fa-user-injured"></i>
                             </div>
                             <div class="stats-content">
                                 <h4>Patient Statistics</h4>
                                 <div class="stats-numbers">
+                                    <?php
+                                    $totalPatients   = $conn->query("SELECT COUNT(*) FROM patients WHERE status = 'active'")->fetchColumn();
+                                    $archivedPatients = $conn->query("SELECT COUNT(*) FROM patients WHERE status = 'archived'")->fetchColumn();
+                                    $totalFamilies   = $conn->query("SELECT COUNT(*) FROM families")->fetchColumn();
+                                    ?>
                                     <div class="stat-line">
-                                        <span class="label">Total Patients</span>
-                                        <span class="value"><?= number_format($stats['patients_total']) ?></span>
+                                        <span class="label">Active Patients</span>
+                                        <span class="value"><?= number_format($totalPatients) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Archived Patients</span>
+                                        <span class="value"><?= number_format($archivedPatients) ?></span>
                                     </div>
                                     <div class="stat-line">
                                         <span class="label">Total Families</span>
-                                        <span class="value"><?= number_format($stats['families_total']) ?></span>
-                                    </div>
-                                    <div class="stat-line">
-                                        <span class="label">Total Consultation</span>
-                                        <span class="value"><?= number_format($stats['consultations_total']) ?></span>
+                                        <span class="value"><?= number_format($totalFamilies) ?></span>
                                     </div>
                                 </div>
                                 <p class="view-more">View Detailed Report →</p>
                             </div>
                         </a>
-                        <a href="medicine_stats.php" class="stats-card">
+
+                        <!-- 3. Consultation Statistics -->
+                        <a href="consultation_stats.php" class="stats-card consultation-stats-card">
                             <div class="stats-icon">
-                                <img src="images/icons/med_icon.png" alt="">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
+                            <div class="stats-content">
+                                <h4>Consultation Statistics</h4>
+                                <div class="stats-numbers">
+                                    <?php
+                                    $totalConsultations = $conn->query("SELECT COUNT(*) FROM consultations")->fetchColumn();
+                                    $thisMonthConsult   = $conn->query("SELECT COUNT(*) FROM consultations WHERE MONTH(consultation_date) = MONTH(CURDATE()) AND YEAR(consultation_date) = YEAR(CURDATE())")->fetchColumn();
+                                    $todayConsult       = $conn->query("SELECT COUNT(*) FROM consultations WHERE DATE(consultation_date) = CURDATE()")->fetchColumn();
+                                    ?>
+                                    <div class="stat-line">
+                                        <span class="label">Total Consultations</span>
+                                        <span class="value"><?= number_format($totalConsultations) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">This Month</span>
+                                        <span class="value"><?= number_format($thisMonthConsult) ?></span>
+                                    </div>
+                                    <div class="stat-line">
+                                        <span class="label">Today</span>
+                                        <span class="value highlight"><?= number_format($todayConsult) ?></span>
+                                    </div>
+                                </div>
+                                <p class="view-more">View Detailed Report →</p>
+                            </div>
+                        </a>
+
+                        <!-- 4. Medicine Statistics -->
+                        <a href="medicine_stats.php" class="stats-card medicine-stats-card">
+                            <div class="stats-icon">
+                                <i class="fas fa-pills"></i>
                             </div>
                             <div class="stats-content">
                                 <h4>Medicine Statistics</h4>
                                 <div class="stats-numbers">
+                                    <?php
+                                    $totalMedicines   = $conn->query("SELECT COUNT(*) FROM medicines_catalog")->fetchColumn();
+                                    $inStock          = $conn->query("SELECT COUNT(*) FROM medicines_catalog WHERE stock_status = 'In Stock'")->fetchColumn();
+                                    $lowStock         = $conn->query("SELECT COUNT(*) FROM medicines_catalog WHERE stock_status = 'Low Stock'")->fetchColumn();
+                                    $outOfStock       = $conn->query("SELECT COUNT(*) FROM medicines_catalog WHERE stock_status = 'Out of Stock'")->fetchColumn();
+                                    $expiringSoon     = $conn->query("SELECT COUNT(DISTINCT catalog_id) FROM medicine_batches WHERE expiry_status IN ('Expiring within a month', 'Expiring within a week') AND is_disposed = 0")->fetchColumn();
+                                    ?>
                                     <div class="stat-line">
-                                        <span class="label">Unique Medicines</span>
-                                        <span class="value"><?= number_format($stats['catalog_total']) ?></span>
+                                        <span class="label">Total Medicines (Catalog)</span>
+                                        <span class="value"><?= number_format($totalMedicines) ?></span>
                                     </div>
                                     <div class="stat-line">
-                                        <span class="label">Total Batches</span>
-                                        <span class="value"><?= number_format($stats['batches_total']) ?></span>
+                                        <span class="label">In Stock</span>
+                                        <span class="value success"><?= number_format($inStock) ?></span>
                                     </div>
                                     <div class="stat-line">
-                                        <span class="label">Total Units</span>
-                                        <span class="value"><?= number_format($stats['units_total']) ?></span>
-                                    </div>
-                                </div>
-                                <p class="view-more">View Detailed Report →</p>
-                            </div>
-                        </a>
-                        <a href="medicine_request_stats.php" class="stats-card">
-                            <div class="stats-icon">
-                                <img src="images/icons/reqmd_icon.png" alt="">
-                            </div>
-                            <div class="stats-content">
-                                <h4>Request Statistics</h4>
-                                <div class="stats-numbers">
-                                    <div class="stat-line">
-                                        <span class="label">Total Requests </span>
-                                        <span class="value"><?= number_format($stats['requests_total']) ?></span>
+                                        <span class="label">Low Stock / Expiring Soon</span>
+                                        <span class="value warning"><?= number_format($lowStock + $expiringSoon) ?></span>
                                     </div>
                                     <div class="stat-line">
-                                        <span class="label">Pending Requests</span>
-                                        <span class="value"><?= number_format($stats['requests_pending']) ?></span>
+                                        <span class="label">Out of Stock</span>
+                                        <span class="value danger"><?= number_format($outOfStock) ?></span>
                                     </div>
                                 </div>
                                 <p class="view-more">View Detailed Report →</p>
@@ -503,7 +535,9 @@ $medEmailLogs = $conn->query("
 
                 <!-- ==================== SYSTEM LOGS (Medicine Only) ==================== -->
                 <section class="system-logs-section">
-                    <h3>SMS and Email Logs</h3>
+                    <div class="section-header">
+                        <h3>SMS and Email Logs</h3>
+                    </div>
                     <div class="log-tabs">
                         <button class="tab-btn active" data-tab="sms">SMS</button>
                         <button class="tab-btn" data-tab="email">Email</button>
@@ -553,7 +587,18 @@ $medEmailLogs = $conn->query("
                                         <div class="log-details">
                                             <p><strong>Email:</strong> <?= htmlspecialchars($log['recipient_email']) ?></p>
                                             <p><strong>Subject:</strong> <?= htmlspecialchars($log['subject']) ?></p>
-                                            <p><strong>Message:</strong> <?= nl2br(htmlspecialchars($log['message'])) ?></p>
+                                            <?php 
+                                                $cleanMessage = strip_tags($log['message']);
+                                                $shortMessage = strlen($cleanMessage) > 200 
+                                                    ? substr($cleanMessage, 0, 200) . "..." 
+                                                    : $cleanMessage;
+                                            ?>
+                                            <p><strong>Message:</strong> 
+                                                <?= nl2br(htmlspecialchars($shortMessage)) ?>
+                                                <?php if (strlen($cleanMessage) > 200): ?>
+                                                    <br><small style="color:#666;">(truncated)</small>
+                                                <?php endif; ?>
+                                            </p>                                            
                                             <?php if ($log['status'] === 'failed'): ?>
                                                 <p class="error-msg"><strong>Error:</strong> <?= htmlspecialchars($log['error_message']) ?></p>
                                             <?php endif; ?>

@@ -131,12 +131,12 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 }
 
                 // Compose approval email
-                $subject = "Maru-Health Account Approval";
+                $subject = "MaruHealth Account Approval";
                 $message = "
                     <h2>Account Approved</h2>
                     <p>Dear $userName,</p>
-                    <p>Your Maru-Health account registration has been approved. You may now log in to our website.</p>
-                    <p>Best regards,<br>Maru-Health Team</p>
+                    <p>Your MaruHealth account registration has been approved. You may now log in to our website.</p>
+                    <p>Best regards,<br>MaruHealth Team</p>
                 ";
                 
                 // Send email notification
@@ -210,13 +210,13 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
             }
             
             // Compose rejection email
-            $subject = "Maru-Health Account Registration Update";
+            $subject = "MaruHealth Account Registration Update";
             $message = "
                 <h2>Account Registration Update</h2>
                 <p>Dear $userName,</p>
-                <p>We regret to inform you that your Maru-Health account registration could not be approved at this time.</p>
+                <p>We regret to inform you that your MaruHealth account registration could not be approved at this time.</p>
                 <p>Please contact our office for further assistance or to clarify any requirements.</p>
-                <p>Best regards,<br>Maru-Health Team</p>
+                <p>Best regards,<br>MaruHealth Team</p>
             ";
             
             // Send email notification
@@ -311,12 +311,13 @@ $displayRole = ucwords(str_replace('_', ' ', $adminRole));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pending Accounts</title>
+    <title>User Account Management</title>
     <link rel="stylesheet" href="css/account_approval.css">
     <link rel="stylesheet" href="css/nav_footer.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Istok+Web&display=swap" rel="stylesheet">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
     <style>
         .dependent-info {
             font-style: italic;

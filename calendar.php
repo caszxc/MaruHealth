@@ -45,6 +45,7 @@ require_once "deletion_notice.php";
     <title>Calendar</title>
     <link rel="stylesheet" href="css/calendar.css">
     <link rel="stylesheet" href="css/nav_footer.css">
+    <link rel="icon" href="<?= $logo_url ?>" type="image/x-icon">
 
     <script>
         function loadCalendar(month, year) {
